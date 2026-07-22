@@ -6,8 +6,7 @@ import csv
 import argparse
 from pathlib import Path
 from pydantic import BaseModel, Field
-from llm7shi.compat import generate_with_schema
-from llm7shi import create_json_descriptions_prompt
+from llm7shi import Client
 
 class ArticleClassification(BaseModel):
     is_series: bool = Field(description="True if the article belongs to a series (e.g. numbered series, related links), False if it is a standalone article.")
@@ -50,8 +49,7 @@ def main():
 
     items_dir = repo_root / "items"
     output_file = repo_root / "classification.tsv"
-    json_descriptions = create_json_descriptions_prompt(ArticleClassification)
-    
+
     # Load already processed
     processed_ids = set()
     if output_file.exists():
@@ -100,16 +98,10 @@ def main():
             print(f"[{i+1}/{len(md_files)}] Processing {file_id}: {frontmatter.get('title')}")
             
             try:
-                result = generate_with_schema(
-                    [context, INSTRUCTION_PROMPT, json_descriptions],
-                    schema=ArticleClassification,
-                    model=args.model,
-                    show_params=False,
-                )
-                
-                # handle if result is a list or object
-                res_text = result.text if hasattr(result, 'text') else result[0].text
-                ans = ArticleClassification.model_validate_json(res_text)
+                # 記事ごとに独立して実行するため毎回 Client インスタンスを新規作成（履歴積み重なり防止）
+                client = Client(model=args.model, show_params=False)
+                resp = client(f"{context}\n\n{INSTRUCTION_PROMPT}", schema=ArticleClassification)
+                ans = resp.data if getattr(resp, 'data', None) is not None else ArticleClassification.model_validate_json(resp.text)
                 
                 is_series = ans.is_series
                 dir_name = (ans.dir_name or 'misc').strip('/')
