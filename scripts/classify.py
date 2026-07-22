@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from llm7shi import Client
 
 class ArticleClassification(BaseModel):
-    category: str = Field(description="The category or series directory name (e.g. haskell, math, retro, ai, env, web, etc.).")
+    category: str = Field(description="The category or series directory name (lowercase English string).")
     slug: str = Field(description="A short English kebab-case string based on the title/content.")
 
 def parse_args():
@@ -26,8 +26,10 @@ INSTRUCTION_PROMPT = """You are tasked with classifying a Qiita article to organ
 Decide on a category name (directory name) and a short English kebab-case slug for the article.
 
 Guidelines:
-1. Category Candidates: haskell, wiktionary, sapi, math, ai, retro, web, env, misc (or other appropriate names).
-2. Slug: Short english kebab-case (e.g., haskell-intro, ssml, promise, wsl-setup)."""
+1. Category: Select the most appropriate category name primarily from the `tags` provided in the front matter of the article context.
+   - Convert the chosen tag to a simple, lowercase English name suitable for a directory (e.g., "Haskell" -> "haskell", "AtCoder" -> "atcoder").
+   - If none of the tags are suitable for a directory category, create a new appropriate lowercase English category name based on the article's core topic.
+2. Slug: Short English kebab-case string based on the title/content (e.g., haskell-intro, ssml, promise, wsl-setup)."""
 
 def create_context(file_path: Path) -> tuple[str, str]:
     """YAML Front Matterを除いた本文冒頭 50 行を取得し、titleとタグ(文字列リスト)で再生成したFront Matterを付与する"""
