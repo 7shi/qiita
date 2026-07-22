@@ -44,15 +44,29 @@ make all
   ※ `items/` 配下の各記事のメタデータや本文をローカルLLMで解析し、シリーズ判定・カテゴリ分類・スラッグ決定を行い、結果を `classification.tsv` に出力します。実際のリネーム・移動は行いません。
   ※ デフォルトモデルは `ollama:gemma4:31b-it-qat` です。
 
+- **LLMによる本文からのシリーズ記事IDグループ抽出**
+  ```bash
+  uv run python scripts/extract_series.py [-m MODEL] [-o OUTPUT]
+  ```
+  ※ `classification.tsv` でシリーズと判定された記事について、本文冒頭に明示されているシリーズ構成（記事IDリンク群）をローカルLLMで解析し、シリーズグループごとの記事IDリストを抽出します。デフォルトで `series_groups.json` に出力されます。
+  ※ デフォルトモデルは `ollama:gemma4:31b-it-qat` です。
+
 - **分類結果TSVの整形・タイトル紐付け**
   ```bash
   uv run python scripts/format_classification.py [-o OUTPUT]
   ```
   ※ `classification.tsv` に `items/{id}.md` から読み取ったタイトルを紐付け、`proposed_path` でソートしたTSVを出力します。デフォルトで `classified_titles.tsv` に出力されます（`-o -` で標準出力指定可）。
 
+## ドキュメント
+
+- `PLAN.md` : リポジトリ内記事の整理計画・分類方針・命名規約をまとめたドキュメント。
+- `docs/` : LLM抽出等の各種ノウハウや仕様を整理したドキュメント類。
+  - [docs/20260722-placeholder-extraction.md](docs/20260722-placeholder-extraction.md) : LLMによる構造化情報抽出テクニック（URLプレースホルダー置換＋自記事 `0` 方式）の解説。
+
 ## ディレクトリ構成
 
 - `data/` : Qiita APIから取得した生のJSONファイル（`7shi-1.json` など）が保存されます。
+- `docs/` : 技術ドキュメントや抽出ノウハウをまとめたディレクトリです。
 - `items/` : JSONから展開されたマークダウンファイルが保存されます。ファイル名は記事のID（`{id}.md`）になります。
 - `scripts/` : 各種スクリプトが配置されています。
 - `PLAN.md` : リポジトリ内記事の整理計画・分類方針・命名規約をまとめたドキュメント。
