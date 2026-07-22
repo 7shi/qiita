@@ -45,8 +45,11 @@ Article content snippet (first 1500 characters):
 
 def main():
     args = parse_args()
-    items_dir = Path("items")
-    output_file = Path("classification.tsv")
+    script_dir = Path(__file__).resolve().parent
+    repo_root = script_dir.parent
+
+    items_dir = repo_root / "items"
+    output_file = repo_root / "classification.tsv"
     json_descriptions = create_json_descriptions_prompt(ArticleClassification)
     
     # Load already processed

@@ -39,7 +39,7 @@ make all
 
 - **LLMによる記事の分類・ファイル名提案**
   ```bash
-  uv run python classify.py [-m MODEL]
+  uv run python scripts/classify.py [-m MODEL]
   ```
   ※ `items/` 配下の各記事のメタデータや本文をローカルLLMで解析し、シリーズ判定・カテゴリ分類・スラッグ決定を行い、結果を `classification.tsv` に出力します。実際のリネーム・移動は行いません。
   ※ デフォルトモデルは `ollama:gemma4:31b-it-qat` です。
@@ -55,6 +55,5 @@ make all
 - `data/` : Qiita APIから取得した生のJSONファイル（`7shi-1.json` など）が保存されます。
 - `items/` : JSONから展開されたマークダウンファイルが保存されます。ファイル名は記事のID（`{id}.md`）になります。
 - `scripts/` : 各種スクリプトが配置されています。
-- `classify.py` : ローカルLLMを用いて記事の分類・スラッグ決定・ファイル名提案を行い、`classification.tsv` を出力するスクリプト。
 - `PLAN.md` : リポジトリ内記事の整理計画・分類方針・命名規約をまとめたドキュメント。
 - `pyproject.toml` : `uv` によるPythonプロジェクトの設定ファイルです。
