@@ -44,11 +44,17 @@ make all
   ※ `items/` 配下の各記事のメタデータや本文をローカルLLMで解析し、シリーズ判定・カテゴリ分類・スラッグ決定を行い、結果を `classification.tsv` に出力します。実際のリネーム・移動は行いません。
   ※ デフォルトモデルは `ollama:gemma4:31b-it-qat` です。
 
+- **分類結果TSVの整形・タイトル紐付け**
+  ```bash
+  uv run python scripts/format_classification.py [-o OUTPUT]
+  ```
+  ※ `classification.tsv` に `items/{id}.md` から読み取ったタイトルを紐付け、`proposed_path` でソートしたTSVを出力します。デフォルトで `classified_titles.tsv` に出力されます（`-o -` で標準出力指定可）。
+
 ## ディレクトリ構成
 
 - `data/` : Qiita APIから取得した生のJSONファイル（`7shi-1.json` など）が保存されます。
 - `items/` : JSONから展開されたマークダウンファイルが保存されます。ファイル名は記事のID（`{id}.md`）になります。
-- `scripts/` : 展開用のPythonスクリプト（`extract.py`）が配置されています。
+- `scripts/` : 各種スクリプトが配置されています。
 - `classify.py` : ローカルLLMを用いて記事の分類・スラッグ決定・ファイル名提案を行い、`classification.tsv` を出力するスクリプト。
 - `PLAN.md` : リポジトリ内記事の整理計画・分類方針・命名規約をまとめたドキュメント。
 - `pyproject.toml` : `uv` によるPythonプロジェクトの設定ファイルです。
