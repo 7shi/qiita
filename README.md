@@ -51,6 +51,12 @@ make all
   ```
   ※ 取得済みのJSONファイルを読み込み、`items/` ディレクトリ配下にマークダウンファイル（`{id}.md`）を展開します。
 
+- **カテゴリの集計のみ**
+  ```bash
+  make category.txt
+  ```
+  ※ `classified.tsv` からカテゴリごとの記事数を集計し、`category.txt` に出力します。
+
 ---
 
 ### 2. LLMによる記事分類・構造化
@@ -81,6 +87,8 @@ uv run scripts/extract_series.py [-m MODEL] [-o OUTPUT]
 
 ## ディレクトリ・主要ファイル構成
 
+- `category.txt` : `classified.tsv` からカテゴリごとの記事数を集計したファイル。
+- `category_map.txt` : `classified.tsv` のカテゴリを大分類へ補正・名寄せするためのマッピング定義ファイル。
 - `classified.tsv` : `classify.py` による全記事の分類・SLUG生成結果ファイル。
 - `data/` : Qiita APIから取得した生のJSONファイル（`7shi-1.json` など）が保存されます。
 - `docs/` : 技術ドキュメントや抽出ノウハウをまとめたディレクトリです。
@@ -89,3 +97,5 @@ uv run scripts/extract_series.py [-m MODEL] [-o OUTPUT]
 - `pyproject.toml` : `uv` によるPythonプロジェクトの設定ファイルです。
 - `scripts/` : 各種スクリプトが配置されています。
 - `series.jsonl` : `extract_series.py` によるシリーズ判定結果ファイル。
+
+

@@ -1,0 +1,13 @@
+ai: agent, ai, bard, bitnet, codewhisperer, copilot, cursor, gemini, geminipro, genai, google-ai-studio, llama-cpp, llm, mcp, modelcontextprotocol, neural-network, ollama, rag, rocm, stablediffusion, vector-search, windsurf
+fsharp: fsharp, f#
+haskell: haskell
+javascript: javascript, typescript, deno, html, react, nextjs, tailwindcss, chrome-extension, webaudioapi, webspeechapi
+languages: cpp, gcc, csharp, dotnet, winforms, go, java, netbeans, common-lisp, scheme, rust, vb, vba, vbscript
+math: math, mathematics, linear-algebra, numeric, statistics, quantum-computing, quantum-mechanics
+media: tts, ffmpeg, gif, gimp, ocr, pdf
+misc: algorithm, async-await, clean, malware, opengl, suggestion, tutorial
+python: python
+retro: vax, pdp11, intel8086, s390, assembly, virtio
+tools: wsl, msys2, unix, uv, makefile, github, bitbucket, sql, sqlite, sqlite3
+webassembly: webassembly, emscripten
+wiktionary: wiktionary, wikipedia, machine-translation

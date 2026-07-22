@@ -1,0 +1,13 @@
+     38 ai
+     39 fsharp
+     53 haskell
+     36 javascript
+     26 languages
+     23 math
+     12 media
+      7 misc
+     18 python
+      8 retro
+     12 tools
+      4 webassembly
+      5 wiktionary
