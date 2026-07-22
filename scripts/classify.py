@@ -10,11 +10,8 @@ from pydantic import BaseModel, Field
 from llm7shi import Client
 
 class ArticleClassification(BaseModel):
-    is_series: bool = Field(description="True if the article belongs to a series (e.g. numbered series, related links), False if it is a standalone article.")
-    dir_name: str = Field(description="The category or series directory name (e.g. haskell, math, retro, ai, env, web, etc.).")
+    category: str = Field(description="The category or series directory name (e.g. haskell, math, retro, ai, env, web, etc.).")
     slug: str = Field(description="A short English kebab-case string based on the title/content.")
-    series_num: int = Field(description="The estimated order in the series (e.g. 1, 2, 3), useful for reasoning. Use 0 if not a series.")
-    reasoning: str = Field(description="Brief reasoning for the chosen category and series/standalone classification.")
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Classify Qiita articles using LLM.")
@@ -23,52 +20,60 @@ def parse_args():
         default="ollama:gemma4:31b-it-qat",
         help="LLM model to use for classification (default: ollama:gemma4:31b-it-qat)"
     )
-    parser.add_argument(
-        "-s", "--series",
-        default="series.jsonl",
-        help="Path to series.jsonl (default: series.jsonl)"
-    )
     return parser.parse_args()
 
 INSTRUCTION_PROMPT = """You are tasked with classifying a Qiita article to organize a repository.
-Determine if this article belongs to a series or is a standalone (category) article.
-Also decide on a directory name (category/series name) and a short English kebab-case slug for the filename.
+Decide on a category name (directory name) and a short English kebab-case slug for the article.
 
 Guidelines:
-1. Series criteria: "〜超入門" and "【解答例】〜超入門" pairs, articles ending with "(2)" or similar, continuous topics (Wiktionary, GIF parsing), or articles starting with a list of links (e.g. "Haskellの実験メモ一覧").
-2. Directory Candidates: haskell, wiktionary, sapi, math, ai, retro, web, env, misc (or other appropriate names).
-3. Slug: Short english kebab-case (e.g., haskell, ssml, promise, wsl-setup)."""
+1. Category Candidates: haskell, wiktionary, sapi, math, ai, retro, web, env, misc (or other appropriate names).
+2. Slug: Short english kebab-case (e.g., haskell-intro, ssml, promise, wsl-setup)."""
 
-def create_context(frontmatter, content):
-    return f"""Article metadata:
-Title: {frontmatter.get('title')}
-Tags: {', '.join(t.get('name', '') for t in frontmatter.get('tags', []))}
-Created At: {frontmatter.get('created_at')}
+def create_context(file_path: Path) -> tuple[str, str]:
+    """YAML Front Matterを除いた本文冒頭 50 行を取得し、titleとタグ(文字列リスト)で再生成したFront Matterを付与する"""
+    with open(file_path, "r", encoding="utf-8") as f:
+        raw_lines = [line.rstrip("\n\r") for line in f.readlines()]
 
-Article content snippet (first 1500 characters):
-{content[:1500]}"""
+    frontmatter_lines = []
+    body_lines = []
+    in_front_matter = False
+    for i, line in enumerate(raw_lines):
+        if i == 0 and line.strip() == "---":
+            in_front_matter = True
+            continue
+        if in_front_matter:
+            if line.strip() == "---":
+                in_front_matter = False
+            else:
+                frontmatter_lines.append(line)
+            continue
+        body_lines.append(line)
 
-def load_series_group_ids(series_file: Path) -> set[str]:
-    """series.jsonl からグループ判定された (member_ids が2件以上) 全記事IDを取得する"""
-    series_ids = set()
-    if not series_file.exists():
-        return series_ids
     try:
-        with open(series_file, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                data = json.loads(line)
-                member_ids = data.get("member_ids", [])
-                if len(member_ids) > 1:
-                    for mid in member_ids:
-                        series_ids.add(mid)
-                    if "root_id" in data:
-                        series_ids.add(data["root_id"])
-    except Exception as e:
-        print(f"Warning: Could not read {series_file}: {e}", file=sys.stderr)
-    return series_ids
+        frontmatter = yaml.safe_load("\n".join(frontmatter_lines)) or {}
+    except Exception:
+        frontmatter = {}
+
+    title = frontmatter.get("title", "")
+    raw_tags = frontmatter.get("tags", [])
+    tag_names = []
+    for t in raw_tags:
+        if isinstance(t, dict) and "name" in t:
+            tag_names.append(t["name"])
+        elif isinstance(t, str):
+            tag_names.append(t)
+
+    clean_fm = {
+        "title": title,
+        "tags": tag_names,
+    }
+    fm_str = yaml.dump(clean_fm, allow_unicode=True, sort_keys=False).strip()
+
+    target_body_lines = body_lines[:50]
+    body_text = "\n".join(target_body_lines)
+
+    context = f"---\n{fm_str}\n---\n\n{body_text}"
+    return context, title
 
 def main():
     args = parse_args()
@@ -77,12 +82,6 @@ def main():
 
     items_dir = repo_root / "items"
     output_file = repo_root / "classified.tsv"
-    series_file = repo_root / args.series
-
-    # series.jsonl からグループ判定された記事IDを取得して除外対象に設定
-    series_group_ids = load_series_group_ids(series_file)
-    if series_group_ids:
-        print(f"Loaded {len(series_group_ids)} article IDs from {series_file.name} to exclude.")
 
     # Load already processed
     processed_ids = set()
@@ -97,43 +96,22 @@ def main():
     md_files = sorted(list(items_dir.glob("*.md")))
     target_files = [
         f for f in md_files
-        if f.stem not in processed_ids and f.stem not in series_group_ids
+        if f.stem not in processed_ids
     ]
 
-    print(f"Total articles: {len(md_files)}, Series group excluded: {len(series_group_ids)}, Already classified: {len(processed_ids)}, Remaining to classify: {len(target_files)}")
+    print(f"Total articles: {len(md_files)}, Already classified: {len(processed_ids)}, Remaining to classify: {len(target_files)}")
 
     file_exists = output_file.exists()
     mode = 'a' if file_exists else 'w'
     with open(output_file, mode, encoding='utf-8', newline='') as f:
         writer = csv.writer(f, delimiter='\t')
         if not file_exists:
-            writer.writerow(['id', 'is_series', 'dir_name', 'series_num', 'slug', 'proposed_path', 'reasoning'])
+            writer.writerow(['id', 'category', 'slug'])
         
         for i, file_path in enumerate(target_files):
             file_id = file_path.stem
-            
-            with open(file_path, 'r', encoding='utf-8') as mf:
-                content = mf.read()
-            
-            # parse yaml frontmatter
-            if content.startswith('---'):
-                parts = content.split('---', 2)
-                if len(parts) >= 3:
-                    try:
-                        frontmatter = yaml.safe_load(parts[1])
-                        md_content = parts[2].strip()
-                    except:
-                        frontmatter = {}
-                        md_content = content
-                else:
-                    frontmatter = {}
-                    md_content = content
-            else:
-                frontmatter = {}
-                md_content = content
-            
-            context = create_context(frontmatter, md_content)
-            print(f"[{i+1}/{len(target_files)}] Processing {file_id}: {frontmatter.get('title')}")
+            context, title = create_context(file_path)
+            print(f"[{i+1}/{len(target_files)}] Processing {file_id}: {title}")
             
             try:
                 # 記事ごとに独立して実行するため毎回 Client インスタンスを新規作成（履歴積み重なり防止）
@@ -141,41 +119,21 @@ def main():
                 resp = client(f"{context}\n\n{INSTRUCTION_PROMPT}", schema=ArticleClassification)
                 ans = resp.data if getattr(resp, 'data', None) is not None else ArticleClassification.model_validate_json(resp.text)
                 
-                is_series = ans.is_series
-                dir_name = (ans.dir_name or 'misc').strip('/')
-                series_num = ans.series_num
+                category = (ans.category or 'misc').strip('/')
                 slug = (ans.slug or 'untitled').strip('/')
-                
-                created_at = str(frontmatter.get('created_at', ''))
-                date_str = created_at[:10].replace('-', '') if len(created_at) >= 10 else '00000000'
-
-                if is_series:
-                    try:
-                        num_val = int(series_num)
-                        num_str = f"{num_val:02d}"
-                    except (ValueError, TypeError):
-                        num_str = str(series_num)
-                    proposed_filename = f"{num_str}-{slug}.md"
-                else:
-                    proposed_filename = f"{date_str}-{slug}.md"
-                
-                proposed_path = f"{dir_name}/{proposed_filename}"
 
                 writer.writerow([
                     file_id, 
-                    is_series, 
-                    dir_name, 
-                    series_num, 
-                    slug,
-                    proposed_path,
-                    ans.reasoning.replace('\n', ' ')
+                    category, 
+                    slug
                 ])
                 f.flush()
-                print(f"  -> Proposed path: {proposed_path} (Series: {is_series})")
+                print(f"  -> Category: {category}, Slug: {slug}")
             except Exception as e:
                 print(f"  -> Error processing {file_id}: {e}")
 
 if __name__ == "__main__":
     main()
+
 
 

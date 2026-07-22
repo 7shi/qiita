@@ -19,24 +19,13 @@ Qiita API を利用して記事一覧データを JSON 形式で取得し、そ�
 
 データ取得からLLMによる分類・整理までの全体フローは以下の通りです。
 
-```
-[ Qiita API ]
-      │ (curl / jq)
-      ▼
-[ data/*.json ] (生JSONデータ)
-      │
-      │ (scripts/extract.py / make extract)
-      ▼
-[ items/*.md ] (フロントマター付きマークダウン)
-      │
-      │ (scripts/extract_series.py)
-      ▼
-[ series.jsonl ] (シリーズグループ判定結果)
-      │
-      │ (scripts/classify.py)
-      ▼
-[ classified.tsv ] (単体記事の分類・ファイル名提案)
-```
+1. **データ取得とマークダウン展開**
+   - `data/*.json` (Qiita APIからの生JSONデータ)
+   - `items/*.md` (フロントマター付きマークダウン)
+
+2. **LLMによる解析スクリプト (独立・順不同)**
+   - `scripts/classify.py` → `classified.tsv` (全記事の分類・SLUG生成)
+   - `scripts/extract_series.py` → `series.jsonl` (本文からのシリーズ構成抽出)
 
 ## 使い方
 
@@ -64,26 +53,25 @@ make all
 
 ---
 
-### 2. LLMによる記事分類・構造化フロー
+### 2. LLMによる記事分類・構造化
 
-`items/*.md` 展開後、以下の順番でスクリプトを実行して記事の構造化・分類を進めます。
+`items/*.md` 展開後、以下のスクリプトを実行して記事の分類やシリーズ抽出を行います（互いに依存関係はありません）。
 
-#### Step 1: 本文からのシリーズ記事抽出
+#### 記事の分類・SLUG生成
+```bash
+uv run scripts/classify.py [-m MODEL]
+```
+全記事についてLLMで解析・カテゴリ分類・スラッグ決定を行い、結果を `classified.tsv` に出力します。
+- **デフォルトモデル**: `ollama:gemma4:31b-it-qat`
+- **出力**: `classified.tsv`
+
+#### 本文からのシリーズ記事抽出
 ```bash
 uv run scripts/extract_series.py [-m MODEL] [-o OUTPUT]
 ```
-`items/` 配下の全記事を対象に総当たりで、本文冒頭に明示されているシリーズ構成（記事IDリンク群）をローカルLLMで解析し、判定結果を `series.jsonl` に出力します。（シリーズグループは `member_ids` に記事IDリスト、単体記事は `member_ids: []`）
+`items/` 配下の全記事を対象に、本文冒頭に明示されているシリーズ構成（記事IDリンク群）をローカルLLMで解析し、判定結果を `series.jsonl` に出力します。（シリーズグループは `member_ids` に記事IDリスト、単体記事は `member_ids: []`）
 - **デフォルトモデル**: `ollama:gemma4:31b-it-qat`
 - **出力**: `series.jsonl`
-
-#### Step 2: 単体記事の分類・ファイル名提案
-```bash
-uv run scripts/classify.py [-m MODEL] [-s SERIES]
-```
-`series.jsonl` でシリーズグループ（`member_ids` が2件以上）と判定された記事を除外し、残りの単体記事についてLLMで解析・カテゴリ分類・スラッグ決定を行い、結果を `classified.tsv` に出力します。
-- **デフォルトモデル**: `ollama:gemma4:31b-it-qat`
-- **入力**: `series.jsonl`
-- **出力**: `classified.tsv`
 
 ## ドキュメント
 
@@ -93,11 +81,11 @@ uv run scripts/classify.py [-m MODEL] [-s SERIES]
 
 ## ディレクトリ・主要ファイル構成
 
+- `classified.tsv` : `classify.py` による全記事の分類・SLUG生成結果ファイル。
 - `data/` : Qiita APIから取得した生のJSONファイル（`7shi-1.json` など）が保存されます。
 - `docs/` : 技術ドキュメントや抽出ノウハウをまとめたディレクトリです。
 - `items/` : JSONから展開されたマークダウンファイルが保存されます。ファイル名は記事のID（`{id}.md`）になります。
-- `scripts/` : 各種スクリプトが配置されています。
-- `series.jsonl` : `extract_series.py` によるシリーズ判定結果ファイル。
-- `classified.tsv` : `classify.py` による単体記事の分類・パス提案結果ファイル。
 - `PLAN.md` : リポジトリ内記事の整理計画・分類方針・命名規約をまとめたドキュメント。
 - `pyproject.toml` : `uv` によるPythonプロジェクトの設定ファイルです。
+- `scripts/` : 各種スクリプトが配置されています。
+- `series.jsonl` : `extract_series.py` によるシリーズ判定結果ファイル。
