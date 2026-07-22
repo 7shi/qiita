@@ -7,7 +7,7 @@ Qiita記事のシリーズ抽出スクリプト
 3. 対象記事の `items/{id}.md` の本文冒頭 50 行（YAML Front Matter除外）を取得します。
 4. 本文中のQiita記事URLを出現順に [1], [2], [3] ... のような可変長数値仮表記に置換してLLMに渡します。
 5. LLMは同一シリーズに属する仮番号の整数リストを出力します。自分自身（リンクのない記事）は 0 と判定させ、シリーズでなければ [0] を返させます。
-6. Pythonスクリプト側で 0 を起点記事IDに、数値仮番号を実際の 20 桁Qiita記事IDに復元・記録します。
+6. Pythonスクリプト側で 0 を起点記事IDに、数値仮番号を実際の 20 桁Qiita記事IDに復元し、series.jsonl に記録します。
 7. グループが検出された場合、グループに含まれる記事も処理対象リストから除外します。
 """
 
@@ -61,8 +61,8 @@ def parse_args():
     parser.add_argument(
         "-o",
         "--output",
-        default="series_groups.json",
-        help="Output JSON file path (default: series_groups.json)",
+        default="series.jsonl",
+        help="Output JSONL file path (default: series.jsonl)",
     )
     return parser.parse_args()
 
@@ -73,15 +73,6 @@ def load_all_article_ids(items_dir: Path) -> list[str]:
         print(f"Error: {items_dir} not found.", file=sys.stderr)
         return []
     return sorted([p.stem for p in items_dir.glob("*.md")])
-
-
-def save_processed_cache(cache_path: Path, processed_ids: set[str]):
-    """処理済みIDキャッシュを書き出す"""
-    try:
-        with open(cache_path, "w", encoding="utf-8") as f:
-            json.dump(sorted(list(processed_ids)), f, ensure_ascii=False, indent=2)
-    except Exception as e:
-        print(f"Warning: Could not save processed cache: {e}", file=sys.stderr)
 
 
 def create_context(file_path: Path) -> tuple[str, dict[int, str]]:
@@ -127,38 +118,39 @@ def main():
 
     items_dir = repo_root / args.items_dir
     output_path = repo_root / args.output
-    processed_cache_path = output_path.parent / f".{output_path.stem}_processed.json"
 
     all_ids = load_all_article_ids(items_dir)
     print(f"Found {len(all_ids)} total articles in {items_dir.name}.")
 
     processed_ids = set()
-    series_groups = []
+    group_count = 0
 
-    # 過去の出力があれば読み込んで途中再開をサポート
+    # 過去の出力 (JSONL) があれば読み込んで途中再開をサポート
     if output_path.exists():
         try:
             with open(output_path, "r", encoding="utf-8") as f:
-                series_groups = json.load(f)
-            for group in series_groups:
-                for item_id in group.get("member_ids", []):
-                    processed_ids.add(item_id)
-                if "root_id" in group:
-                    processed_ids.add(group["root_id"])
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    data = json.loads(line)
+                    root_id = data.get("root_id")
+                    member_ids = data.get("member_ids", [])
+                    if root_id:
+                        processed_ids.add(root_id)
+                    for mid in member_ids:
+                        processed_ids.add(mid)
+                    if len(member_ids) > 1:
+                        group_count += 1
+            print(
+                f"Loaded existing output from {output_path.name}. {group_count} series groups found, {len(processed_ids)} article IDs completed."
+            )
         except Exception as e:
             print(f"Warning: Could not read existing output file: {e}", file=sys.stderr)
 
-    if processed_cache_path.exists():
-        try:
-            with open(processed_cache_path, "r", encoding="utf-8") as f:
-                cached_ids = json.load(f)
-                processed_ids.update(cached_ids)
-        except Exception as e:
-            print(f"Warning: Could not read processed cache file: {e}", file=sys.stderr)
-
     # 処理対象リスト作成（未処理の記事のみ）
     remaining_ids = [aid for aid in all_ids if aid not in processed_ids]
-    print(f"Loaded existing status. {len(series_groups)} groups processed, {len(processed_ids)} article IDs completed. Remaining: {len(remaining_ids)}")
+    print(f"Remaining articles to process: {len(remaining_ids)}")
 
     while remaining_ids:
         root_id = remaining_ids[0]
@@ -168,7 +160,9 @@ def main():
             print(f"Warning: File {file_path} does not exist.", file=sys.stderr)
             remaining_ids.pop(0)
             processed_ids.add(root_id)
-            save_processed_cache(processed_cache_path, processed_ids)
+            record = {"root_id": root_id, "member_ids": []}
+            with open(output_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(record, ensure_ascii=False) + "\n")
             continue
 
         context, placeholder_map = create_context(file_path)
@@ -201,44 +195,40 @@ def main():
             is_series = len(extracted_ids) > 1
 
             if is_series:
-                overlaps = [eid for eid in extracted_ids if eid in processed_ids and eid != root_id]
-                has_overlap = len(overlaps) > 0
-
-                group_data = {
+                record = {
                     "root_id": root_id,
                     "member_ids": extracted_ids,
-                    "has_overlap": has_overlap,
-                    "overlapping_ids": overlaps,
                 }
-                series_groups.append(group_data)
-
-                # 逐次ファイルに書き出し
-                with open(output_path, "w", encoding="utf-8") as f:
-                    json.dump(series_groups, f, ensure_ascii=False, indent=2)
-
                 print(
-                    f"  -> Extracted series group with {len(extracted_ids)} articles (items: {ans.series_item_numbers}). (Overlap: {has_overlap})"
+                    f"  -> Extracted series group with {len(extracted_ids)} articles (items: {ans.series_item_numbers})."
                 )
                 to_remove = set(extracted_ids)
             else:
+                record = {
+                    "root_id": root_id,
+                    "member_ids": [],
+                }
                 print(f"  -> Standalone article (not a series).")
                 to_remove = {root_id}
 
+            # 1行追記で逐次出力
+            with open(output_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(record, ensure_ascii=False) + "\n")
+
             processed_ids.update(to_remove)
-            save_processed_cache(processed_cache_path, processed_ids)
 
             # 処理対象リストから除外
             remaining_ids = [aid for aid in remaining_ids if aid not in to_remove]
 
         except Exception as e:
             print(f"  -> Error processing {root_id}: {e}", file=sys.stderr)
-            # エラー発生時は対象記事をリストから除外して先に進む
+            record = {"root_id": root_id, "member_ids": []}
+            with open(output_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(record, ensure_ascii=False) + "\n")
             remaining_ids.pop(0)
             processed_ids.add(root_id)
-            save_processed_cache(processed_cache_path, processed_ids)
 
-    print(f"Extraction finished. Total series groups: {len(series_groups)}")
-    print(f"Results saved to {output_path}")
+    print(f"Extraction finished. Results saved to {output_path}")
 
 
 if __name__ == "__main__":

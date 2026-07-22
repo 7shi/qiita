@@ -24,9 +24,9 @@ def parse_args():
         help="LLM model to use for classification (default: ollama:gemma4:31b-it-qat)"
     )
     parser.add_argument(
-        "-s", "--series-groups",
-        default="series_groups.json",
-        help="Path to series_groups.json (default: series_groups.json)"
+        "-s", "--series",
+        default="series.jsonl",
+        help="Path to series.jsonl (default: series.jsonl)"
     )
     return parser.parse_args()
 
@@ -48,21 +48,26 @@ Created At: {frontmatter.get('created_at')}
 Article content snippet (first 1500 characters):
 {content[:1500]}"""
 
-def load_series_group_ids(groups_file: Path) -> set[str]:
-    """series_groups.json から全グループに含まれる記事ID一覧を取得する"""
+def load_series_group_ids(series_file: Path) -> set[str]:
+    """series.jsonl からグループ判定された (member_ids が2件以上) 全記事IDを取得する"""
     series_ids = set()
-    if not groups_file.exists():
+    if not series_file.exists():
         return series_ids
     try:
-        with open(groups_file, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            for group in data:
-                for member_id in group.get("member_ids", []):
-                    series_ids.add(member_id)
-                if "root_id" in group:
-                    series_ids.add(group["root_id"])
+        with open(series_file, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                data = json.loads(line)
+                member_ids = data.get("member_ids", [])
+                if len(member_ids) > 1:
+                    for mid in member_ids:
+                        series_ids.add(mid)
+                    if "root_id" in data:
+                        series_ids.add(data["root_id"])
     except Exception as e:
-        print(f"Warning: Could not read {groups_file}: {e}", file=sys.stderr)
+        print(f"Warning: Could not read {series_file}: {e}", file=sys.stderr)
     return series_ids
 
 def main():
@@ -72,12 +77,12 @@ def main():
 
     items_dir = repo_root / "items"
     output_file = repo_root / "classification.tsv"
-    series_groups_file = repo_root / args.series_groups
+    series_file = repo_root / args.series
 
-    # series_groups.json からグループ判定された記事IDを取得して除外対象に設定
-    series_group_ids = load_series_group_ids(series_groups_file)
+    # series.jsonl からグループ判定された記事IDを取得して除外対象に設定
+    series_group_ids = load_series_group_ids(series_file)
     if series_group_ids:
-        print(f"Loaded {len(series_group_ids)} article IDs from {series_groups_file.name} to exclude.")
+        print(f"Loaded {len(series_group_ids)} article IDs from {series_file.name} to exclude.")
 
     # Load already processed
     processed_ids = set()
@@ -172,4 +177,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 

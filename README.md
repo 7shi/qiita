@@ -39,21 +39,21 @@ make all
 
 - **LLMによる本文からのシリーズ記事IDグループ抽出**
   ```bash
-  uv run python scripts/extract_series.py [-m MODEL] [-o OUTPUT]
+  uv run scripts/extract_series.py [-m MODEL] [-o OUTPUT]
   ```
-  ※ `items/` 配下の全記事を対象に総当たりで、本文冒頭に明示されているシリーズ構成（記事IDリンク群）をローカルLLMで解析し、シリーズグループごとの記事IDリストを抽出します。デフォルトで `series_groups.json` に出力されます。
+  ※ `items/` 配下の全記事を対象に総当たりで、本文冒頭に明示されているシリーズ構成（記事IDリンク群）をローカルLLMで解析し、判定結果を `series.jsonl` （シリーズグループは `member_ids` に記事IDリスト、単体記事は `member_ids: []`）に出力します。
   ※ デフォルトモデルは `ollama:gemma4:31b-it-qat` です。
 
 - **LLMによる記事の分類・ファイル名提案**
   ```bash
-  uv run python scripts/classify.py [-m MODEL] [-s SERIES_GROUPS]
+  uv run scripts/classify.py [-m MODEL] [-s SERIES]
   ```
-  ※ `series_groups.json` でシリーズグループ判定された記事を除外し、残りの単体記事についてLLMで解析・カテゴリ分類・スラッグ決定を行い、結果を `classification.tsv` に出力します。
+  ※ `series.jsonl` でシリーズグループ（`member_ids` が2件以上）判定された記事を除外し、残りの単体記事についてLLMで解析・カテゴリ分類・スラッグ決定を行い、結果を `classification.tsv` に出力します。
   ※ デフォルトモデルは `ollama:gemma4:31b-it-qat` です。
 
 - **分類結果TSVの整形・タイトル紐付け**
   ```bash
-  uv run python scripts/format_classification.py [-o OUTPUT]
+  uv run scripts/format_classification.py [-o OUTPUT]
   ```
   ※ `classification.tsv` に `items/{id}.md` から読み取ったタイトルを紐付け、`proposed_path` でソートしたTSVを出力します。デフォルトで `classified_titles.tsv` に出力されます（`-o -` で標準出力指定可）。
 
