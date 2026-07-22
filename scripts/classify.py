@@ -3,6 +3,7 @@ import glob
 import yaml
 import json
 import csv
+import sys
 import argparse
 from pathlib import Path
 from pydantic import BaseModel, Field
@@ -21,6 +22,11 @@ def parse_args():
         "-m", "--model",
         default="ollama:gemma4:31b-it-qat",
         help="LLM model to use for classification (default: ollama:gemma4:31b-it-qat)"
+    )
+    parser.add_argument(
+        "-s", "--series-groups",
+        default="series_groups.json",
+        help="Path to series_groups.json (default: series_groups.json)"
     )
     return parser.parse_args()
 
@@ -42,6 +48,23 @@ Created At: {frontmatter.get('created_at')}
 Article content snippet (first 1500 characters):
 {content[:1500]}"""
 
+def load_series_group_ids(groups_file: Path) -> set[str]:
+    """series_groups.json から全グループに含まれる記事ID一覧を取得する"""
+    series_ids = set()
+    if not groups_file.exists():
+        return series_ids
+    try:
+        with open(groups_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            for group in data:
+                for member_id in group.get("member_ids", []):
+                    series_ids.add(member_id)
+                if "root_id" in group:
+                    series_ids.add(group["root_id"])
+    except Exception as e:
+        print(f"Warning: Could not read {groups_file}: {e}", file=sys.stderr)
+    return series_ids
+
 def main():
     args = parse_args()
     script_dir = Path(__file__).resolve().parent
@@ -49,6 +72,12 @@ def main():
 
     items_dir = repo_root / "items"
     output_file = repo_root / "classification.tsv"
+    series_groups_file = repo_root / args.series_groups
+
+    # series_groups.json からグループ判定された記事IDを取得して除外対象に設定
+    series_group_ids = load_series_group_ids(series_groups_file)
+    if series_group_ids:
+        print(f"Loaded {len(series_group_ids)} article IDs from {series_groups_file.name} to exclude.")
 
     # Load already processed
     processed_ids = set()
@@ -60,19 +89,23 @@ def main():
                 if row:
                     processed_ids.add(row[0])
 
-    mode = 'a' if processed_ids else 'w'
+    md_files = sorted(list(items_dir.glob("*.md")))
+    target_files = [
+        f for f in md_files
+        if f.stem not in processed_ids and f.stem not in series_group_ids
+    ]
+
+    print(f"Total articles: {len(md_files)}, Series group excluded: {len(series_group_ids)}, Already classified: {len(processed_ids)}, Remaining to classify: {len(target_files)}")
+
+    file_exists = output_file.exists()
+    mode = 'a' if file_exists else 'w'
     with open(output_file, mode, encoding='utf-8', newline='') as f:
         writer = csv.writer(f, delimiter='\t')
-        if not processed_ids:
+        if not file_exists:
             writer.writerow(['id', 'is_series', 'dir_name', 'series_num', 'slug', 'proposed_path', 'reasoning'])
         
-        md_files = list(items_dir.glob("*.md"))
-        md_files.sort()
-        
-        for i, file_path in enumerate(md_files):
+        for i, file_path in enumerate(target_files):
             file_id = file_path.stem
-            if file_id in processed_ids:
-                continue
             
             with open(file_path, 'r', encoding='utf-8') as mf:
                 content = mf.read()
@@ -95,7 +128,7 @@ def main():
                 md_content = content
             
             context = create_context(frontmatter, md_content)
-            print(f"[{i+1}/{len(md_files)}] Processing {file_id}: {frontmatter.get('title')}")
+            print(f"[{i+1}/{len(target_files)}] Processing {file_id}: {frontmatter.get('title')}")
             
             try:
                 # 記事ごとに独立して実行するため毎回 Client インスタンスを新規作成（履歴積み重なり防止）
@@ -139,3 +172,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

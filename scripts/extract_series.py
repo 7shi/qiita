@@ -2,16 +2,16 @@
 Qiita記事のシリーズ抽出スクリプト
 
 【仕様】
-1. `classification.tsv` から `is_series == True`（文字列 'True'）と判定された記事を対象とします。
-2. 既に抽出済みのシリーズに含まれる記事IDはスキップしながら未処理の記事を巡回します。
+1. `items/` ディレクトリ内の全記事を総当たりで処理対象とします。
+2. 既に抽出済みのシリーズに含まれる記事IDおよび処理済み記事IDをスキップしながら未処理の記事を巡回します。
 3. 対象記事の `items/{id}.md` の本文冒頭 50 行（YAML Front Matter除外）を取得します。
 4. 本文中のQiita記事URLを出現順に [1], [2], [3] ... のような可変長数値仮表記に置換してLLMに渡します。
-5. LLMは同一シリーズに属する仮番号の整数リストを出力します。自分自身（リンクのない記事）は 0 と判定させます。
+5. LLMは同一シリーズに属する仮番号の整数リストを出力します。自分自身（リンクのない記事）は 0 と判定させ、シリーズでなければ [0] を返させます。
 6. Pythonスクリプト側で 0 を起点記事IDに、数値仮番号を実際の 20 桁Qiita記事IDに復元・記録します。
+7. グループが検出された場合、グループに含まれる記事も処理対象リストから除外します。
 """
 
 import argparse
-import csv
 import json
 import os
 import re
@@ -27,7 +27,7 @@ QIITA_URL_PATTERN = re.compile(
 
 class SeriesExtractionResult(BaseModel):
     series_item_numbers: list[int] = Field(
-        description="List of 1-based item numbers (e.g. [1, 0, 2, 3]) representing the ordered articles belonging to the SAME series. Use 0 for the current unlinked article itself."
+        description="List of 1-based item numbers (e.g. [1, 0, 2, 3]) representing the ordered articles belonging to the SAME series. Use 0 for the current unlinked article itself. If the article is NOT part of a series, return [0]."
     )
 
 
@@ -37,6 +37,7 @@ Article links in the text have been replaced with 1-based numbers in brackets li
 Extract the list of item numbers (integers e.g., 1, 2) that belong to the SAME series.
 IMPORTANT:
 - Use 0 to represent the CURRENT article itself if it appears as an unlinked item in the series sequence (e.g. "2. 外積と愉快な仲間たち ← この記事").
+- If the article is NOT part of any series (standalone article), return [0].
 - Do NOT include numbers for unrelated external references or recommended links that are not part of this series.
 - Return the numbers in the order they belong to the series."""
 
@@ -50,12 +51,6 @@ def parse_args():
         "--model",
         default="ollama:gemma4:31b-it-qat",
         help="LLM model to use for extraction (default: ollama:gemma4:31b-it-qat)",
-    )
-    parser.add_argument(
-        "-c",
-        "--classification",
-        default="classification.tsv",
-        help="Path to classification.tsv (default: classification.tsv)",
     )
     parser.add_argument(
         "-i",
@@ -72,20 +67,21 @@ def parse_args():
     return parser.parse_args()
 
 
-def load_series_article_ids(tsv_path: str) -> list[str]:
-    """classification.tsv から is_series == True の記事ID一覧を取得する"""
-    series_ids = []
-    if not os.path.exists(tsv_path):
-        print(f"Error: {tsv_path} not found.", file=sys.stderr)
-        return series_ids
+def load_all_article_ids(items_dir: Path) -> list[str]:
+    """items ディレクトリ内の全 .md ファイルから記事ID一覧を取得する"""
+    if not items_dir.exists():
+        print(f"Error: {items_dir} not found.", file=sys.stderr)
+        return []
+    return sorted([p.stem for p in items_dir.glob("*.md")])
 
-    with open(tsv_path, "r", encoding="utf-8") as f:
-        reader = csv.DictReader(f, delimiter="\t")
-        for row in reader:
-            is_series_val = str(row.get("is_series", "")).strip()
-            if is_series_val.lower() == "true":
-                series_ids.append(row["id"])
-    return series_ids
+
+def save_processed_cache(cache_path: Path, processed_ids: set[str]):
+    """処理済みIDキャッシュを書き出す"""
+    try:
+        with open(cache_path, "w", encoding="utf-8") as f:
+            json.dump(sorted(list(processed_ids)), f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"Warning: Could not save processed cache: {e}", file=sys.stderr)
 
 
 def create_context(file_path: Path) -> tuple[str, dict[int, str]]:
@@ -129,17 +125,17 @@ def main():
     script_dir = Path(__file__).resolve().parent
     repo_root = script_dir.parent
 
-    tsv_path = repo_root / args.classification
     items_dir = repo_root / args.items_dir
     output_path = repo_root / args.output
+    processed_cache_path = output_path.parent / f".{output_path.stem}_processed.json"
 
-    series_candidate_ids = load_series_article_ids(str(tsv_path))
-    print(f"Found {len(series_candidate_ids)} candidate series articles.")
+    all_ids = load_all_article_ids(items_dir)
+    print(f"Found {len(all_ids)} total articles in {items_dir.name}.")
 
-    # 過去の出力があれば読み込んで途中再開をサポート
     processed_ids = set()
     series_groups = []
 
+    # 過去の出力があれば読み込んで途中再開をサポート
     if output_path.exists():
         try:
             with open(output_path, "r", encoding="utf-8") as f:
@@ -147,24 +143,36 @@ def main():
             for group in series_groups:
                 for item_id in group.get("member_ids", []):
                     processed_ids.add(item_id)
-            print(
-                f"Loaded existing output with {len(series_groups)} groups ({len(processed_ids)} processed IDs)."
-            )
+                if "root_id" in group:
+                    processed_ids.add(group["root_id"])
         except Exception as e:
             print(f"Warning: Could not read existing output file: {e}", file=sys.stderr)
 
-    for i, root_id in enumerate(series_candidate_ids):
-        # 既に抽出済みのシリーズに含まれるIDはスキップ
-        if root_id in processed_ids:
-            continue
+    if processed_cache_path.exists():
+        try:
+            with open(processed_cache_path, "r", encoding="utf-8") as f:
+                cached_ids = json.load(f)
+                processed_ids.update(cached_ids)
+        except Exception as e:
+            print(f"Warning: Could not read processed cache file: {e}", file=sys.stderr)
 
+    # 処理対象リスト作成（未処理の記事のみ）
+    remaining_ids = [aid for aid in all_ids if aid not in processed_ids]
+    print(f"Loaded existing status. {len(series_groups)} groups processed, {len(processed_ids)} article IDs completed. Remaining: {len(remaining_ids)}")
+
+    while remaining_ids:
+        root_id = remaining_ids[0]
         file_path = items_dir / f"{root_id}.md"
+
         if not file_path.exists():
             print(f"Warning: File {file_path} does not exist.", file=sys.stderr)
+            remaining_ids.pop(0)
+            processed_ids.add(root_id)
+            save_processed_cache(processed_cache_path, processed_ids)
             continue
 
         context, placeholder_map = create_context(file_path)
-        print(f"[{i+1}/{len(series_candidate_ids)}] Processing root article ID: {root_id}")
+        print(f"[{len(remaining_ids)} remaining] Processing article ID: {root_id}")
 
         try:
             # 各記事独立して実行するため毎回 Client インスタンスを新規作成（履歴積み重なり防止）
@@ -187,37 +195,47 @@ def main():
                     if real_id not in extracted_ids:
                         extracted_ids.append(real_id)
 
-            # もし0が返されずとも起点記事自体が含まれていない場合は念のため補完
             if root_id not in extracted_ids:
                 extracted_ids.insert(0, root_id)
 
-            # 既存記事との重複チェック（安易にマージせずフラグを記録）
-            overlaps = [eid for eid in extracted_ids if eid in processed_ids and eid != root_id]
-            has_overlap = len(overlaps) > 0
+            is_series = len(extracted_ids) > 1
 
-            group_data = {
-                "root_id": root_id,
-                "member_ids": extracted_ids,
-                "has_overlap": has_overlap,
-                "overlapping_ids": overlaps,
-            }
+            if is_series:
+                overlaps = [eid for eid in extracted_ids if eid in processed_ids and eid != root_id]
+                has_overlap = len(overlaps) > 0
 
-            series_groups.append(group_data)
+                group_data = {
+                    "root_id": root_id,
+                    "member_ids": extracted_ids,
+                    "has_overlap": has_overlap,
+                    "overlapping_ids": overlaps,
+                }
+                series_groups.append(group_data)
 
-            # 抽出されたすべての記事IDを処理済み集合に追加
-            for eid in extracted_ids:
-                processed_ids.add(eid)
+                # 逐次ファイルに書き出し
+                with open(output_path, "w", encoding="utf-8") as f:
+                    json.dump(series_groups, f, ensure_ascii=False, indent=2)
 
-            print(
-                f"  -> Extracted group with {len(extracted_ids)} articles (items: {ans.series_item_numbers}). (Overlap: {has_overlap})"
-            )
+                print(
+                    f"  -> Extracted series group with {len(extracted_ids)} articles (items: {ans.series_item_numbers}). (Overlap: {has_overlap})"
+                )
+                to_remove = set(extracted_ids)
+            else:
+                print(f"  -> Standalone article (not a series).")
+                to_remove = {root_id}
 
-            # 逐次ファイルに書き出し
-            with open(output_path, "w", encoding="utf-8") as f:
-                json.dump(series_groups, f, ensure_ascii=False, indent=2)
+            processed_ids.update(to_remove)
+            save_processed_cache(processed_cache_path, processed_ids)
+
+            # 処理対象リストから除外
+            remaining_ids = [aid for aid in remaining_ids if aid not in to_remove]
 
         except Exception as e:
             print(f"  -> Error processing {root_id}: {e}", file=sys.stderr)
+            # エラー発生時は対象記事をリストから除外して先に進む
+            remaining_ids.pop(0)
+            processed_ids.add(root_id)
+            save_processed_cache(processed_cache_path, processed_ids)
 
     print(f"Extraction finished. Total series groups: {len(series_groups)}")
     print(f"Results saved to {output_path}")
@@ -225,3 +243,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

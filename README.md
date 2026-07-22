@@ -37,18 +37,18 @@ make all
   ```
   ※ 取得済みのJSONファイルを読み込み、`items/` ディレクトリ配下にマークダウンファイル（`{id}.md`）を展開します。実行時に `uv` を通じて必要なPythonパッケージが準備されます。
 
-- **LLMによる記事の分類・ファイル名提案**
-  ```bash
-  uv run python scripts/classify.py [-m MODEL]
-  ```
-  ※ `items/` 配下の各記事のメタデータや本文をローカルLLMで解析し、シリーズ判定・カテゴリ分類・スラッグ決定を行い、結果を `classification.tsv` に出力します。実際のリネーム・移動は行いません。
-  ※ デフォルトモデルは `ollama:gemma4:31b-it-qat` です。
-
 - **LLMによる本文からのシリーズ記事IDグループ抽出**
   ```bash
   uv run python scripts/extract_series.py [-m MODEL] [-o OUTPUT]
   ```
-  ※ `classification.tsv` でシリーズと判定された記事について、本文冒頭に明示されているシリーズ構成（記事IDリンク群）をローカルLLMで解析し、シリーズグループごとの記事IDリストを抽出します。デフォルトで `series_groups.json` に出力されます。
+  ※ `items/` 配下の全記事を対象に総当たりで、本文冒頭に明示されているシリーズ構成（記事IDリンク群）をローカルLLMで解析し、シリーズグループごとの記事IDリストを抽出します。デフォルトで `series_groups.json` に出力されます。
+  ※ デフォルトモデルは `ollama:gemma4:31b-it-qat` です。
+
+- **LLMによる記事の分類・ファイル名提案**
+  ```bash
+  uv run python scripts/classify.py [-m MODEL] [-s SERIES_GROUPS]
+  ```
+  ※ `series_groups.json` でシリーズグループ判定された記事を除外し、残りの単体記事についてLLMで解析・カテゴリ分類・スラッグ決定を行い、結果を `classification.tsv` に出力します。
   ※ デフォルトモデルは `ollama:gemma4:31b-it-qat` です。
 
 - **分類結果TSVの整形・タイトル紐付け**
