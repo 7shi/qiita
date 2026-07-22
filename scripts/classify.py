@@ -76,7 +76,7 @@ def main():
     repo_root = script_dir.parent
 
     items_dir = repo_root / "items"
-    output_file = repo_root / "classification.tsv"
+    output_file = repo_root / "classified.tsv"
     series_file = repo_root / args.series
 
     # series.jsonl からグループ判定された記事IDを取得して除外対象に設定
