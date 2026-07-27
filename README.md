@@ -51,12 +51,6 @@ make all
   ```
   ※ 取得済みのJSONファイルを読み込み、`items/` ディレクトリ配下にマークダウンファイル（`{id}.md`）を展開します。
 
-- **カテゴリの集計のみ**
-  ```bash
-  make category.txt
-  ```
-  ※ `classified.tsv` のカテゴリを `category_map.txt` で大分類へ変換し、記事数を集計して `category.txt` に出力します。
-
 - **記事一覧の集計のみ**
   ```bash
   make articles.tsv
@@ -87,7 +81,7 @@ uv run scripts/extract_series.py [-m MODEL] [-o OUTPUT]
 
 ## ドキュメント
 
-- `PLAN.md` : リポジトリ内記事の整理計画・分類方針・命名規約をまとめたドキュメント。
+- `PLAN.md` : `articles/` の整理状況とシリーズ化の残課題をまとめたドキュメント。
 - `docs/` : LLM抽出等の各種ノウハウや仕様を整理したドキュメント類。
   - [docs/20260722-placeholder-extraction.md](docs/20260722-placeholder-extraction.md) : LLMによる構造化情報抽出テクニック（URLプレースホルダー置換＋自記事 `0` 方式）の解説。
 
@@ -95,13 +89,10 @@ uv run scripts/extract_series.py [-m MODEL] [-o OUTPUT]
 
 - `articles/` : `articles/{category}/{slug}.md` の形で記事本体を格納するディレクトリです。記事一覧の正本（インデックス元）です。
 - `articles.tsv` : `articles/` ディレクトリを走査して集計した記事一覧ファイル。
-- `category.txt` : `classified.tsv` からカテゴリごとの記事数を集計したファイル。
-- `category_map.txt` : `classified.tsv` のカテゴリを大分類へ補正・名寄せするためのマッピング定義ファイル。
-- `classified.tsv` : `classify.py` による全記事の分類・SLUG生成結果ファイル。
 - `data/` : Qiita APIから取得した生のJSONファイル（`7shi-1.json` など）が保存されます。
 - `docs/` : 技術ドキュメントや抽出ノウハウをまとめたディレクトリです。
 - `items/` : JSONから展開されたマークダウンファイルが保存されます。ファイル名は記事のID（`{id}.md`）になります。
-- `PLAN.md` : リポジトリ内記事の整理計画・分類方針・命名規約をまとめたドキュメント。
+- `PLAN.md` : `articles/` の整理状況とシリーズ化の残課題をまとめたドキュメント。
 - `pyproject.toml` : `uv` によるPythonプロジェクトの設定ファイルです。
 - `scripts/` : 各種スクリプトが配置されています。
 - `series.jsonl` : `extract_series.py` によるシリーズ判定結果ファイル。
