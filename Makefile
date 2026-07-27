@@ -1,4 +1,4 @@
-.PHONY: help all extract
+.PHONY: help all extract category article
 
 help:
 	@echo "Available targets:"
@@ -7,6 +7,9 @@ help:
 	@echo "  7shi-%.json  - Fetch 7shi's articles for the specific page (e.g. 7shi-1.json)"
 	@echo "  extract      - Extract items from json to md"
 	@echo "  category.txt - Aggregate categories from classified.tsv via category_map.txt"
+	@echo "  articles.tsv - Aggregate articles from classified.tsv, category_map.txt, and items/"
+	@echo "  category     - Alias for category.txt"
+	@echo "  article      - Alias for articles.tsv"
 
 all: data/7shi-1.json data/7shi-2.json data/7shi-3.json extract
 
@@ -16,6 +19,10 @@ data/7shi-%.json:
 extract:
 	uv run scripts/extract.py
 
+category: category.txt
 category.txt: classified.tsv category_map.txt
 	uv run scripts/aggregate_category.py
 
+article: articles.tsv
+articles.tsv: classified.tsv category_map.txt
+	uv run scripts/aggregate_articles.py
