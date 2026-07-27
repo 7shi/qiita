@@ -61,7 +61,7 @@ make all
   ```bash
   make articles.tsv
   ```
-  ※ `classified.tsv`・`category_map.txt`・`items/` の情報をもとに、記事一覧を `articles.tsv` に出力します。
+  ※ `classified.tsv`・`category_map.txt` の情報をもとに、記事一覧を `articles.tsv` に出力します。
 
 ---
 
@@ -93,7 +93,7 @@ uv run scripts/extract_series.py [-m MODEL] [-o OUTPUT]
 
 ## ディレクトリ・主要ファイル構成
 
-- `articles.tsv` : `classified.tsv`・`category_map.txt`・`items/` から集計した記事一覧ファイル。
+- `articles.tsv` : `classified.tsv`・`category_map.txt` から集計した記事一覧ファイル。
 - `category.txt` : `classified.tsv` からカテゴリごとの記事数を集計したファイル。
 - `category_map.txt` : `classified.tsv` のカテゴリを大分類へ補正・名寄せするためのマッピング定義ファイル。
 - `classified.tsv` : `classify.py` による全記事の分類・SLUG生成結果ファイル。

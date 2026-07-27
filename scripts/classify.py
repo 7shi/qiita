@@ -31,7 +31,7 @@ Guidelines:
    - If none of the tags are suitable for a directory category, create a new appropriate lowercase English category name based on the article's core topic.
 2. Slug: Short English kebab-case string based on the title/content (e.g., haskell-intro, ssml, promise, wsl-setup)."""
 
-def create_context(file_path: Path) -> tuple[str, str]:
+def create_context(file_path: Path) -> tuple[str, str, str]:
     """YAML Front Matterを除いた本文冒頭 50 行を取得し、titleとタグ(文字列リスト)で再生成したFront Matterを付与する"""
     with open(file_path, "r", encoding="utf-8") as f:
         raw_lines = [line.rstrip("\n\r") for line in f.readlines()]
@@ -57,6 +57,7 @@ def create_context(file_path: Path) -> tuple[str, str]:
         frontmatter = {}
 
     title = frontmatter.get("title", "")
+    created = (frontmatter.get("created_at") or "").split("T", 1)[0]
     raw_tags = frontmatter.get("tags", [])
     tag_names = []
     for t in raw_tags:
@@ -75,7 +76,7 @@ def create_context(file_path: Path) -> tuple[str, str]:
     body_text = "\n".join(target_body_lines)
 
     context = f"---\n{fm_str}\n---\n\n{body_text}"
-    return context, title
+    return context, title, created
 
 def main():
     args = parse_args()
@@ -108,26 +109,28 @@ def main():
     with open(output_file, mode, encoding='utf-8', newline='') as f:
         writer = csv.writer(f, delimiter='\t')
         if not file_exists:
-            writer.writerow(['id', 'category', 'slug'])
-        
+            writer.writerow(['id', 'category', 'slug', 'title', 'created_at'])
+
         for i, file_path in enumerate(target_files):
             file_id = file_path.stem
-            context, title = create_context(file_path)
+            context, title, created = create_context(file_path)
             print(f"[{i+1}/{len(target_files)}] Processing {file_id}: {title}")
-            
+
             try:
                 # 記事ごとに独立して実行するため毎回 Client インスタンスを新規作成（履歴積み重なり防止）
                 client = Client(model=args.model, show_params=False)
                 resp = client(f"{context}\n\n{INSTRUCTION_PROMPT}", schema=ArticleClassification)
                 ans = resp.data if getattr(resp, 'data', None) is not None else ArticleClassification.model_validate_json(resp.text)
-                
+
                 category = (ans.category or 'misc').strip('/')
                 slug = (ans.slug or 'untitled').strip('/')
 
                 writer.writerow([
-                    file_id, 
-                    category, 
-                    slug
+                    file_id,
+                    category,
+                    slug,
+                    title,
+                    created,
                 ])
                 f.flush()
                 print(f"  -> Category: {category}, Slug: {slug}")
