@@ -7,7 +7,7 @@ help:
 	@echo "  7shi-%.json  - Fetch 7shi's articles for the specific page (e.g. 7shi-1.json)"
 	@echo "  extract      - Extract items from json to md"
 	@echo "  category     - Aggregate categories from classified.tsv via category_map.txt"
-	@echo "  articles     - Aggregate articles from classified.tsv and category_map.txt"
+	@echo "  articles     - Aggregate articles from the articles/ directory"
 
 all: data/7shi-1.json data/7shi-2.json data/7shi-3.json extract
 
@@ -22,5 +22,5 @@ category.txt: classified.tsv category_map.txt
 	uv run scripts/aggregate_category.py
 
 articles: articles.tsv
-articles.tsv: classified.tsv category_map.txt
+articles.tsv: $(wildcard articles/*/*.md)
 	uv run scripts/aggregate_articles.py

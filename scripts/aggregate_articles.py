@@ -1,35 +1,42 @@
 import csv
+from pathlib import Path
 
-CLASSIFIED_TSV = "classified.tsv"
-CATEGORY_MAP_TXT = "category_map.txt"
+import yaml
+
+ARTICLES_DIR = Path("articles")
 OUTPUT_TSV = "articles.tsv"
 
-def load_category_map(path: str) -> dict[str, str]:
-    tag_to_category = {}
+def load_frontmatter(path: Path) -> dict:
     with open(path, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.rstrip("\n")
-            if not line:
-                continue
-            category, tags = line.split(": ", 1)
-            for tag in tags.split(", "):
-                tag_to_category[tag] = category
-    return tag_to_category
+        lines = f.read().splitlines()
+
+    frontmatter_lines = []
+    in_front_matter = False
+    for i, line in enumerate(lines):
+        if i == 0 and line.strip() == "---":
+            in_front_matter = True
+            continue
+        if in_front_matter:
+            if line.strip() == "---":
+                break
+            frontmatter_lines.append(line)
+
+    return yaml.safe_load("\n".join(frontmatter_lines)) or {}
 
 def main():
-    tag_to_category = load_category_map(CATEGORY_MAP_TXT)
-
     rows = []
-    with open(CLASSIFIED_TSV, "r", encoding="utf-8", newline="") as f:
-        reader = csv.DictReader(f, delimiter="\t")
-        for row in reader:
-            tag = row["category"]
-            category = tag_to_category.get(tag, tag)
-            rows.append((category, row["created_at"], row["id"], row["title"]))
+    for path in ARTICLES_DIR.glob("*/*.md"):
+        category = path.parent.name
+        slug = path.stem
+        frontmatter = load_frontmatter(path)
+        article_id = frontmatter["id"]
+        title = frontmatter["title"]
+        created = frontmatter["created_at"].split("T", 1)[0]
+        rows.append((category, created, article_id, slug, title))
 
     with open(OUTPUT_TSV, "w", encoding="utf-8", newline="") as f:
         writer = csv.writer(f, delimiter="\t", lineterminator="\n")
-        writer.writerow(["category", "created", "id", "title"])
+        writer.writerow(["category", "created", "id", "slug", "title"])
         writer.writerows(sorted(rows))
 
 if __name__ == "__main__":
