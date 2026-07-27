@@ -1,14 +1,14 @@
-     38 ai
+     39 ai
      39 fsharp
      53 haskell
      36 javascript
      26 languages
-     20 math
+     19 math
      12 media
-      7 misc
+     10 misc
      18 python
       3 quantum
-      8 retro
+      6 retro
      12 tools
       4 webassembly
-      5 wiktionary
+      4 wiktionary

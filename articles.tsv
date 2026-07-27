@@ -6,6 +6,7 @@ ai	2023-04-15	9e692d2aa4883154888c	Amazon CodeWhisperer で四則演算器を作
 ai	2023-06-22	b2d37b00132c23858a50	AMD GPU での Stable Diffusion の改善
 ai	2023-11-09	3de830afa69add8a705c	Bard の公開リンクの期限
 ai	2023-11-09	4c71bb7b3b6f9af7bdc6	Bard でログの長さに注意
+ai	2023-12-18	2ddab6e8803cd37661b1	Gemini 1.0 Pro の翻訳能力を調査
 ai	2024-01-18	54e45181052c914a4d45	Gemini 1.0 Pro プレビュー版の利用制限にまつわるエラーについて
 ai	2024-01-18	667e1206469b2a1a4e00	Gemini 1.0 Pro でのブロックと設定
 ai	2024-02-09	26131d290741a53abc07	RAG の実践的な資料
@@ -191,7 +192,6 @@ languages	2023-03-18	8eae6d909e1b82b35215	CESU-8 から UTF-16 への変換
 languages	2023-05-13	59e12ee1f56536710b83	TextBox への貼り付け時に改行コードを調整
 languages	2025-04-03	9a4a3a4544a30aa7b033	Go ランタイムのメモリ管理：mmap と sbrk
 languages	2025-04-04	510653e0c0e28411cc9d	Go 実行バイナリのメモリ管理
-math	2014-10-08	6887e7939c0168a0eb21	符号あり数値の直感的な考え方
 math	2016-10-26	017d2d2c758f76071f23	外積と愉快な仲間たち
 math	2016-10-31	f54302058149d07da592	ユークリッド空間のホッジ双対とバブルソート
 math	2016-11-02	a80988a32a0d706e9378	四元数と行列で見る内積と外積の「内」と「外」
@@ -223,12 +223,15 @@ media	2020-05-14	9a4f2220cfde4fbbdce7	紙芝居方式で動画を作成
 media	2020-05-15	ff9cf324f18234cabd82	SSMLの言語・地域コードとSAPI音声の対応
 media	2020-05-16	ecb9ea901e4026a925ee	SAPIで未サポートの言語を喋らせる
 media	2025-01-03	d7c4e772f4780c6b99a6	Gemini で数式対応 OCR
+misc	2014-10-08	6887e7939c0168a0eb21	符号あり数値の直感的な考え方
 misc	2014-12-05	ab3b819871d7b0710949	Clean 一意型 調査メモ
+misc	2014-12-16	8985e7719347f048e094	SHのPC相対について
 misc	2016-03-26	49cd2595426dd38da1ba	Lockyに見るランサムウェアの傾向と対策
 misc	2017-01-30	b02f2e45b49c0314fd12	OpenGLでオフスクリーンレンダリング
 misc	2019-12-22	b0b95610b59050e42666	レーベンシュタイン距離のコードの解釈
 misc	2020-06-26	5e1e95252f1456301522	PromiseとTaskCompletionSource
 misc	2024-08-15	ae0da373184b82d53fcc	Ollama で llama-translate-gguf を動かす
+misc	2024-08-24	bcda13856d13dd19a5bd	liumOS の virtio-net ドライバと仕様書
 misc	2024-11-13	13d9c884a618feb89a94	Gemini の Function calling を試す
 python	2014-12-14	41d262ca11ea16d85abc	Python ビット演算 超入門
 python	2020-02-11	b3aba035c45868ab34e9	Pythonでもジェネレーターで関数モナドとStateモナドを模倣してみた
@@ -251,14 +254,12 @@ python	2025-06-08	69d1e7c15c7c6a5bb34f	Windows Terminal で Python から Sixel
 quantum	2020-02-19	883a3b722b4fea428abd	量子力学の非局所性を計算で確認してみた
 quantum	2024-05-07	3504d8fa2c868620f57a	量子コンピューター超入門
 quantum	2024-05-10	1704b58f8828601a0e6c	量子コンピューター超入門2 一般的な表記法
-retro	2014-12-16	8985e7719347f048e094	SHのPC相対について
 retro	2015-09-14	85c4a43a07152c4322d5	UNIX/32VによるVAX事始め
 retro	2015-09-17	7b24ed23fcbea08c3615	VAXの機械語を総当たり調査
 retro	2015-10-08	98c7aa38fe0bd29a7296	S/390の機械語を総当たり調査
 retro	2015-11-08	86724696518df3a174dc	PDP-11による機械語入門
 retro	2015-11-09	b3911948f9d97b05395e	8086による機械語入門
 retro	2016-02-14	e43e8ce0b1a2cadee2a3	VAXによる機械語入門
-retro	2024-08-24	bcda13856d13dd19a5bd	liumOS の virtio-net ドライバと仕様書
 tools	2015-01-29	894fdd849658880bf6c9	MSYS2でRicty Diminishedを使う設定など
 tools	2015-11-18	71532036c53d321a2b17	Ancient UNIXのcrt0.sを読む
 tools	2020-04-17	cfda84909b2ea787afdb	WSLでUbuntuと共存させてArch Linuxを使う
@@ -279,4 +280,3 @@ wiktionary	2020-05-03	1f5c6a6561ef5c1e357b	WikipediaのSVG画像をPNGで取得
 wiktionary	2020-06-05	e8091f6ac72491ad45a6	Wiktionaryの効率的な処理方法を探る
 wiktionary	2020-06-17	4e3c614aac19d645fd1d	Wiktionaryの言語コードを取得
 wiktionary	2020-06-27	6d1e8466b7586e5d0e90	Wiktionaryのスクリプトをローカルで動かす
-wiktionary	2023-12-18	2ddab6e8803cd37661b1	Gemini 1.0 Pro の翻訳能力を調査
