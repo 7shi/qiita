@@ -3,10 +3,11 @@ fsharp: fsharp, f#
 haskell: haskell
 javascript: javascript, typescript, deno, html, react, nextjs, tailwindcss, chrome-extension, webaudioapi, webspeechapi
 languages: cpp, gcc, csharp, dotnet, winforms, go, java, netbeans, common-lisp, scheme, rust, vb, vba, vbscript
-math: math, mathematics, linear-algebra, numeric, statistics, quantum-computing, quantum-mechanics
+math: math, mathematics, linear-algebra, numeric, statistics
 media: tts, ffmpeg, gif, gimp, ocr, pdf
 misc: algorithm, async-await, clean, malware, opengl, suggestion, tutorial
 python: python
+quantum: quantum-computing, quantum-mechanics
 retro: vax, pdp11, intel8086, s390, assembly, virtio
 tools: wsl, msys2, unix, uv, makefile, github, bitbucket, sql, sqlite, sqlite3
 webassembly: webassembly, emscripten

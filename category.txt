@@ -3,10 +3,11 @@
      53 haskell
      36 javascript
      26 languages
-     23 math
+     20 math
      12 media
       7 misc
      18 python
+      3 quantum
       8 retro
      12 tools
       4 webassembly

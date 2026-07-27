@@ -210,10 +210,7 @@ math	2017-03-31	1275d2a15a25a75125d2	関数で考えるコベクトル
 math	2017-04-12	5515a49c86efb8d5102a	関数で考える行列
 math	2017-04-26	538504de453208be937e	コベクトルで考えるパーセプトロン
 math	2017-06-07	c452e2946d1f58b5ff7f	関数で考える双対性
-math	2020-02-19	883a3b722b4fea428abd	量子力学の非局所性を計算で確認してみた
 math	2023-09-27	50156c2a7ddec2235ca3	不偏分散を具体例で確認
-math	2024-05-07	3504d8fa2c868620f57a	量子コンピューター超入門
-math	2024-05-10	1704b58f8828601a0e6c	量子コンピューター超入門2 一般的な表記法
 media	2017-01-16	33117c6c369d37dc6cdd	GIFのバイナリを読んでみた
 media	2017-01-17	cfe1c6e42aff78c06652	GIFのLZW圧縮を調べてみた
 media	2017-02-08	3253d5766a4c65cb1a1f	GIMPで画像を一括でレベル補正（Python-Fu）
@@ -251,6 +248,9 @@ python	2024-12-07	29a16427c2a8deee4747	Windows で uv の PyTorch インスト�
 python	2024-12-16	d8d3ab5371aa9dddcb3e	Python 用簡易プル型 XML パーサー xml7shi
 python	2025-03-22	9e49ff81ceb1196f73a4	pyperclip でクリップボードの監視機能がなくなった
 python	2025-06-08	69d1e7c15c7c6a5bb34f	Windows Terminal で Python から Sixel
+quantum	2020-02-19	883a3b722b4fea428abd	量子力学の非局所性を計算で確認してみた
+quantum	2024-05-07	3504d8fa2c868620f57a	量子コンピューター超入門
+quantum	2024-05-10	1704b58f8828601a0e6c	量子コンピューター超入門2 一般的な表記法
 retro	2014-12-16	8985e7719347f048e094	SHのPC相対について
 retro	2015-09-14	85c4a43a07152c4322d5	UNIX/32VによるVAX事始め
 retro	2015-09-17	7b24ed23fcbea08c3615	VAXの機械語を総当たり調査
