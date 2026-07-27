@@ -17,5 +17,5 @@ extract:
 	uv run scripts/extract.py
 
 category.txt: classified.tsv category_map.txt
-	cut -f2 $< | tail -n +2 | awk -F': ' 'NR==FNR{n=split($$2,tags,", "); for(i=1;i<=n;i++) map[tags[i]]=$$1; next} {print ($$1 in map ? map[$$1] : $$1)}' category_map.txt - | sort | uniq -c > $@
+	uv run scripts/aggregate_category.py
 
