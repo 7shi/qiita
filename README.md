@@ -55,7 +55,7 @@ make all
   ```bash
   make category.txt
   ```
-  ※ `classified.tsv` からカテゴリごとの記事数を集計し、`category.txt` に出力します。
+  ※ `classified.tsv` のカテゴリを `category_map.txt` で大分類へ変換し、記事数を集計して `category.txt` に出力します。
 
 ---
 

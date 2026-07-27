@@ -6,7 +6,7 @@ help:
 	@echo "  all          - Fetch all pages (7shi-1.json to 7shi-3.json) and extract items"
 	@echo "  7shi-%.json  - Fetch 7shi's articles for the specific page (e.g. 7shi-1.json)"
 	@echo "  extract      - Extract items from json to md"
-	@echo "  category.txt - Aggregate unique categories from classified.tsv"
+	@echo "  category.txt - Aggregate categories from classified.tsv via category_map.txt"
 
 all: data/7shi-1.json data/7shi-2.json data/7shi-3.json extract
 
@@ -16,6 +16,6 @@ data/7shi-%.json:
 extract:
 	uv run scripts/extract.py
 
-category.txt: classified.tsv
-	cut -f2 $< | tail -n +2 | sort | uniq -c > $@
+category.txt: classified.tsv category_map.txt
+	cut -f2 $< | tail -n +2 | awk -F': ' 'NR==FNR{n=split($$2,tags,", "); for(i=1;i<=n;i++) map[tags[i]]=$$1; next} {print ($$1 in map ? map[$$1] : $$1)}' category_map.txt - | sort | uniq -c > $@
 
