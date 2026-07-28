@@ -44,7 +44,6 @@ fsharp	2016-07-03	026c7daa5b0b24d02c0f	monads-with-computation-expressions	コ�
 fsharp	2016-07-04	6635d6bea5c455cbb4da	computation-expression-function-monad	試作したコンピュテーション式と関数モナド
 fsharp	2016-11-17	755c537f1a308d07484b	grayscale-disappearing-image	グレースケールで消える画像に変換
 fsharp	2016-11-17	d223e347d67cc399f70c	constant-rgb-sum	RGB値の合計が一定の画像変換
-fsharp	2016-12-14	4fb60dacad46cb8e63b3	polynomial-product	多項式の積を計算
 fsharp	2016-12-14	7f490819e818dd7aa37c	function-indentation	functionのインデント
 fsharp	2016-12-19	e4c7ca9fdd8789a4ec7b	mimic-python-main	F# ScriptでPythonの__name__を真似する
 fsharp	2016-12-20	b627930944df6495165e	combination-enumeration	組み合わせの列挙
@@ -137,24 +136,6 @@ languages	2023-03-18	8eae6d909e1b82b35215	cesu8-to-utf16	CESU-8 から UTF-16 �
 languages	2023-05-13	59e12ee1f56536710b83	textbox-paste-newline	TextBox への貼り付け時に改行コードを調整
 languages	2025-04-03	9a4a3a4544a30aa7b033	go-memory-management-2	Go ランタイムのメモリ管理：mmap と sbrk
 languages	2025-04-04	510653e0c0e28411cc9d	go-memory-management	Go 実行バイナリのメモリ管理
-math	2016-10-26	017d2d2c758f76071f23	outer-products	外積と愉快な仲間たち
-math	2016-10-31	f54302058149d07da592	hodge-dual-bubble-sort	ユークリッド空間のホッジ双対とバブルソート
-math	2016-11-02	a80988a32a0d706e9378	quaternion-inner-outer-product	四元数と行列で見る内積と外積の「内」と「外」
-math	2016-12-03	2036e7a739c2a9e04025	making-quaternions	四元数を作ろう
-math	2016-12-06	b34fe724d36fb7d96456	octonions	八元数を作ろう
-math	2016-12-13	8495b2d6b888e7b8703f	octonion-multiplication	八元数の積をプログラムで確認
-math	2016-12-20	02c758c03d2fd7038912	cross-product-components	外積の成分をプログラムで確認
-math	2017-01-04	88be5203769e629df243	cayley-dickson-construction	多元数の積の構成
-math	2017-03-02	03e9eb2c78360a5c1374	inner-product-estimate	見積りで考える内積
-math	2017-03-06	4f313cb36cdd12c8d833	complex-vectors-as-real-vectors	実ベクトルで考える複素ベクトル
-math	2017-03-12	989d59d74a505a92c419	sedenions	十六元数を作ろう
-math	2017-03-14	050f6615558c4c2b1d92	bicomplex-numbers	表現行列で考える双複素数
-math	2017-03-14	e7364e1b2593f24427a5	quaternion-representation-matrix	表現行列で考える四元数
-math	2017-03-25	fafe77f9a5ff2f9651ba	clifford-algebra-pauli	クリフォード代数で考えるパウリ行列と双四元数
-math	2017-03-31	1275d2a15a25a75125d2	covectors-as-functions	関数で考えるコベクトル
-math	2017-04-12	5515a49c86efb8d5102a	matrices-as-functions	関数で考える行列
-math	2017-04-26	538504de453208be937e	perceptron-covector	コベクトルで考えるパーセプトロン
-math	2017-06-07	c452e2946d1f58b5ff7f	duality	関数で考える双対性
 math	2023-09-27	50156c2a7ddec2235ca3	unbiased-variance	不偏分散を具体例で確認
 media	2017-02-08	3253d5766a4c65cb1a1f	gimp-batch-levels	GIMPで画像を一括でレベル補正（Python-Fu）
 media	2017-07-14	f48a93f8e769e2cf5dec	pdf-check	PDFファイルのチェック

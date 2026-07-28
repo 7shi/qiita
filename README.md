@@ -27,6 +27,8 @@ Qiita API を利用して記事一覧データを JSON 形式で取得し、そ�
    - `scripts/classify.py` → `classified.tsv` (全記事の分類・SLUG生成)
    - `scripts/extract_series.py` → `series.jsonl` (本文からのシリーズ構成抽出)
 
+   いずれも一度限りの整理作業に使った中間生成物で、結果を `articles/` (分類) と `series/` (シリーズ構成) に反映済みのため `classified.tsv` / `series.jsonl` 自体は削除済み。スクリプトはLLM抽出手法の参照コードとして残している。
+
 ## 使い方
 
 ### 1. 記事データの取得とマークダウン化
@@ -53,9 +55,9 @@ make all
 
 - **記事一覧の集計のみ**
   ```bash
-  make articles.tsv
+  make articles
   ```
-  ※ `articles/{category}/{slug}.md` を走査し、記事一覧を `articles.tsv` に出力します。
+  ※ `articles/{category}/{slug}.md` を走査し、記事一覧を `articles.tsv` に出力します（`series/` へ移行済みの記事は対象外）。
 
 ---
 
@@ -88,13 +90,13 @@ uv run scripts/extract_series.py [-m MODEL] [-o OUTPUT]
 ## ディレクトリ・主要ファイル構成
 
 - `articles/` : `articles/{category}/{slug}.md` の形で記事本体を格納するディレクトリです。記事一覧の正本（インデックス元）です。
-- `articles.tsv` : `articles/` ディレクトリを走査して集計した記事一覧ファイル。
+- `articles.tsv` : `articles/` ディレクトリを走査して集計した記事一覧ファイル（`series/` の記事は対象外）。
 - `data/` : Qiita APIから取得した生のJSONファイル（`7shi-1.json` など）が保存されます。
 - `docs/` : 技術ドキュメントや抽出ノウハウをまとめたディレクトリです。
 - `items/` : JSONから展開されたマークダウンファイルが保存されます。ファイル名は記事のID（`{id}.md`）になります。
-- `PLAN.md` : `articles/` の整理状況とシリーズ化の残課題をまとめたドキュメント。
+- `PLAN.md` : `articles/` の整理状況とシリーズ化の経緯をまとめたドキュメント。
 - `pyproject.toml` : `uv` によるPythonプロジェクトの設定ファイルです。
 - `scripts/` : 各種スクリプトが配置されています。
-- `series.jsonl` : `extract_series.py` によるシリーズ判定結果ファイル。
+- `series/` : 複数記事にまたがるシリーズを `series/{slug}/` ディレクトリにまとめたものです。各ディレクトリの `README.md` が目録（正本）です。
 
 

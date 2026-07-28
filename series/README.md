@@ -9,3 +9,6 @@
 - [sqlitepclraw](sqlitepclraw/README.md): SQLitePCLRawが動作する組み合わせを探る
 - [emscripten-wasi](emscripten-wasi/README.md): Emscripten と WASI
 - [wiktionary](wiktionary/README.md): Wiktionaryの全文処理
+- [bicomplex-numbers](bicomplex-numbers/README.md): 表現行列で考える双複素数
+- [inner-product-estimate](inner-product-estimate/README.md): 見積りで考える内積
+- [outer-products](outer-products/README.md): 外積と愉快な仲間たち
