@@ -57,7 +57,7 @@ make all
   ```bash
   make articles
   ```
-  ※ `articles/{category}/{slug}.md` を走査し、記事一覧を `articles.tsv` に出力します（`series/` へ移行済みの記事は対象外）。
+  ※ `articles/{category}/{slug}.md` と `series/{slug}/{filename}.md` を走査し、記事一覧を `ARTICLES.tsv` に出力します。
 
 ---
 
@@ -90,7 +90,7 @@ uv run scripts/extract_series.py [-m MODEL] [-o OUTPUT]
 ## ディレクトリ・主要ファイル構成
 
 - `articles/` : `articles/{category}/{slug}.md` の形で記事本体を格納するディレクトリです。記事一覧の正本（インデックス元）です。
-- `articles.tsv` : `articles/` ディレクトリを走査して集計した記事一覧ファイル（`series/` の記事は対象外）。
+- `ARTICLES.tsv` : `articles/` と `series/` ディレクトリを走査して集計した記事一覧ファイル。
 - `data/` : Qiita APIから取得した生のJSONファイル（`7shi-1.json` など）が保存されます。
 - `docs/` : 技術ドキュメントや抽出ノウハウをまとめたディレクトリです。
 - `items/` : JSONから展開されたマークダウンファイルが保存されます。ファイル名は記事のID（`{id}.md`）になります。

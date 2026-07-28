@@ -27,7 +27,7 @@ from pathlib import Path
 def parse_args():
     parser = argparse.ArgumentParser(description="Build series.md from series.jsonl.")
     parser.add_argument("-i", "--input", default="series.jsonl", help="Input JSONL file (default: series.jsonl)")
-    parser.add_argument("-a", "--articles", default="articles.tsv", help="Article index TSV (default: articles.tsv)")
+    parser.add_argument("-a", "--articles", default="ARTICLES.tsv", help="Article index TSV (default: ARTICLES.tsv)")
     parser.add_argument("-o", "--output", default="series.md", help="Output Markdown file (default: series.md)")
     return parser.parse_args()
 
