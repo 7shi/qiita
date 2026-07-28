@@ -36,8 +36,6 @@ ai	2025-04-12	3fb540c72ad4577350c6	google-genai-error-handling	Google Gen AI SDK
 ai	2025-04-14	7578f1710e76770f1af1	gemini-youtube-analysis	Gemini が YouTube 動画をどう扱うかの調査
 ai	2025-04-22	f7625cc56a57e2d245ea	roo-code-vs-copilot	コード移行作業における GitHub Copilot エージェントに対する Roo Code の優位性
 ai	2025-04-23	06ed3e922630fcbd7734	gemini-api-migration	Gemini API 移行ガイド
-ai	2025-06-02	6a68a49629c463bc90f7	build-therock-windows	TheRock（ROCm の開発版）を Windows でビルド
-ai	2025-06-04	99d5f80a45bf72b693e9	build-llama-cpp-therock	TheRock で llama.cpp をビルド
 fsharp	2014-08-26	29d10e74c8df30df04af	coroutines-with-sequences	F#のシーケンスでコルーチン
 fsharp	2014-09-03	78fa1d02730c7cd11786	fsharp-coroutines-2	F#のシーケンスでコルーチン(2)
 fsharp	2016-06-30	567e92474681a38de86a	irregular-data-computation-expression	不揃いなデータをコンピュテーション式で処理
@@ -50,7 +48,6 @@ fsharp	2016-12-14	4fb60dacad46cb8e63b3	polynomial-product	多項式の積を計�
 fsharp	2016-12-14	7f490819e818dd7aa37c	function-indentation	functionのインデント
 fsharp	2016-12-19	e4c7ca9fdd8789a4ec7b	mimic-python-main	F# ScriptでPythonの__name__を真似する
 fsharp	2016-12-20	b627930944df6495165e	combination-enumeration	組み合わせの列挙
-fsharp	2016-12-26	04c2991239894687ef2f	json-parser	JSONパーサーを作る
 fsharp	2016-12-27	2e08418eeb448a343723	extract-har	HARからファイルを抽出する
 fsharp	2016-12-30	5fc7d6477d96bbd7a71d	fsharp-dev-env	F#開発環境の紹介
 fsharp	2016-12-31	efc236112abc6db94fbd	file-dnd-gui	ファイルのDnDを受けるGUIの雛形
@@ -70,8 +67,6 @@ fsharp	2020-06-03	b5121bb3a94e691cd1c5	python-to-fsharp-parallel	Pythonの並列
 fsharp	2020-06-05	0ac50e3816dca212a52e	stream-extraction-combination	ストリームの抜き出しと結合
 fsharp	2020-06-09	1d6b97c657c6fffdbd70	wiktionary-speed-comparison	Wiktionaryの全文処理をF#とPythonで速度比較
 fsharp	2020-06-09	6bc57ddde5a06e526496	fsharp-no-project	.NET CoreでプロジェクトなしにF#を使う
-fsharp	2020-06-23	e8de755a5738f862e09f	winrt-async-reflection	WinRTの非同期メソッドをリフレクションで扱う
-fsharp	2020-06-24	01899f69f010a029242f	fsharp-winrt-reflection	F#でリフレクションを駆使してWinRTを扱う
 fsharp	2023-02-12	b28767a0f1303bd08245	richtextbox-context-menu	RichTextBox にコンテキストメニューを付ける
 fsharp	2023-02-12	bcf1998f1dd3755ac82c	fsharp-http-server-malware	簡易 HTTP サーバーとマルウェア判定
 fsharp	2023-02-13	71be43cd0934f944721a	gdi-screen-capture	GDI ベースの画面キャプチャ
@@ -98,8 +93,8 @@ haskell	2015-07-24	cda901af6abb732f9c64	maybe-monad-infix	Maybeモナドによ�
 haskell	2015-12-07	9a6e7e3b8e88bafe4174	haskell-arrows	アローの取っ掛かり
 haskell	2016-07-01	92139286a4e9b5620d69	do-blocks-computation-expressions	doブロックとコンピュテーション式
 haskell	2020-02-16	0e2951155fd8949dbc55	xorshift	Xorshiftを移植してみた
-javascript	2014-08-27	622c322bd482b340038c	es6-coroutine	ECMAScript 6のyieldでコルーチン
-javascript	2014-09-04	e9d65db80bfaa6adaa16	es6-coroutines	ECMAScript 6のyieldでコルーチン(2)
+javascript	2014-08-27	622c322bd482b340038c	es6-coroutine-1	ECMAScript 6のyieldでコルーチン
+javascript	2014-09-04	e9d65db80bfaa6adaa16	es6-coroutine-2	ECMAScript 6のyieldでコルーチン(2)
 javascript	2014-10-15	a0143daac77a205e7962	currying-partial-application	カリー化と部分適用（JavaScriptとHaskell）
 javascript	2014-11-02	4601dff7664311659723	haskell-bubble-sort-to-javascript	HaskellのバブルソートをJavaScriptに直訳してみた
 javascript	2020-02-07	43452dcd34e57100fc3c	web-speech-api-reading-position	Web Speech API で読み上げ位置を取得
@@ -138,20 +133,12 @@ languages	2013-12-01	7b4b863af14ed2e1fb14	vb5-latin-app	VB5で作ったラテン
 languages	2014-08-20	cac7b3e9b90bf91b00cc	cpp-intro-strings	文字列で学ぶC++入門
 languages	2015-01-30	2d44e040bae930d11088	cross-compiler-build	最低限のクロスコンパイラの作り方
 languages	2015-05-05	18d15f8238c074a2e8fc	netbeans-msys2-gcc	NetBeansからMSYS2のgccを使う
-languages	2015-11-27	6a12160276a8db358e34	parser-combinators	C++11 パーサコンビネータ 超入門
-languages	2015-11-30	f86f2f7ad68cfff1b399	cpp-parser-combinators	C++11 パーサコンビネータ 超入門 2
-languages	2016-05-12	68228e19552c271bea81	java-parser-combinators	Java パーサコンビネータ 超入門
-languages	2016-05-14	39a9ddffcc5bdf2c0142	java-parser-combinator-2	Java パーサコンビネータ 超入門 2
-languages	2016-05-16	64261a67081d49f941e3	recursive-descent-parsing	Java 再帰下降構文解析 超入門
 languages	2016-11-27	39a222b5928bf0b6f745	covariance-contravariance	共変戻り値と反変引数
 languages	2018-06-16	d503c83c1befe1cdb284	disassemble-comparison	複数の処理系で逆アセンブルして比較
 languages	2019-12-09	def164cfc3ef4b08ccc8	access-private-members	privateメンバへアクセスするコードの調査
 languages	2020-01-19	61f4c4e132835b26b3ea	vba-clipboard	64bit VBAでクリップボードに文字列を設定・取得
-languages	2020-04-28	7781516d6746e29c03b4	vbs-onecore-voice	VBSでOneCoreの音声を使用する
 languages	2020-05-30	235328dbdc5c0c85edcb	dotnet-bzip2-libraries	.NET Frameworkのbzip2ライブラリを調査
 languages	2020-06-08	07bfbc87956be6e1960d	unicode-prefix-matching-comparison	.NET FrameworkとPythonで合成文字の前方一致を比較
-languages	2020-06-23	885501607aecee7613fa	winrt-tts-rust	Rust/WinRTで音声合成
-languages	2020-06-24	dc21a3be8b7c69fbc11b	winrt-tts-cs	WinRTで音声合成
 languages	2020-07-09	5e8d87c14ba057039518	getting-started-with-go	いきなりGoを使うのに試したこと
 languages	2022-01-12	cf9f7a8f0d53e6b6c841	richtextbox-insert-image	RichTextBoxに画像を挿入
 languages	2023-02-22	a44c5257f04f0c641ef0	generator-with-callcc	call/cc でジェネレーターを実装する
@@ -184,12 +171,9 @@ media	2017-01-17	cfe1c6e42aff78c06652	gif-lzw-compression	GIFのLZW圧縮を調�
 media	2017-02-08	3253d5766a4c65cb1a1f	gimp-batch-levels	GIMPで画像を一括でレベル補正（Python-Fu）
 media	2017-07-14	f48a93f8e769e2cf5dec	pdf-check	PDFファイルのチェック
 media	2020-04-18	407ad24a5d9ad89be2e5	small-audio-files	なるべく小さい音声ファイルを作る
-media	2020-04-28	a5fb03406e0626b4f138	windows-tts-python	PythonでWindows 10の音声合成を使用する
-media	2020-05-01	51017b4b268f66e11c42	sapi-pronunciation	SAPIで発音を指定する
 media	2020-05-13	17d818195259e4a73db6	ffmpeg-mp4-sync	FFmpegでMP4を作成する際に時間がずれる
 media	2020-05-14	9a4f2220cfde4fbbdce7	create-slideshow-video	紙芝居方式で動画を作成
 media	2020-05-15	ff9cf324f18234cabd82	ssml-sapi-voices	SSMLの言語・地域コードとSAPI音声の対応
-media	2020-05-16	ecb9ea901e4026a925ee	sapi-unsupported-languages	SAPIで未サポートの言語を喋らせる
 media	2025-01-03	d7c4e772f4780c6b99a6	gemini-formula-ocr	Gemini で数式対応 OCR
 misc	2014-10-08	6887e7939c0168a0eb21	intuitive-signed-numbers	符号あり数値の直感的な考え方
 misc	2014-12-05	ab3b819871d7b0710949	clean-uniqueness-types	Clean 一意型 調査メモ
@@ -201,6 +185,12 @@ misc	2020-06-26	5e1e95252f1456301522	promise-and-taskcompletion-source	Promise�
 misc	2024-08-15	ae0da373184b82d53fcc	ollama-llama-translate-gguf	Ollama で llama-translate-gguf を動かす
 misc	2024-08-24	bcda13856d13dd19a5bd	liumos-virtio-net	liumOS の virtio-net ドライバと仕様書
 misc	2024-11-13	13d9c884a618feb89a94	complete-blog-post	Gemini の Function calling を試す
+parser	2015-11-27	6a12160276a8db358e34	cpp-parser-combinator-1	C++11 パーサコンビネータ 超入門
+parser	2015-11-30	f86f2f7ad68cfff1b399	cpp-parser-combinator-2	C++11 パーサコンビネータ 超入門 2
+parser	2016-05-12	68228e19552c271bea81	java-parser-combinator-1	Java パーサコンビネータ 超入門
+parser	2016-05-14	39a9ddffcc5bdf2c0142	java-parser-combinator-2	Java パーサコンビネータ 超入門 2
+parser	2016-05-16	64261a67081d49f941e3	recursive-descent-parsing	Java 再帰下降構文解析 超入門
+parser	2016-12-26	04c2991239894687ef2f	json-parser	JSONパーサーを作る
 python	2014-12-14	41d262ca11ea16d85abc	python-bitwise-ops	Python ビット演算 超入門
 python	2020-02-11	b3aba035c45868ab34e9	python-monad-generator	Pythonでもジェネレーターで関数モナドとStateモナドを模倣してみた
 python	2020-04-30	9c15e2aca88bd40eed2a	module-naming-collision	Pythonでファイル名が悪くてimportでハマった
@@ -228,6 +218,8 @@ retro	2015-10-08	98c7aa38fe0bd29a7296	s390-machine-language	S/390の機械語を
 retro	2015-11-08	86724696518df3a174dc	pdp11-machine-language	PDP-11による機械語入門
 retro	2015-11-09	b3911948f9d97b05395e	intel8086-machine-language-intro	8086による機械語入門
 retro	2016-02-14	e43e8ce0b1a2cadee2a3	vax-machine-language-intro	VAXによる機械語入門
+therock	2025-06-02	6a68a49629c463bc90f7	build-therock-windows	TheRock（ROCm の開発版）を Windows でビルド
+therock	2025-06-04	99d5f80a45bf72b693e9	build-llama-cpp-therock	TheRock で llama.cpp をビルド
 tools	2015-01-29	894fdd849658880bf6c9	msys2-setup	MSYS2でRicty Diminishedを使う設定など
 tools	2015-11-18	71532036c53d321a2b17	ancient-unix-crt0	Ancient UNIXのcrt0.sを読む
 tools	2020-04-17	cfda84909b2ea787afdb	arch-linux-wsl	WSLでUbuntuと共存させてArch Linuxを使う
@@ -240,6 +232,12 @@ tools	2020-05-31	b70e2837be3e41fbde66	bitbucket-backup	Bitbucketのリポジト�
 tools	2024-11-29	b17cb8d96ae0328bee7e	github-issues-notebooklm	GitHub の Issues を NotebookLM で調査
 tools	2024-12-06	0f9c9ff7cf2fcb9597c5	introducing-uv	uv 導入のきっかけについて
 tools	2025-02-28	94fc7418051e50eb68eb	omegawiki-db-conversion	OmegaWiki のデータベース調査
+tts	2020-04-28	7781516d6746e29c03b4	vbs-onecore-voice	VBSでOneCoreの音声を使用する
+tts	2020-04-28	a5fb03406e0626b4f138	windows-tts-python	PythonでWindows 10の音声合成を使用する
+tts	2020-05-01	51017b4b268f66e11c42	sapi-pronunciation	SAPIで発音を指定する
+tts	2020-05-16	ecb9ea901e4026a925ee	sapi-unsupported-languages	SAPIで未サポートの言語を喋らせる
+tts	2020-06-23	885501607aecee7613fa	winrt-tts-rust	Rust/WinRTで音声合成
+tts	2020-06-24	dc21a3be8b7c69fbc11b	winrt-tts-cs	WinRTで音声合成
 webassembly	2024-09-02	70ec93b683c0a1bcef6f	emscripten-basics	Emscripten の基本的な使い方とグルーコード
 webassembly	2024-09-03	0cedc2a55c8ca0bb7538	emscripten-wasi	Emscripten と WASI
 webassembly	2024-09-04	34f7d4693bd4b16d2df3	wasm-independent-instances	WebAssembly で同じコードを独立して動かす
@@ -248,3 +246,5 @@ wiktionary	2020-05-03	1f5c6a6561ef5c1e357b	wikipedia-svg-to-png	WikipediaのSVG�
 wiktionary	2020-06-05	e8091f6ac72491ad45a6	efficient-wiktionary-processing	Wiktionaryの効率的な処理方法を探る
 wiktionary	2020-06-17	4e3c614aac19d645fd1d	wiktionary-language-codes	Wiktionaryの言語コードを取得
 wiktionary	2020-06-27	6d1e8466b7586e5d0e90	run-wiktionary-scripts-locally	Wiktionaryのスクリプトをローカルで動かす
+winrt	2020-06-23	e8de755a5738f862e09f	winrt-async-reflection	WinRTの非同期メソッドをリフレクションで扱う
+winrt	2020-06-24	01899f69f010a029242f	fsharp-winrt-reflection	F#でリフレクションを駆使してWinRTを扱う
