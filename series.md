@@ -6,20 +6,6 @@
 
 # 要検討
 
-## wiktionary-speed-comparison: Wiktionaryの全文処理をF#とPythonで速度比較
-
-1. [Wiktionaryの効率的な処理方法を探る](articles/wiktionary/efficient-wiktionary-processing.md) `e8091f6ac72491ad45a6`
-2. [Wiktionaryの全文処理をF#とPythonで速度比較](articles/fsharp/wiktionary-speed-comparison.md) `1d6b97c657c6fffdbd70` ^root
-3. [Wiktionaryの言語コードを取得](articles/wiktionary/wiktionary-language-codes.md) `4e3c614aac19d645fd1d`
-4. [Wiktionaryから特定の言語を抽出](articles/python/wiktionary-language-extraction.md) `449e1aeaee3a25ca5a05`
-5. [Wiktionaryで英語の不規則動詞を調査](articles/python/wiktionary-irregular-verbs.md) `2a945c346f74ca54552f`
-6. [Wiktionaryのスクリプトをローカルで動かす](articles/wiktionary/run-wiktionary-scripts-locally.md) `6d1e8466b7586e5d0e90`
-
-## wikipedia-dump: Wikipediaのダンプからページを取り出す
-
-1. [XMLのタグの構造と出現数を調べる](articles/fsharp/xml-tag-analysis.md) `022c58cf9a86ced595ef`
-2. [Wikipediaのダンプからページを取り出す](articles/python/wikipedia-dump.md) `7a4aa381ec3dc97bd0f2` ^root
-
 ## bicomplex-numbers: 表現行列で考える双複素数
 
 1. [実ベクトルで考える複素ベクトル](articles/math/complex-vectors-as-real-vectors.md) `4f313cb36cdd12c8d833`

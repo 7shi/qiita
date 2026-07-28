@@ -8,3 +8,4 @@
 - [reading-gif](reading-gif/README.md): GIFのバイナリを読んでみた
 - [sqlitepclraw](sqlitepclraw/README.md): SQLitePCLRawが動作する組み合わせを探る
 - [emscripten-wasi](emscripten-wasi/README.md): Emscripten と WASI
+- [wiktionary](wiktionary/README.md): Wiktionaryの全文処理

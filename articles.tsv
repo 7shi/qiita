@@ -56,11 +56,9 @@ fsharp	2017-01-11	1d3750ba17f5a88b8405	fsharp-intro-2	Haskellで学ぶF#入門
 fsharp	2017-01-11	b174d1c50aab9350dafc	learn-fsharp-with-haskell	【解答例】Haskellで学ぶF#入門
 fsharp	2017-02-01	02ec42692b77e6c7c192	raii-pinning	RAIIでピン止め
 fsharp	2017-11-29	414fcb97c7aea6816a72	dirac-operator	ディラック作用素の代数計算
-fsharp	2020-05-24	022c58cf9a86ced595ef	xml-tag-analysis	XMLのタグの構造と出現数を調べる
 fsharp	2020-05-28	9c3340d04ec0450678c4	fsharp-script-args	F#スクリプトで引数の扱いをすり合わせる
 fsharp	2020-06-03	b5121bb3a94e691cd1c5	python-to-fsharp-parallel	Pythonの並列計算サンプルをF#に移植
 fsharp	2020-06-05	0ac50e3816dca212a52e	stream-extraction-combination	ストリームの抜き出しと結合
-fsharp	2020-06-09	1d6b97c657c6fffdbd70	wiktionary-speed-comparison	Wiktionaryの全文処理をF#とPythonで速度比較
 fsharp	2020-06-09	6bc57ddde5a06e526496	fsharp-no-project	.NET CoreでプロジェクトなしにF#を使う
 fsharp	2023-02-12	b28767a0f1303bd08245	richtextbox-context-menu	RichTextBox にコンテキストメニューを付ける
 fsharp	2023-02-12	bcf1998f1dd3755ac82c	fsharp-http-server-malware	簡易 HTTP サーバーとマルウェア判定
@@ -183,13 +181,10 @@ parser	2016-12-26	04c2991239894687ef2f	json-parser	JSONパーサーを作る
 python	2014-12-14	41d262ca11ea16d85abc	python-bitwise-ops	Python ビット演算 超入門
 python	2020-02-11	b3aba035c45868ab34e9	python-monad-generator	Pythonでもジェネレーターで関数モナドとStateモナドを模倣してみた
 python	2020-04-30	9c15e2aca88bd40eed2a	module-naming-collision	Pythonでファイル名が悪くてimportでハマった
-python	2020-05-25	7a4aa381ec3dc97bd0f2	wikipedia-dump	Wikipediaのダンプからページを取り出す
 python	2020-05-27	c296a168d53c7af28942	mysql-dump-to-tsv	MySQLのダンプをTSVに変換するスクリプトを書く
 python	2020-06-01	b619caed4a70902f0ece	multistream-bzip2	Pythonでマルチストリームbzip2を逐次展開する
 python	2020-06-08	d37493c58a8bb8d7beed	python-class-instance-variables	Pythonでクラス変数とインスタンス変数を取り違えてハマった
 python	2020-06-10	c7608db7a097ddd16be6	xml-parsing-speed	PythonのXMLパースを速度比較
-python	2020-06-12	2a945c346f74ca54552f	wiktionary-irregular-verbs	Wiktionaryで英語の不規則動詞を調査
-python	2020-06-16	449e1aeaee3a25ca5a05	wiktionary-language-extraction	Wiktionaryから特定の言語を抽出
 python	2023-08-08	663c37408f880336fa9b	string-similarity-grouping	文字列を類似度でグループ化
 python	2023-11-03	6000e9ce33145bec49a0	unicode-normalization	Unicode 正規化と文字操作
 python	2023-11-19	7f9c8ea1a4e380c02af1	ai-log-helper	AI ログの取得補助
@@ -226,9 +221,8 @@ tts	2020-05-16	ecb9ea901e4026a925ee	sapi-unsupported-languages	SAPIで未サポ�
 tts	2020-06-23	885501607aecee7613fa	winrt-tts-rust	Rust/WinRTで音声合成
 tts	2020-06-24	dc21a3be8b7c69fbc11b	winrt-tts-cs	WinRTで音声合成
 webassembly	2025-04-02	5e4eb45e080049387334	hyperlight-wasm	Hyperlight Wasm: マイクロ VM による安全・高速な WebAssembly 実行環境
+wikipedia	2020-05-24	022c58cf9a86ced595ef	xml-tag-analysis	XMLのタグの構造と出現数を調べる
+wikipedia	2020-05-25	7a4aa381ec3dc97bd0f2	wikipedia-dump	Wikipediaのダンプからページを取り出す
 wiktionary	2020-05-03	1f5c6a6561ef5c1e357b	wikipedia-svg-to-png	WikipediaのSVG画像をPNGで取得
-wiktionary	2020-06-05	e8091f6ac72491ad45a6	efficient-wiktionary-processing	Wiktionaryの効率的な処理方法を探る
-wiktionary	2020-06-17	4e3c614aac19d645fd1d	wiktionary-language-codes	Wiktionaryの言語コードを取得
-wiktionary	2020-06-27	6d1e8466b7586e5d0e90	run-wiktionary-scripts-locally	Wiktionaryのスクリプトをローカルで動かす
 winrt	2020-06-23	e8de755a5738f862e09f	winrt-async-reflection	WinRTの非同期メソッドをリフレクションで扱う
 winrt	2020-06-24	01899f69f010a029242f	fsharp-winrt-reflection	F#でリフレクションを駆使してWinRTを扱う
