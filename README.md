@@ -98,5 +98,3 @@ uv run scripts/extract_series.py [-m MODEL] [-o OUTPUT]
 - `pyproject.toml` : `uv` によるPythonプロジェクトの設定ファイルです。
 - `scripts/` : 各種スクリプトが配置されています。
 - `series/` : 複数記事にまたがるシリーズを `series/{slug}/` ディレクトリにまとめたものです。各ディレクトリの `README.md` が目録（正本）です。
-
-
