@@ -532,7 +532,7 @@ while (it = it.next().evalCont()) {
 
 https://qiita.com/7shi/items/a44c5257f04f0c641ef0
 
-Haskell ではジェネレーターから継続を返す部分で型が循環してエラーになるため、単純に書き直しただけでは移植できません。詳細は機会があればまとめるかもしれません。
+Haskell ではジェネレーターから継続を返す部分で型が循環しますが、`data` で包めば移植できます。詳細は[後述](#haskell-への移植)します。
 
 JavaScript は動的型付けのため型エラーで実行できないということはありませんが、もちろん間違った使い方をすれば実行時エラーになります。Haskell と Scheme の中間のような使用感だと思いました。
 
@@ -570,6 +570,117 @@ f x = evalCont $ callCC $ \ret -> do
 
 これらを JavaScript に移植しました。
 
-ジェネレーターの例は単純な書き直しではコンパイルを通せないため、Haskell では実装していません。
+ジェネレーターの例は素朴に書き直しただけではコンパイルを通せないため、節を改めて説明します。
 
-※ Haskell でジェネレーターが実装できないということではなく、JavaScript で示したのと同じ方法ではうまくいかなかったということです。
+# Haskell への移植
+
+ジェネレーターを Haskell に移植します。型が循環するため素朴には書けませんが、`data` を使えば解決します。
+
+## type だけだと循環する
+
+JS のジェネレーターが返すオブジェクト `{value, next}` の型を考えます。`next` は継続モナドを返し、その継続モナドの答えの型（`Cont r a` の `r`）は `{value, next}` 自身です。
+
+型シノニムで書いてみます。
+
+```hs:型シノニム
+type It = (Maybe Int, () -> Cont It It)
+```
+
+右辺に `It` が現れています。型シノニムは名前を展開するだけのものなので、展開しても
+
+* `(Maybe Int, () -> Cont (Maybe Int, () -> Cont ... ) ... )`
+
+のように終わりません。GHC はこれを受け付けません。
+
+```text:エラー
+Cycle in type synonym declarations:
+  type It = (Maybe Int, () -> Cont It It)
+```
+
+型シノニムを使わずタプルのまま型推論に任せても、同じところに行き着きます。Haskell の型は有限の木として表されるため、自分自身を含む型は表せません。型推論では、この状況を occurs check という検査で検出します。
+
+※ `evalCont` を呼ぶまでは答えの型 `r` が多相なままなので、エラーは出ません。`r` がタプルの型に確定した瞬間にエラーとなります。
+
+## data を使うと解決する
+
+`data`（および `newtype`）は型を**名前で**新しく導入します。`It` は `It` という型そのものであって、中身のタプルの型と同一視されるわけではありません。型としては展開されない一枚岩なので、フィールドの型に自分自身が現れても構いません。
+
+※ リストの定義 `data [a] = [] | a:[a]` も自分自身を含んでいます。再帰的なデータ構造は `data` で表現できます。
+
+先ほどの型シノニムを `data`（レコード構文）で書き直します。
+
+```hs:レコード構文
+data It = It { value :: Maybe Int, next :: () -> Cont It It }
+```
+
+これで型が付きます。JS 版とほぼ一対一に対応する形で移植できます。
+
+```hs:ジェネレーター
+data It = It { value :: Maybe Int, next :: () -> Cont It It }
+
+g :: It
+g = It Nothing $ \_ -> callCC $ \ccOut ->
+    let yield v = callCC $ \nxt -> ccOut (It (Just v) nxt)
+    in do
+        yield 1
+        yield 2
+        yield 3
+        return (It Nothing (\_ -> error "done"))
+
+main :: IO ()
+main = go g
+  where
+    go it =
+        let it' = evalCont (next it ())
+        in case value it' of
+            Nothing -> return ()
+            Just v  -> print v >> go it'
+```
+```text:実行結果
+1
+2
+3
+```
+
+JS では値の有無を `undefined` で判定していましたが、Haskell では `Maybe` を使いました。`main` の `go` が JS の `while (it = it.next().evalCont())` に相当します。
+
+`data` で包む代償は、コンストラクタ `It` を付けて作りパターンマッチで剝がす手間だけです。JS の無名オブジェクトに名前を付けたに過ぎません。
+
+※ `callCC` の型 `((a -> Cont r b) -> Cont r a) -> Cont r a` の `b` は、`yield` を使う文脈で `It` に確定するため、多相性を扱う言語拡張（RankNTypes）は必要ありません。
+
+※ 前掲の `Cont` の実装をそのまま使う場合、GHC では `Monad` のスーパークラスである `Functor` と `Applicative` のインスタンスも必要です。`fmap = liftM`、`(<*>) = ap` で済みます（`Control.Monad` から import）。標準の `Control.Monad.Trans.Cont` を使っても同じように動きます。
+
+## 直和型による整理
+
+値の有無を `Maybe` で表す代わりに直和型にすると、Haskell らしく整理できます。
+
+```hs:整理した版
+data Gen a
+    = Done
+    | Yield a (Cont (Gen a) (Gen a))  -- 値と、再開用の継続
+
+yield ccOut v = callCC $ \next -> ccOut (Yield v (next ()))
+
+runGen body = evalCont $ callCC $ \ccOut -> body ccOut >> return Done
+
+toList Done = []
+toList (Yield v k) = v : toList (evalCont k)
+```
+
+`Cont` の答えの型を `Gen a` 自身にしている点は変わりません。`runGen` でジェネレーターを組み立て、`toList` でリストに変換します。
+
+```hs:使用例
+g123    = runGen $ \ccOut -> let y = yield ccOut in do { y 1; y 2; y 3 }
+nats    = runGen $ \ccOut -> let loop n = yield ccOut n >> loop (n + 1) in loop 0
+squares = runGen $ \ccOut -> mapM_ (\n -> yield ccOut (n * n)) [1 .. 5]
+```
+```text:実行結果
+> toList g123
+[1,2,3]
+> take 5 (toList nats)
+[0,1,2,3,4]
+> toList squares
+[1,4,9,16,25]
+```
+
+`nats` のように無限のジェネレーターも書けます。また `do` ブロックが使えるため、`mapM_` のような既存のモナド用の関数がそのまま使えます。JavaScript で `bind` を入れ子にするより見通しが良くなります。

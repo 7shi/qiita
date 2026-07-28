@@ -28,7 +28,8 @@ def main():
     rows = []
     for base_dir in (ARTICLES_DIR, SERIES_DIR):
         for path in base_dir.glob("*/*.md"):
-            if path.name == "README.md":
+            # 拡張子を除く部分が大文字だけのファイル（README, PLAN など）は記事ではない
+            if path.stem.isupper():
                 continue
             directory = str(path.parent)
             slug = path.stem
