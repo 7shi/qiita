@@ -1,4 +1,4 @@
-.PHONY: help all extract article
+.PHONY: help all extract articles
 
 help:
 	@echo "Available targets:"
@@ -16,6 +16,5 @@ data/7shi-%.json:
 extract:
 	uv run scripts/extract.py
 
-articles: articles.tsv
-articles.tsv: $(wildcard articles/*/*.md)
+articles:
 	uv run scripts/aggregate_articles.py
