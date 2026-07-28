@@ -2,7 +2,7 @@
 
 ## 現状
 
-`articles/{category}/{slug}.md` の形で記事を整理済み（現在249件）。`category` は18種類（`ai`, `fsharp`, `haskell`, `javascript`, `languages`, `math`, `media`, `misc`, `parser`, `python`, `quantum`, `retro`, `therock`, `tools`, `tts`, `webassembly`, `wiktionary`, `winrt`）。ファイル名の英字slugはタイトル・本文から意訳した短いkebab-case。
+`articles/{category}/{slug}.md` の形で記事を整理済み（現在233件）。`category` は18種類（`ai`, `fsharp`, `haskell`, `javascript`, `languages`, `math`, `media`, `misc`, `parser`, `python`, `quantum`, `retro`, `therock`, `tools`, `tts`, `webassembly`, `wiktionary`, `winrt`）。ファイル名の英字slugはタイトル・本文から意訳した短いkebab-case。
 
 `articles.tsv` は `articles/` ディレクトリを実際に走査して生成するインデックスファイル（`scripts/aggregate_articles.py`）。`articles/` を正とし、`articles.tsv` はそこから機械的に再生成できる。**`series/` は対象外**（`scripts/aggregate_articles.py` は `articles/*/*.md` のみ走査し、`series/{slug}/` へ移行済みの記事は `articles.tsv` に含まれない）。`make articles` で依存チェックなしに再生成できるよう `Makefile` を改変済み（`articles: articles.tsv` の中間ターゲットを廃止し、`articles` から直接 `aggregate_articles.py` を実行）。シリーズを `series/{slug}/` へ移行するたびに `make articles` を実行して再生成する。
 

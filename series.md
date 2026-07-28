@@ -4,37 +4,6 @@
 <!-- ^root: 抽出元記事（本文にリンク一覧があった記事。連載順とは無関係） -->
 <!-- ^dup: 複数シリーズに重複（要確認） / ^missing: articles/ に存在しない記事 -->
 
-## fsharp-opengl: F#でOpenGL
-
-1. [F#でOpenGL](articles/fsharp/opengl.md) `029343420518b6884d7c` ^root
-2. [F#にOpenGLの歯車デモを移植](articles/fsharp/opengl-gears.md) `efdf0ae04a24bc1b7623`
-3. [OpenGLでオフスクリーンレンダリング](articles/misc/opengl-offscreen-rendering.md) `b02f2e45b49c0314fd12`
-
-## cps-to-continuation: CPS 変換から継続モナドへ
-
-1. [ループと末尾再帰](articles/javascript/loops-and-tail-recursion.md) `5c44c23ef92f4c4273b4`
-2. [CPS 変換による末尾再帰化](articles/javascript/cps-tail-recursion.md) `2d25f7afe25c3ca11acb`
-3. [CPS 変換から継続モナドへ](articles/javascript/cps-to-continuation-monad.md) `27b6f3169961299a6195` ^root
-
-## reading-gif: GIFのバイナリを読んでみた
-
-1. [GIFのバイナリを読んでみた](articles/media/reading-gif-binary.md) `33117c6c369d37dc6cdd` ^root
-2. [GIFのLZW圧縮を調べてみた](articles/media/gif-lzw-compression.md) `cfe1c6e42aff78c06652`
-3. [GIFのLZWを展開してみた](articles/fsharp/gif-lzw-decompression.md) `778f58d4647b10f0f403`
-
-## sqlitepclraw: SQLitePCLRawが動作する組み合わせを探る
-
-1. [SQLitePCLRawが動作する組み合わせを探る](articles/tools/sqlitepclraw-combinations.md) `8846bf14b74a26e014a6` ^root
-2. [Microsoft.Data.SqliteをWindowsとWSLで共有する](articles/fsharp/microsoft-data-sqlite-wsl.md) `9fbb88786d8a5a6212ab`
-3. [WindowsでMono.Data.Sqliteを使う](articles/tools/mono-data-sqlite-windows.md) `923b3a234eaecd7e8f1c`
-4. [Mono.Data.SqliteでDapperを使う](articles/fsharp/mono-sqlite-dapper.md) `f7ec381f5bac184e0b24`
-
-## emscripten-wasi: Emscripten と WASI
-
-1. [Emscripten の基本的な使い方とグルーコード](articles/webassembly/emscripten-basics.md) `70ec93b683c0a1bcef6f`
-2. [Emscripten と WASI](articles/webassembly/emscripten-wasi.md) `0cedc2a55c8ca0bb7538` ^root
-3. [WebAssembly で同じコードを独立して動かす](articles/webassembly/wasm-independent-instances.md) `34f7d4693bd4b16d2df3`
-
 # 要検討
 
 ## wiktionary-speed-comparison: Wiktionaryの全文処理をF#とPythonで速度比較

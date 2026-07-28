@@ -54,15 +54,10 @@ fsharp	2016-12-31	efc236112abc6db94fbd	file-dnd-gui	ファイルのDnDを受け�
 fsharp	2017-01-04	ff746903680ae8d0d7ce	fsharp-intro	C#/JavaScriptで学ぶF#入門
 fsharp	2017-01-11	1d3750ba17f5a88b8405	fsharp-intro-2	Haskellで学ぶF#入門
 fsharp	2017-01-11	b174d1c50aab9350dafc	learn-fsharp-with-haskell	【解答例】Haskellで学ぶF#入門
-fsharp	2017-01-18	778f58d4647b10f0f403	gif-lzw-decompression	GIFのLZWを展開してみた
-fsharp	2017-01-19	029343420518b6884d7c	opengl	F#でOpenGL
-fsharp	2017-01-20	efdf0ae04a24bc1b7623	opengl-gears	F#にOpenGLの歯車デモを移植
 fsharp	2017-02-01	02ec42692b77e6c7c192	raii-pinning	RAIIでピン止め
 fsharp	2017-11-29	414fcb97c7aea6816a72	dirac-operator	ディラック作用素の代数計算
 fsharp	2020-05-24	022c58cf9a86ced595ef	xml-tag-analysis	XMLのタグの構造と出現数を調べる
 fsharp	2020-05-28	9c3340d04ec0450678c4	fsharp-script-args	F#スクリプトで引数の扱いをすり合わせる
-fsharp	2020-05-29	9fbb88786d8a5a6212ab	microsoft-data-sqlite-wsl	Microsoft.Data.SqliteをWindowsとWSLで共有する
-fsharp	2020-05-29	f7ec381f5bac184e0b24	mono-sqlite-dapper	Mono.Data.SqliteでDapperを使う
 fsharp	2020-06-03	b5121bb3a94e691cd1c5	python-to-fsharp-parallel	Pythonの並列計算サンプルをF#に移植
 fsharp	2020-06-05	0ac50e3816dca212a52e	stream-extraction-combination	ストリームの抜き出しと結合
 fsharp	2020-06-09	1d6b97c657c6fffdbd70	wiktionary-speed-comparison	Wiktionaryの全文処理をF#とPythonで速度比較
@@ -117,9 +112,6 @@ javascript	2022-10-27	e75fa610f24a3350b260	mathjs-matrix	Math.js で行列計算
 javascript	2022-10-28	700dc16d9dca40afbe99	lojban-root-score	ロジバンの語根のスコアを計算する
 javascript	2022-11-18	6575cbb98c5a710a2945	cloneable-iterator	イテレーターのクローンもどき
 javascript	2022-12-05	e275c4443a9338c8fda5	chatgpt-quaternions	ChatGPTは四元数を知っている
-javascript	2023-02-17	5c44c23ef92f4c4273b4	loops-and-tail-recursion	ループと末尾再帰
-javascript	2023-02-26	2d25f7afe25c3ca11acb	cps-tail-recursion	CPS 変換による末尾再帰化
-javascript	2023-03-08	27b6f3169961299a6195	cps-to-continuation-monad	CPS 変換から継続モナドへ
 javascript	2023-03-09	56071382384617911a58	flatmap-and-yield-star	flatMap と yield*
 javascript	2023-08-03	4d80f838638a5bb66265	jsdelivr-github	自作ライブラリを jsDelivr から取得
 javascript	2023-08-03	c7b21eb28c953315da7e	partial-tts	ページに部分的な読み上げ機能を付ける
@@ -166,8 +158,6 @@ math	2017-04-12	5515a49c86efb8d5102a	matrices-as-functions	関数で考える行
 math	2017-04-26	538504de453208be937e	perceptron-covector	コベクトルで考えるパーセプトロン
 math	2017-06-07	c452e2946d1f58b5ff7f	duality	関数で考える双対性
 math	2023-09-27	50156c2a7ddec2235ca3	unbiased-variance	不偏分散を具体例で確認
-media	2017-01-16	33117c6c369d37dc6cdd	reading-gif-binary	GIFのバイナリを読んでみた
-media	2017-01-17	cfe1c6e42aff78c06652	gif-lzw-compression	GIFのLZW圧縮を調べてみた
 media	2017-02-08	3253d5766a4c65cb1a1f	gimp-batch-levels	GIMPで画像を一括でレベル補正（Python-Fu）
 media	2017-07-14	f48a93f8e769e2cf5dec	pdf-check	PDFファイルのチェック
 media	2020-04-18	407ad24a5d9ad89be2e5	small-audio-files	なるべく小さい音声ファイルを作る
@@ -179,7 +169,6 @@ misc	2014-10-08	6887e7939c0168a0eb21	intuitive-signed-numbers	符号あり数値
 misc	2014-12-05	ab3b819871d7b0710949	clean-uniqueness-types	Clean 一意型 調査メモ
 misc	2014-12-16	8985e7719347f048e094	sh-pc-relative	SHのPC相対について
 misc	2016-03-26	49cd2595426dd38da1ba	locky-ransomware	Lockyに見るランサムウェアの傾向と対策
-misc	2017-01-30	b02f2e45b49c0314fd12	opengl-offscreen-rendering	OpenGLでオフスクリーンレンダリング
 misc	2019-12-22	b0b95610b59050e42666	levenshtein-distance	レーベンシュタイン距離のコードの解釈
 misc	2020-06-26	5e1e95252f1456301522	promise-and-taskcompletion-source	PromiseとTaskCompletionSource
 misc	2024-08-15	ae0da373184b82d53fcc	ollama-llama-translate-gguf	Ollama で llama-translate-gguf を動かす
@@ -226,8 +215,6 @@ tools	2020-04-17	cfda84909b2ea787afdb	arch-linux-wsl	WSLでUbuntuと共存させ
 tools	2020-04-19	bfb66e69672c08480b0b	tatoeba-multilingual-extraction	複数言語を指定して多言語の例文データを抽出
 tools	2020-04-30	a4c82a48fdcc113815f1	play-wav-from-wsl	WSLからWAVEファイルを再生する
 tools	2020-05-14	f557b199557fc3a6648a	makefile-lambda	ラムダ式とMakefileマクロ
-tools	2020-05-28	8846bf14b74a26e014a6	sqlitepclraw-combinations	SQLitePCLRawが動作する組み合わせを探る
-tools	2020-05-29	923b3a234eaecd7e8f1c	mono-data-sqlite-windows	WindowsでMono.Data.Sqliteを使う
 tools	2020-05-31	b70e2837be3e41fbde66	bitbucket-backup	Bitbucketのリポジトリをバックアップする
 tools	2024-11-29	b17cb8d96ae0328bee7e	github-issues-notebooklm	GitHub の Issues を NotebookLM で調査
 tools	2024-12-06	0f9c9ff7cf2fcb9597c5	introducing-uv	uv 導入のきっかけについて
@@ -238,9 +225,6 @@ tts	2020-05-01	51017b4b268f66e11c42	sapi-pronunciation	SAPIで発音を指定す
 tts	2020-05-16	ecb9ea901e4026a925ee	sapi-unsupported-languages	SAPIで未サポートの言語を喋らせる
 tts	2020-06-23	885501607aecee7613fa	winrt-tts-rust	Rust/WinRTで音声合成
 tts	2020-06-24	dc21a3be8b7c69fbc11b	winrt-tts-cs	WinRTで音声合成
-webassembly	2024-09-02	70ec93b683c0a1bcef6f	emscripten-basics	Emscripten の基本的な使い方とグルーコード
-webassembly	2024-09-03	0cedc2a55c8ca0bb7538	emscripten-wasi	Emscripten と WASI
-webassembly	2024-09-04	34f7d4693bd4b16d2df3	wasm-independent-instances	WebAssembly で同じコードを独立して動かす
 webassembly	2025-04-02	5e4eb45e080049387334	hyperlight-wasm	Hyperlight Wasm: マイクロ VM による安全・高速な WebAssembly 実行環境
 wiktionary	2020-05-03	1f5c6a6561ef5c1e357b	wikipedia-svg-to-png	WikipediaのSVG画像をPNGで取得
 wiktionary	2020-06-05	e8091f6ac72491ad45a6	efficient-wiktionary-processing	Wiktionaryの効率的な処理方法を探る
