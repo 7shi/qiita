@@ -214,6 +214,7 @@ fafe77f9a5ff2f9651ba	2017-03-25	series/bicomplex-numbers	04-clifford-algebra-pau
 5c44c23ef92f4c4273b4	2023-02-17	series/cps-to-continuation	01-loops-and-tail-recursion	ループと末尾再帰
 2d25f7afe25c3ca11acb	2023-02-26	series/cps-to-continuation	02-cps-tail-recursion	CPS 変換による末尾再帰化
 27b6f3169961299a6195	2023-03-08	series/cps-to-continuation	03-cps-to-continuation-monad	CPS 変換から継続モナドへ
+	2026-07-28	series/cps-to-continuation	haskell-generator	継続モナドによるジェネレーターを Haskell で書く
 70ec93b683c0a1bcef6f	2024-09-02	series/emscripten-wasi	01-emscripten-basics	Emscripten の基本的な使い方とグルーコード
 0cedc2a55c8ca0bb7538	2024-09-03	series/emscripten-wasi	02-emscripten-wasi	Emscripten と WASI
 34f7d4693bd4b16d2df3	2024-09-04	series/emscripten-wasi	03-wasm-independent-instances	WebAssembly で同じコードを独立して動かす

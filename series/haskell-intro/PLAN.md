@@ -10,8 +10,8 @@
 調査の結果、**`data` で包めば通る**ことが確認できた（GHC 9.6.6）。
 説明とコードは既に姉妹編の記事へ反映済み。
 
-- [CPS 変換から継続モナドへ](../cps-to-continuation/03-cps-to-continuation-monad.md#haskell-への移植)
-  の「Haskell への移植」節（[Qiita](https://qiita.com/7shi/items/27b6f3169961299a6195)）
+- [継続モナドによるジェネレーターを Haskell で書く](../cps-to-continuation/haskell-generator.md)
+  （`cps-to-continuation` の応用編として分離した単発記事。未投稿）
 - 検証コードと調査メモ: [`cps-to-continuation/check/`](../cps-to-continuation/check/NOTES.md)
 
 - 循環の正体: `Cont r a` の答えの型 `r` が、`next` を含むレコード自身になる。
@@ -72,12 +72,13 @@ occurs check・無限の型という語はシリーズ全体で未出（`grep` �
 - [`cps-to-continuation`](../cps-to-continuation/README.md) の3記事（JavaScript による
   CPS 変換から継続モナドへ）が実質的な姉妹編。あちらは JS 読者向け、
   こちらは Haskell シリーズの読者向けという棲み分け。
-- 3記事目の
-  [CPS 変換から継続モナドへ](../cps-to-continuation/03-cps-to-continuation-monad.md)
-  には「Haskell への移植」節を追加済み。`type` の循環 → `data` で解決 →
-  直和型による整理、という流れで、コルーチンの実装まで載っている。
+- 応用編の
+  [継続モナドによるジェネレーターを Haskell で書く](../cps-to-continuation/haskell-generator.md)
+  に、`type` の循環 → `data` で解決 → 直和型による整理、という流れで
+  コルーチンの実装が載っている（未投稿）。
   本記事のコルーチンの節は、この内容を Haskell シリーズの読者向けに書き直す形になる。
-  重複する説明はあちらへのリンクで済ませるか、逆にあちらから本記事へ誘導するかは要判断。
+  重複する説明はあちらへのリンクで済ませるか、逆にあちらから本記事へ誘導するか、
+  あるいは未投稿のうちに本記事へ統合してしまうかは要判断。
 
 ## 補足
 
