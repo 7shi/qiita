@@ -84,99 +84,25 @@
 5. [Wiktionaryで英語の不規則動詞を調査](articles/python/wiktionary-irregular-verbs.md) `2a945c346f74ca54552f`
 6. [Wiktionaryのスクリプトをローカルで動かす](articles/wiktionary/run-wiktionary-scripts-locally.md) `6d1e8466b7586e5d0e90`
 
-## 8086-disassembler: Haskellによる8086逆アセンブラ開発入門
-
-1. [Haskellによる8086逆アセンブラ開発入門](articles/haskell/8086-disassembler.md) `026839b2bc193dbfb0cb` ^root
-2. [【解答例】Haskellによる8086逆アセンブラ開発入門](articles/haskell/8086-disassembler-answer.md) `6d228b6fc4734f48a33e`
-3. [8086による機械語入門](articles/retro/intel8086-machine-language-intro.md) `b3911948f9d97b05395e` ^dup
-
-## algebraic-data-types-answer: 【解答例】Haskell 代数的データ型 超入門
-
-1. [Haskell 代数的データ型 超入門](articles/haskell/algebraic-data-types.md) `1ce76bde464b4a55c143` ^dup
-2. [【解答例】Haskell 代数的データ型 超入門](articles/haskell/algebraic-data-types-answer.md) `0bed757ed0b51944a669` ^root
-
-## bubble-sort: Haskellでバブルソート
-
-1. [Haskell 超入門](articles/haskell/haskell-intro.md) `145f1234f8ec2af923ef` ^dup
-2. [Haskellでバブルソート](articles/haskell/bubble-sort.md) `1e2a66bf8e8c7f0bd70f` ^root ^dup
-
 ## compose-maybe-state: MaybeとStateを合成
 
-1. [Haskell モナド変換子 超入門](articles/haskell/monad-transformers.md) `4408b76624067c17e933` ^dup
-2. [MaybeとStateを合成](articles/haskell/compose-maybe-state.md) `12036631dad1979a273b` ^root
-3. [Parsecをモナド変換子で模倣](articles/haskell/parsec-monad-transformers.md) `201f379443079736e18e`
-
-## function-composition: 関数合成を機械的に扱う試み
-
-1. [Haskell 超入門](articles/haskell/haskell-intro.md) `145f1234f8ec2af923ef` ^dup
-2. [関数合成を機械的に扱う試み](articles/haskell/function-composition.md) `f2c1365b792aa6046a49` ^root
+1. [MaybeとStateを合成](articles/haskell/compose-maybe-state.md) `12036631dad1979a273b` ^root
+2. [Parsecをモナド変換子で模倣](articles/haskell/parsec-monad-transformers.md) `201f379443079736e18e`
 
 ## function-overloading: Haskellで関数のオーバーロード
 
 1. [Haskellの実験メモ一覧](articles/haskell/haskell-experiments.md) `b6cbb7df2dd969c84f49` ^dup
 2. [Haskellで関数のオーバーロード](articles/haskell/function-overloading.md) `17a1567a635af17fc83f` ^root
 
-## haskell-action-intro: 【解答例】Haskell アクション 超入門
-
-1. [Haskell アクション 超入門](articles/haskell/haskell-actions-intro.md) `85afd7bbd5d6c4115ad6` ^dup
-2. [【解答例】Haskell アクション 超入門](articles/haskell/haskell-action-intro.md) `623fd55b8b68398becdc` ^root
-
-## haskell-actions-lambdas: 【解答例】Haskell アクションとラムダ 超入門
-
-1. [Haskell アクションとラムダ 超入門](articles/haskell/actions-and-lambdas.md) `4a8a2807bb5186576c61` ^dup
-2. [【解答例】Haskell アクションとラムダ 超入門](articles/haskell/haskell-actions-lambdas.md) `cb99bb70ee103408bf51` ^root
-
 ## haskell-algebraic-computation: Haskellによる代数計算入門
 
-1. [Haskellによる代数計算入門](articles/haskell/haskell-algebraic-computation.md) `096396f0007857676515` ^root
-2. [【解答例】Haskellによる代数計算入門](articles/haskell/algebraic-calculation.md) `c62858d22a565095f791`
-3. [多項式の積を計算](articles/fsharp/polynomial-product.md) `4fb60dacad46cb8e63b3` ^dup
-4. [ディラック作用素の代数計算](articles/fsharp/dirac-operator.md) `414fcb97c7aea6816a72`
-
-## haskell-exception-handling: 【解答例】Haskell 例外処理 超入門
-
-1. [Haskell 例外処理 超入門](articles/haskell/exception-handling.md) `73e534c47bbebc71b37e` ^dup
-2. [【解答例】Haskell 例外処理 超入門](articles/haskell/haskell-exception-handling.md) `f825dc54a5f6fb2a72dc` ^root
-
-## haskell-intro-answers: 【解答例】Haskell 超入門
-
-1. [Haskell 超入門](articles/haskell/haskell-intro.md) `145f1234f8ec2af923ef` ^dup
-2. [【解答例】Haskell 超入門](articles/haskell/haskell-intro-answers.md) `0ece8c3394e1328267ed` ^root
-
-## haskell-lambda: Haskell ラムダ 超入門
-
-1. [Haskell 超入門](articles/haskell/haskell-intro.md) `145f1234f8ec2af923ef` ^dup
-2. [Haskell 代数的データ型 超入門](articles/haskell/algebraic-data-types.md) `1ce76bde464b4a55c143` ^dup
-3. [Haskell アクション 超入門](articles/haskell/haskell-actions-intro.md) `85afd7bbd5d6c4115ad6` ^dup
-4. [Haskell ラムダ 超入門](articles/haskell/haskell-lambda.md) `1345bf32003faff435cb` ^root ^dup
-5. [Haskell アクションとラムダ 超入門](articles/haskell/actions-and-lambdas.md) `4a8a2807bb5186576c61` ^dup
-6. [Haskell IOモナド 超入門](articles/haskell/io-monad-intro.md) `d3d3492ddd90d47160f2` ^dup
-7. [Haskell リストモナド 超入門](articles/haskell/list-monad-intro.md) `deb19c4cba933590ffbf` ^dup
-8. [Haskell Maybeモナド 超入門](articles/haskell/haskell-maybe-monad.md) `c7d7eec066af0fe0688d` ^dup
-9. [Haskell 状態系モナド 超入門](articles/haskell/state-monads.md) `2e9bff5d88302de1a9e9` ^dup
-10. [Haskell モナド変換子 超入門](articles/haskell/monad-transformers.md) `4408b76624067c17e933` ^dup
-11. [Haskell 例外処理 超入門](articles/haskell/exception-handling.md) `73e534c47bbebc71b37e` ^dup
-12. [Haskell 構文解析 超入門](articles/haskell/parsing-intro.md) `b8c741e78a96ea2c10fe` ^dup
-
-## haskell-lambda-intro: 【解答例】Haskell ラムダ 超入門
-
-1. [Haskell ラムダ 超入門](articles/haskell/haskell-lambda.md) `1345bf32003faff435cb` ^dup
-2. [【解答例】Haskell ラムダ 超入門](articles/haskell/haskell-lambda-intro.md) `bfa4c282c504c24578d2` ^root
-
-## haskell-parsing-intro: 【解答例】Haskell 構文解析 超入門
-
-1. [Haskell 構文解析 超入門](articles/haskell/parsing-intro.md) `b8c741e78a96ea2c10fe` ^dup
-2. [【解答例】Haskell 構文解析 超入門](articles/haskell/haskell-parsing-intro.md) `f65814b1e91d48ec8d12` ^root
+1. [多項式の積を計算](articles/fsharp/polynomial-product.md) `4fb60dacad46cb8e63b3` ^dup
+2. [ディラック作用素の代数計算](articles/fsharp/dirac-operator.md) `414fcb97c7aea6816a72`
 
 ## haskell-typeclasses-fsharp-interfaces: Haskellの型クラスとF#のインターフェース
 
 1. [Haskellの実験メモ一覧](articles/haskell/haskell-experiments.md) `b6cbb7df2dd969c84f49` ^dup
 2. [Haskellの型クラスとF#のインターフェース](articles/haskell/haskell-typeclasses-fsharp-interfaces.md) `cd7f65a898dd5696c73d` ^root
-
-## hunit-intro: HUnit 超入門
-
-1. [Haskell 超入門](articles/haskell/haskell-intro.md) `145f1234f8ec2af923ef` ^dup
-2. [HUnit 超入門](articles/haskell/hunit-intro.md) `9fb326a87de6c3083784` ^root
 
 ## implementing-space: Haskellで空間を実装してみた
 
@@ -187,57 +113,21 @@
 
 1. [Clean 一意型 調査メモ](articles/misc/clean-uniqueness-types.md) `ab3b819871d7b0710949`
 2. [IOモナドを素手で触ってみた](articles/haskell/io-monad-internals.md) `0a90d7ba31355e1c73aa` ^root
-3. [Haskell IOモナド 超入門](articles/haskell/io-monad-intro.md) `d3d3492ddd90d47160f2` ^dup
-
-## io-monad-intro-answer: 【解答例】Haskell IOモナド 超入門
-
-1. [Haskell IOモナド 超入門](articles/haskell/io-monad-intro.md) `d3d3492ddd90d47160f2` ^dup
-2. [【解答例】Haskell IOモナド 超入門](articles/haskell/io-monad-intro-answer.md) `dfc114f133580ee85686` ^root
 
 ## ioref-state: IORefとState
 
 1. [Haskellの実験メモ一覧](articles/haskell/haskell-experiments.md) `b6cbb7df2dd969c84f49` ^dup
 2. [IORefとState](articles/haskell/ioref-state.md) `3722f0a677d6763eb395` ^root
 
-## list-monad-generator: ジェネレーターでリストモナドを模倣してみた
-
-1. [Haskell リストモナド 超入門](articles/haskell/list-monad-intro.md) `deb19c4cba933590ffbf` ^dup
-2. [ジェネレーターでリストモナドを模倣してみた](articles/haskell/list-monad-generator.md) `8ec339bcddbb6692b738` ^root
-
-## list-monad-intro-answer: 【解答例】Haskell リストモナド 超入門
-
-1. [Haskell リストモナド 超入門](articles/haskell/list-monad-intro.md) `deb19c4cba933590ffbf` ^dup
-2. [【解答例】Haskell リストモナド 超入門](articles/haskell/list-monad-intro-answer.md) `4a24fd9395f5a60d811d` ^root
-
 ## maybe-monad-infix: Maybeモナドによる中置記法の処理
 
 1. [Stateモナドによる中置記法の処理](articles/haskell/state-monad-infix.md) `ee5afe4f088f0a1fc8c2` ^dup
 2. [Maybeモナドによる中置記法の処理](articles/haskell/maybe-monad-infix.md) `cda901af6abb732f9c64` ^root
 
-## maybe-monad-intro: 【解答例】Haskell Maybeモナド 超入門
-
-1. [Haskell Maybeモナド 超入門](articles/haskell/haskell-maybe-monad.md) `c7d7eec066af0fe0688d` ^dup
-2. [【解答例】Haskell Maybeモナド 超入門](articles/haskell/maybe-monad-intro.md) `5a8b25d8db772bc27a71` ^root
-
-## monad-laws: モナド則の絵を描いてみた
-
-1. [モナド則の絵を描いてみた](articles/haskell/monad-laws.md) `539c2c46edfb5313cbc6` ^root
-2. [モナド則がちょっと分かった？](articles/haskell/monad-laws-2.md) `547b6137d7a3c482fe68`
-
-## monad-transformer-intro: 【解答例】Haskell モナド変換子 超入門
-
-1. [Haskell モナド変換子 超入門](articles/haskell/monad-transformers.md) `4408b76624067c17e933` ^dup
-2. [【解答例】Haskell モナド変換子 超入門](articles/haskell/monad-transformer-intro.md) `79fe0e4c77427368ae2d` ^root
-
 ## recursion-to-foldr: 再帰をfoldrで書き換えて確認
 
 1. [Haskellの実験メモ一覧](articles/haskell/haskell-experiments.md) `b6cbb7df2dd969c84f49` ^dup
 2. [再帰をfoldrで書き換えて確認](articles/haskell/recursion-to-foldr.md) `82b1e074a360dd28fcbe` ^root
-
-## state-monad-intro: 【解答例】Haskell 状態系モナド 超入門
-
-1. [Haskell 状態系モナド 超入門](articles/haskell/state-monads.md) `2e9bff5d88302de1a9e9` ^dup
-2. [【解答例】Haskell 状態系モナド 超入門](articles/haskell/state-monad-intro.md) `fe978f1bd2d52760419d` ^root
 
 ## state-monad-rpn: Stateモナドによる逆ポーランド記法の処理
 

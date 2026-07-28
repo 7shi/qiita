@@ -77,45 +77,17 @@ fsharp	2023-02-12	bcf1998f1dd3755ac82c	fsharp-http-server-malware	簡易 HTTP �
 fsharp	2023-02-13	71be43cd0934f944721a	gdi-screen-capture	GDI ベースの画面キャプチャ
 fsharp	2023-02-13	f59b6804167717f8f2d6	simple-http-server	TcpListener で簡易 HTTP サーバーを作る
 fsharp	2023-02-15	1a9b5c17c070b67199b0	azuki-textbox-compatibility	Azuki に TextBox 互換のメンバを追加
-haskell	2014-08-20	145f1234f8ec2af923ef	haskell-intro	Haskell 超入門
 haskell	2014-08-22	17a1567a635af17fc83f	function-overloading	Haskellで関数のオーバーロード
 haskell	2014-08-25	cd7f65a898dd5696c73d	haskell-typeclasses-fsharp-interfaces	Haskellの型クラスとF#のインターフェース
 haskell	2014-08-28	d1e5a0c22be6cf61d286	leksah-intro	Haskell IDE Leksah 入門
-haskell	2014-08-29	9fb326a87de6c3083784	hunit-intro	HUnit 超入門
-haskell	2014-08-31	026839b2bc193dbfb0cb	8086-disassembler	Haskellによる8086逆アセンブラ開発入門
-haskell	2014-08-31	0ece8c3394e1328267ed	haskell-intro-answers	【解答例】Haskell 超入門
-haskell	2014-08-31	6d228b6fc4734f48a33e	8086-disassembler-answer	【解答例】Haskellによる8086逆アセンブラ開発入門
 haskell	2014-09-18	1e2a66bf8e8c7f0bd70f	bubble-sort	Haskellでバブルソート
-haskell	2014-09-19	096396f0007857676515	haskell-algebraic-computation	Haskellによる代数計算入門
-haskell	2014-09-19	0bed757ed0b51944a669	algebraic-data-types-answer	【解答例】Haskell 代数的データ型 超入門
-haskell	2014-09-19	1ce76bde464b4a55c143	algebraic-data-types	Haskell 代数的データ型 超入門
-haskell	2014-09-19	c62858d22a565095f791	algebraic-calculation	【解答例】Haskellによる代数計算入門
-haskell	2014-10-09	623fd55b8b68398becdc	haskell-action-intro	【解答例】Haskell アクション 超入門
-haskell	2014-10-09	85afd7bbd5d6c4115ad6	haskell-actions-intro	Haskell アクション 超入門
 haskell	2014-11-08	0bd828489aa176252fe8	implementing-space	Haskellで空間を実装してみた
 haskell	2014-11-21	3722f0a677d6763eb395	ioref-state	IORefとState
-haskell	2014-11-27	1345bf32003faff435cb	haskell-lambda	Haskell ラムダ 超入門
-haskell	2014-11-27	bfa4c282c504c24578d2	haskell-lambda-intro	【解答例】Haskell ラムダ 超入門
 haskell	2014-11-28	82b1e074a360dd28fcbe	recursion-to-foldr	再帰をfoldrで書き換えて確認
-haskell	2014-12-01	547b6137d7a3c482fe68	monad-laws-2	モナド則がちょっと分かった？
-haskell	2014-12-03	4a8a2807bb5186576c61	actions-and-lambdas	Haskell アクションとラムダ 超入門
-haskell	2014-12-03	cb99bb70ee103408bf51	haskell-actions-lambdas	【解答例】Haskell アクションとラムダ 超入門
 haskell	2014-12-09	0a90d7ba31355e1c73aa	io-monad-internals	IOモナドを素手で触ってみた
-haskell	2014-12-11	d3d3492ddd90d47160f2	io-monad-intro	Haskell IOモナド 超入門
-haskell	2014-12-11	dfc114f133580ee85686	io-monad-intro-answer	【解答例】Haskell IOモナド 超入門
-haskell	2014-12-12	539c2c46edfb5313cbc6	monad-laws	モナド則の絵を描いてみた
 haskell	2014-12-18	8ec339bcddbb6692b738	list-monad-generator	ジェネレーターでリストモナドを模倣してみた
-haskell	2014-12-19	4a24fd9395f5a60d811d	list-monad-intro-answer	【解答例】Haskell リストモナド 超入門
-haskell	2014-12-19	deb19c4cba933590ffbf	list-monad-intro	Haskell リストモナド 超入門
-haskell	2014-12-27	2e9bff5d88302de1a9e9	state-monads	Haskell 状態系モナド 超入門
-haskell	2014-12-27	fe978f1bd2d52760419d	state-monad-intro	【解答例】Haskell 状態系モナド 超入門
-haskell	2015-01-04	4408b76624067c17e933	monad-transformers	Haskell モナド変換子 超入門
-haskell	2015-01-04	79fe0e4c77427368ae2d	monad-transformer-intro	【解答例】Haskell モナド変換子 超入門
 haskell	2015-01-05	60f787149673b4d4775f	unboxed-tuples	アンボックス化タプルの挙動を確認（微妙）
 haskell	2015-01-11	1e6b5899db3ab6b6a8fc	list-vs-iouarray	リストとIOUArray
-haskell	2015-01-22	5a8b25d8db772bc27a71	maybe-monad-intro	【解答例】Haskell Maybeモナド 超入門
-haskell	2015-01-22	c7d7eec066af0fe0688d	haskell-maybe-monad	Haskell Maybeモナド 超入門
-haskell	2015-02-09	f2c1365b792aa6046a49	function-composition	関数合成を機械的に扱う試み
 haskell	2015-04-24	12036631dad1979a273b	compose-maybe-state	MaybeとStateを合成
 haskell	2015-04-28	201f379443079736e18e	parsec-monad-transformers	Parsecをモナド変換子で模倣
 haskell	2015-05-07	b6cbb7df2dd969c84f49	haskell-experiments	Haskellの実験メモ一覧
@@ -123,10 +95,6 @@ haskell	2015-07-21	0494704d00396687458f	state-monad-rpn	Stateモナドによる�
 haskell	2015-07-21	8bed38f45272f194631a	polish-notation-state-monad	Stateモナドによるポーランド記法の処理
 haskell	2015-07-22	ee5afe4f088f0a1fc8c2	state-monad-infix	Stateモナドによる中置記法の処理
 haskell	2015-07-24	cda901af6abb732f9c64	maybe-monad-infix	Maybeモナドによる中置記法の処理
-haskell	2015-07-28	73e534c47bbebc71b37e	exception-handling	Haskell 例外処理 超入門
-haskell	2015-07-28	f825dc54a5f6fb2a72dc	haskell-exception-handling	【解答例】Haskell 例外処理 超入門
-haskell	2015-07-31	b8c741e78a96ea2c10fe	parsing-intro	Haskell 構文解析 超入門
-haskell	2015-07-31	f65814b1e91d48ec8d12	haskell-parsing-intro	【解答例】Haskell 構文解析 超入門
 haskell	2015-12-07	9a6e7e3b8e88bafe4174	haskell-arrows	アローの取っ掛かり
 haskell	2016-07-01	92139286a4e9b5620d69	do-blocks-computation-expressions	doブロックとコンピュテーション式
 haskell	2020-02-16	0e2951155fd8949dbc55	xorshift	Xorshiftを移植してみた
