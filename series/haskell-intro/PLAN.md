@@ -17,7 +17,7 @@
 | 6 (b) `ContT r IO` | `check/gen-io/` | `yield` の定義は変わらない。遅延がなくなることが見せ場 |
 | 7 リソース管理 | `check/cont-resource/` | LIFO 解放・`callCC` 脱出時の解放・遅延 IO の罠を確認 |
 | 他言語との対応 | `check/js-async/` | Node コールバック = Haskell 1.0 の 2 継続、`co` = 6 (a)+(b)、Python `with` = ジェネレーター |
-| Haskell 1.0 の I/O | `../../articles/haskell/check/haskell-io-history/` | **単発記事へ分離済み**（下記） |
+| Haskell 1.0 の I/O | zenn リポジトリ `check/20260730-haskell-io-history/` | **単発記事へ分離済み**（下記） |
 
 ### 未検証・未決定
 
@@ -26,10 +26,11 @@
 
 ### 歴史は単発記事へ分離した
 
-**[IOモナドに至るまでのHaskellのI/O](../../articles/haskell/haskell-io-history.md)**
-（`articles/haskell/haskell-io-history.md`、未投稿）を新規作成した。
+**[Haskell の IO モナドへの道](https://zenn.dev/7shi/articles/20260730-haskell-io-history)**
+（Qiita ではなく Zenn で公開した）を新規作成した。
 ストリーム I/O・継続 I/O・世界渡し・IO モナドの経緯を、当時のコードを
-現行 GHC に移植して動かしながら追う内容。他言語（Node.js・Python）の類似実装にも言及。
+現行 GHC に移植して動かしながら追う内容。Clean の一意型と現行 GHC の実装、
+他言語（Node.js・Python）の類似実装にも言及。
 
 **本編ではここに深入りせず、要点だけ参照してリンクする。**
 本編にとって効くのは 2 点だけ（詳細は「Haskell 1.0 の I/O」節）。
@@ -39,11 +40,10 @@
 
 ### 引き継ぎ事項
 
-- 新規記事 `articles/haskell/haskell-io-history.md` は**未投稿**（`id`/`url`/`updated_at` が空）。
-  投稿したら取得し直して埋める。
-- 検証コードの置き場所が 2 箇所に分かれている。
+- 歴史記事は Zenn で公開済み（このリポジトリには残っていない）。
+- 検証コードの置き場所が 2 つのリポジトリに分かれている。
   - シリーズ本編用: `series/haskell-intro/check/{cont-resource,gen-bidirectional,gen-io,js-async}/`
-  - 歴史記事用: `articles/haskell/check/haskell-io-history/`
+  - 歴史記事用: zenn リポジトリ `check/20260730-haskell-io-history/`
     （元は `series/haskell-intro/check/stream-io/` にあったものを移動した）
 - 各 `check/*/README.md` に確認内容と実行結果を書いてある。**PLAN の記述の根拠はそこ。**
   記事を書くときは README を読めば実行結果を再取得せずに済む。
@@ -243,9 +243,8 @@
 
 **歴史そのものは単発記事へ分離した。本編では深入りせず要点だけ参照する。**
 
-- 記事: [IOモナドに至るまでのHaskellのI/O](../../articles/haskell/haskell-io-history.md)
-  （`articles/haskell/haskell-io-history.md`、未投稿）
-- 検証コード: [`../../articles/haskell/check/haskell-io-history/`](../../articles/haskell/check/haskell-io-history/README.md)
+- 記事: [Haskell の IO モナドへの道](https://zenn.dev/7shi/articles/20260730-haskell-io-history)（Zenn）
+- 検証コード: zenn リポジトリ `check/20260730-haskell-io-history/`
 
 典拠は Hudak, Hughes, Peyton Jones, Wadler,
 [*A History of Haskell: Being Lazy with Class*](https://www.microsoft.com/en-us/research/publication/a-history-of-haskell-being-lazy-with-class/)
@@ -466,8 +465,9 @@ occurs check・無限の型という語はシリーズ全体で未出（`grep` �
       腑に落ちるか試す。姉妹編へのリンクとの配分も含めて調整する。
 - [ ] (a)(b)(c) の分量を見て、(c) を別記事に切り出すか判断する。
 - [x] Haskell 1.0 のストリーム I/O との関連付け
-      → `../../articles/haskell/check/haskell-io-history/`
-- [x] 歴史を単発記事へ分離 → `articles/haskell/haskell-io-history.md`（未投稿）
+      → zenn リポジトリ `check/20260730-haskell-io-history/`
+- [x] 歴史を単発記事へ分離 → Zenn で公開
+      （[20260730-haskell-io-history](https://zenn.dev/7shi/articles/20260730-haskell-io-history)）。
       本編は要点だけ参照してリンクする。
 - [ ] 歴史の要点を 5 と 6 の間に置くか、6 (a) の後に置くか決める。
       前者は 6 への動機付け、後者は型の一致（`feed prog` = `Behaviour`）が効く。
@@ -493,4 +493,4 @@ occurs check・無限の型という語はシリーズ全体で未出（`grep` �
   ファイル名が大文字のみの `.md`（`PLAN.md`, `NOTES.md`, `README.md`）は
   `ARTICLES.tsv` の収集対象から除外される。
   歴史記事の検証コードだけは記事に合わせて
-  `articles/haskell/check/haskell-io-history/` に置いた。
+  zenn リポジトリの `check/20260730-haskell-io-history/` に置いた。

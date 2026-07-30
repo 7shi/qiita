@@ -52,7 +52,7 @@ const abort = e => console.error(e.message);
 const readFileC = path => Cont(k => readFileT(path)(abort, k));
 ```
 
-`../../../../articles/haskell/check/haskell-io-history/ContIO.hs` の
+zenn リポジトリ `check/20260730-haskell-io-history/ContIO.hs` の
 
 ```hs
 readFileC name = Cont (readFileT name abort)

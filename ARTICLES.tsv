@@ -70,7 +70,6 @@ f59b6804167717f8f2d6	2023-02-13	articles/fsharp	simple-http-server	TcpListener �
 17a1567a635af17fc83f	2014-08-22	articles/haskell	function-overloading	Haskellで関数のオーバーロード
 9a6e7e3b8e88bafe4174	2015-12-07	articles/haskell	haskell-arrows	アローの取っ掛かり
 b6cbb7df2dd969c84f49	2015-05-07	articles/haskell	haskell-experiments	Haskellの実験メモ一覧
-	2026-07-30	articles/haskell	haskell-io-history	IOモナドに至るまでのHaskellのI/O
 cd7f65a898dd5696c73d	2014-08-25	articles/haskell	haskell-typeclasses-fsharp-interfaces	Haskellの型クラスとF#のインターフェース
 0bd828489aa176252fe8	2014-11-08	articles/haskell	implementing-space	Haskellで空間を実装してみた
 0a90d7ba31355e1c73aa	2014-12-09	articles/haskell	io-monad-internals	IOモナドを素手で触ってみた
