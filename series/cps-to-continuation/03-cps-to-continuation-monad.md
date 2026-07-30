@@ -532,10 +532,6 @@ while (it = it.next().evalCont()) {
 
 https://qiita.com/7shi/items/a44c5257f04f0c641ef0
 
-Haskell ではジェネレーターから継続を返す部分で型が循環するため、`{value, next}` に相当するものを型シノニムやタプルでは表せません。`data` で包めば移植できます。（コードは[移植元](#移植元)を参照）
-
-JavaScript は動的型付けのため型エラーで実行できないということはありませんが、もちろん間違った使い方をすれば実行時エラーになります。Haskell と Scheme の中間のような使用感だと思いました。
-
 ## 移植元
 
 Haskell での継続モナドの説明とソースを参照しました。
@@ -568,7 +564,13 @@ f x = evalCont $ callCC $ \ret -> do
     return "non-zero"
 ```
 
-ジェネレーターは `{value, next}` に相当する型が循環するため、`data` で包みました。
+これらを JavaScript に移植しました。
+
+## ジェネレーター
+
+ジェネレーターは当初 Haskell でうまく実装できなかったため、JavaScript で先に実装しました。それを Haskell に移植する際、`{value, next}` に相当する型が循環するため、`data` で包む必要がありました。
+
+※ JavaScript は動的型付けのため型の循環でエラーになることはありませんが、もちろん間違った使い方をすれば実行時エラーになります。Haskell と Scheme の中間のような使用感だと思いました。
 
 ```hs:ジェネレーター
 data It = It { value :: Maybe Int, next :: () -> Cont It It }
@@ -603,6 +605,4 @@ main = go g
 
 型が循環する理由と、直和型で整理した実装は別記事にまとめました。
 
-[継続モナドによるジェネレーターを Haskell で書く](haskell-generator.md)
-
-これらを JavaScript に移植しました。
+https://zenn.dev/7shi/articles/20260730-haskell-generator
