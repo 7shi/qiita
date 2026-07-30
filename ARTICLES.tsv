@@ -220,30 +220,30 @@ fafe77f9a5ff2f9651ba	2017-03-25	series/bicomplex-numbers	04-clifford-algebra-pau
 029343420518b6884d7c	2017-01-19	series/fsharp-opengl	01-opengl	F#でOpenGL
 efdf0ae04a24bc1b7623	2017-01-20	series/fsharp-opengl	02-opengl-gears	F#にOpenGLの歯車デモを移植
 b02f2e45b49c0314fd12	2017-01-30	series/fsharp-opengl	03-opengl-offscreen-rendering	OpenGLでオフスクリーンレンダリング
-145f1234f8ec2af923ef	2014-08-20	series/haskell-intro	01-haskell-intro	Haskell 超入門
-0ece8c3394e1328267ed	2014-08-31	series/haskell-intro	01a-haskell-intro-answers	【解答例】Haskell 超入門
+145f1234f8ec2af923ef	2014-08-20	series/haskell-intro	01-intro	Haskell 超入門
+0ece8c3394e1328267ed	2014-08-31	series/haskell-intro	01a-intro	【解答例】Haskell 超入門
 1ce76bde464b4a55c143	2014-09-19	series/haskell-intro	02-algebraic-data-types	Haskell 代数的データ型 超入門
-0bed757ed0b51944a669	2014-09-19	series/haskell-intro	02a-algebraic-data-types-answer	【解答例】Haskell 代数的データ型 超入門
-85afd7bbd5d6c4115ad6	2014-10-09	series/haskell-intro	03-haskell-actions-intro	Haskell アクション 超入門
-623fd55b8b68398becdc	2014-10-09	series/haskell-intro	03a-haskell-action-intro	【解答例】Haskell アクション 超入門
-1345bf32003faff435cb	2014-11-27	series/haskell-intro	04-haskell-lambda	Haskell ラムダ 超入門
-bfa4c282c504c24578d2	2014-11-27	series/haskell-intro	04a-haskell-lambda-intro	【解答例】Haskell ラムダ 超入門
+0bed757ed0b51944a669	2014-09-19	series/haskell-intro	02a-algebraic-data-types	【解答例】Haskell 代数的データ型 超入門
+85afd7bbd5d6c4115ad6	2014-10-09	series/haskell-intro	03-actions	Haskell アクション 超入門
+623fd55b8b68398becdc	2014-10-09	series/haskell-intro	03a-actions	【解答例】Haskell アクション 超入門
+1345bf32003faff435cb	2014-11-27	series/haskell-intro	04-lambda	Haskell ラムダ 超入門
+bfa4c282c504c24578d2	2014-11-27	series/haskell-intro	04a-lambda	【解答例】Haskell ラムダ 超入門
 4a8a2807bb5186576c61	2014-12-03	series/haskell-intro	05-actions-and-lambdas	Haskell アクションとラムダ 超入門
-cb99bb70ee103408bf51	2014-12-03	series/haskell-intro	05a-haskell-actions-lambdas	【解答例】Haskell アクションとラムダ 超入門
-d3d3492ddd90d47160f2	2014-12-11	series/haskell-intro	06-io-monad-intro	Haskell IOモナド 超入門
-dfc114f133580ee85686	2014-12-11	series/haskell-intro	06a-io-monad-intro-answer	【解答例】Haskell IOモナド 超入門
-deb19c4cba933590ffbf	2014-12-19	series/haskell-intro	07-list-monad-intro	Haskell リストモナド 超入門
-4a24fd9395f5a60d811d	2014-12-19	series/haskell-intro	07a-list-monad-intro-answer	【解答例】Haskell リストモナド 超入門
-c7d7eec066af0fe0688d	2015-01-22	series/haskell-intro	08-haskell-maybe-monad	Haskell Maybeモナド 超入門
-5a8b25d8db772bc27a71	2015-01-22	series/haskell-intro	08a-maybe-monad-intro	【解答例】Haskell Maybeモナド 超入門
+cb99bb70ee103408bf51	2014-12-03	series/haskell-intro	05a-actions-and-lambdas	【解答例】Haskell アクションとラムダ 超入門
+d3d3492ddd90d47160f2	2014-12-11	series/haskell-intro	06-io-monad	Haskell IOモナド 超入門
+dfc114f133580ee85686	2014-12-11	series/haskell-intro	06a-io-monad	【解答例】Haskell IOモナド 超入門
+deb19c4cba933590ffbf	2014-12-19	series/haskell-intro	07-list-monad	Haskell リストモナド 超入門
+4a24fd9395f5a60d811d	2014-12-19	series/haskell-intro	07a-list-monad	【解答例】Haskell リストモナド 超入門
+c7d7eec066af0fe0688d	2015-01-22	series/haskell-intro	08-maybe-monad	Haskell Maybeモナド 超入門
+5a8b25d8db772bc27a71	2015-01-22	series/haskell-intro	08a-maybe-monad	【解答例】Haskell Maybeモナド 超入門
 2e9bff5d88302de1a9e9	2014-12-27	series/haskell-intro	09-state-monads	Haskell 状態系モナド 超入門
-fe978f1bd2d52760419d	2014-12-27	series/haskell-intro	09a-state-monad-intro	【解答例】Haskell 状態系モナド 超入門
+fe978f1bd2d52760419d	2014-12-27	series/haskell-intro	09a-state-monads	【解答例】Haskell 状態系モナド 超入門
 4408b76624067c17e933	2015-01-04	series/haskell-intro	10-monad-transformers	Haskell モナド変換子 超入門
-79fe0e4c77427368ae2d	2015-01-04	series/haskell-intro	10a-monad-transformer-intro	【解答例】Haskell モナド変換子 超入門
+79fe0e4c77427368ae2d	2015-01-04	series/haskell-intro	10a-monad-transformers	【解答例】Haskell モナド変換子 超入門
 73e534c47bbebc71b37e	2015-07-28	series/haskell-intro	11-exception-handling	Haskell 例外処理 超入門
-f825dc54a5f6fb2a72dc	2015-07-28	series/haskell-intro	11a-haskell-exception-handling	【解答例】Haskell 例外処理 超入門
-b8c741e78a96ea2c10fe	2015-07-31	series/haskell-intro	12-parsing-intro	Haskell 構文解析 超入門
-f65814b1e91d48ec8d12	2015-07-31	series/haskell-intro	12a-haskell-parsing-intro	【解答例】Haskell 構文解析 超入門
+f825dc54a5f6fb2a72dc	2015-07-28	series/haskell-intro	11a-exception-handling	【解答例】Haskell 例外処理 超入門
+b8c741e78a96ea2c10fe	2015-07-31	series/haskell-intro	12-parsing	Haskell 構文解析 超入門
+f65814b1e91d48ec8d12	2015-07-31	series/haskell-intro	12a-parsing	【解答例】Haskell 構文解析 超入門
 026839b2bc193dbfb0cb	2014-08-31	series/haskell-intro	8086-disassembler	Haskellによる8086逆アセンブラ開発入門
 6d228b6fc4734f48a33e	2014-08-31	series/haskell-intro	8086-disassembler-answer	【解答例】Haskellによる8086逆アセンブラ開発入門
 c62858d22a565095f791	2014-09-19	series/haskell-intro	algebraic-calculation	【解答例】Haskellによる代数計算入門

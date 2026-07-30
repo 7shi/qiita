@@ -530,7 +530,7 @@ Haskell シリーズの軸から最も遠いので代償は小さい。
 なお mtl 2.3 では `Control.Monad.Cont` が `liftIO` を再輸出しないので、
 `ContT` を使うコード例では `Control.Monad.IO.Class` の import を省略しないこと。
 
-パーサーは [12-parsing-intro.md](12-parsing-intro.md) があるので、
+パーサーは [12-parsing.md](12-parsing.md) があるので、
 **同記事が `StateT` + `Either` でパーサの原理を説明済み**なのが、6 (c) を落とす決め手になった。
 `RankNTypes` もシリーズ未出だが、(a)(b) の範囲では不要なので説明は要らない。
 
