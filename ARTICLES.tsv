@@ -244,6 +244,7 @@ fe978f1bd2d52760419d	2014-12-27	series/haskell-intro	09a-state-monads	【解答�
 f825dc54a5f6fb2a72dc	2015-07-28	series/haskell-intro	11a-exception-handling	【解答例】Haskell 例外処理 超入門
 b8c741e78a96ea2c10fe	2015-07-31	series/haskell-intro	12-parsing	Haskell 構文解析 超入門
 f65814b1e91d48ec8d12	2015-07-31	series/haskell-intro	12a-parsing	【解答例】Haskell 構文解析 超入門
+	2026-07-31	series/haskell-intro	13-continuation-monad-intro	Haskell 継続モナド 超入門
 026839b2bc193dbfb0cb	2014-08-31	series/haskell-intro	8086-disassembler	Haskellによる8086逆アセンブラ開発入門
 6d228b6fc4734f48a33e	2014-08-31	series/haskell-intro	8086-disassembler-answer	【解答例】Haskellによる8086逆アセンブラ開発入門
 c62858d22a565095f791	2014-09-19	series/haskell-intro	algebraic-calculation	【解答例】Haskellによる代数計算入門
