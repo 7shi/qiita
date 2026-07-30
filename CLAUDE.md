@@ -33,28 +33,25 @@ url: ''
 
 ## 記事執筆時の特殊記法
 
-Qiita 独自の記法（`:::note` による補足説明、`<details>` による折りたたみなど）は
-@NOTATIONS.md を参照する。標準の Markdown ではないため、他所へ転記すると崩れる。
+Qiita 独自の記法（`:::note` による補足説明、`<details>` による折りたたみなど）は @NOTATIONS.md を参照する。標準の Markdown ではないため、他所へ転記すると崩れる。
 
 ## 記事間のリンク
 
-未投稿の記事へリンクする場合は相対パス（`haskell-generator.md` など）で書き、
-投稿後に Qiita の URL へ差し替える。
+未投稿の記事へリンクする場合は相対パス（`haskell-generator.md` など）で書き、投稿後に Qiita の URL へ差し替える。
 
 ## ARTICLES.tsv
 
-`articles/` と `series/` を走査して機械生成するインデックス。手で編集しない。
-記事を追加・移動・リネームしたら再生成する。
+- `articles/` と `series/` を走査して機械生成するインデックス。手で編集しない。
+- 記事を追加・移動・リネームしたら再生成する。
 
 ```
 make articles
 ```
 
-拡張子を除く部分が大文字だけのファイル（`README.md`, `PLAN.md`, `NOTES.md` など）は
-記事ではないものとして収集対象から除外される。
+拡張子を除く部分が大文字だけのファイル（`README.md`, `PLAN.md`, `NOTES.md` など）は記事ではないものとして収集対象から除外される。
 
 ## 検証コード
 
-記事に載せるコードを実際に動かして確認する場合、`{記事のディレクトリ}/check/` に置く。
-掲載コードと同じ内容のファイルと、調査メモ `NOTES.md` を含める。
-例: [`series/cps-to-continuation/check/`](series/cps-to-continuation/check/NOTES.md)
+- 記事に載せるコードを実際に動かして確認する場合、`{記事のディレクトリ}/check/` に置く。
+- 掲載コードと同じ内容のファイルと `README.md` を含める。
+- 例: `series/XXX/check/README.md`
