@@ -46,96 +46,171 @@ Haskell ではモナドと呼ばれる部品を組み合わせてプログラム
 
 # bind と継続
 
-`m >>= k` の `k` は「`m` の後に続く残りの計算」です。これを**継続**（continuation）と呼びます。
+他の言語でもおなじみのパターンとして、処理が終わった後に呼ばれるコールバックがあります。
 
-`do` ブロックはこの `>>=` の連鎖に脱糖されます。これまで扱ってきたモナドで確認します。
-
-```hs
-do
-    x <- m
-    y <- f x
-    g x y
+```js:Node.js のコールバック
+readFile("input.txt", (data) => {
+    console.log(data);
+});
 ```
 
-上記は次のように脱糖されます。
+`readFile` は「読み終わったら何をするか」を表すコールバックを受け取ります。この「次にすること」を**継続**（continuation）と呼びます。
 
-```hs
-m >>= \x ->
-f x >>= \y ->
-g x y
-```
+ここで区別しておきたいのが、継続そのものと、継続の渡し方です。`readFile` は結果を返り値にせず、コールバックという形で継続を引数として受け取っています。このように継続を引数として渡すことを**継続渡し**（continuation-passing）、そのように書くスタイルを**CPS**（Continuation-Passing Style: 継続渡しスタイル）と呼びます。
 
-`\x -> f x >>= \y -> g x y` の部分が `m` の継続です。`m` が値を生成した後に何をするかが、この関数として渡されています。
+Haskell の `>>=`（bind）も同じ構造を持っています。`m >>= k` の `k` は「`m` の結果を受け取って続きを行う関数」、つまり継続です。`k` を引数として受け取る bind は、まさに継続渡しの形をしています。
 
 IO モナドなら「次に実行するアクション」、Maybe モナドなら「値があったときに続ける処理」、リストモナドなら「各要素に対して行う処理」が継続にあたります。モナドの種類が変わっても `k` が継続だという構図は変わりません。
 
 継続はいつも `>>=` の中に隠れていて、直接触ることはできません。今回はこれを表に引っ張り出します。
 
-# 継続モナド
+## bind は CPS
 
-継続を値として取り出せるようにしたモナドが**継続モナド**（`Cont`）です。導出の足場として、[10 回](https://qiita.com/7shi/items/4408b76624067c17e933)の「Identity モナド」を使います。
-
-## Identity モナドの bind は既に CPS
-
-[10 回](https://qiita.com/7shi/items/4408b76624067c17e933)で説明した通り、`Identity` は値をそのまま持つだけの最も単純なモナドです。
-
-```hs:定義（再掲）
-newtype Identity a = Identity { runIdentity :: a }
-```
-
-`Identity` の `bind` を、継続 `k` を主役にして書き直してみます。
+bind が CPS の構造を持っていることを、最も単純なモナドである恒等モナド（`Identity`）で確認します。[10 回](https://qiita.com/7shi/items/4408b76624067c17e933)で説明した、中に値が入っているだけのモナドです。
 
 ```hs
-m >>= k = k (runIdentity m)   -- k を呼ぶだけ
+import Control.Monad.Identity
+
+calc = do
+    x <- return 3
+    return (x * 2)
+
+main = print $ runIdentity (calc :: Identity Int)
+```
+```text:実行結果
+6
 ```
 
-これは**継続渡しスタイル**（CPS: Continuation-Passing Style）そのものです。値を直接返すのではなく、値を渡す先の関数 `k` を呼ぶことで計算を進めています。
+`do` 記法は `>>=` の連鎖の糖衣構文です。展開すれば次のようになります。
 
-CPS で書かれた関数を末尾再帰化の道具として使う話は、姉妹編の[CPS 変換による末尾再帰化](https://qiita.com/7shi/items/2d25f7afe25c3ca11acb)（JavaScript）が扱っています。ただしあちらの動機は「ループにするための CPS」で、今回の「継続を掴むための CPS」とは目的が違います。詳しくは深入りしません。
+```hs
+calc =
+    return 3 >>= \x ->
+    return (x * 2)
+```
 
-## k は外から来るだけで保持できない
+`return 3 >>= k` の `k`（`\x -> return (x * 2)`）が、まさに「`return 3` の後に続く継続」です。
+
+`Identity` の `bind` の定義を、この継続 `k` に注目して見てみます。
+
+```hs
+m >>= k = k (runIdentity m)
+```
+
+`runIdentity m` は `Identity` から値を取り出す操作です。取り出した値を `k` に渡すことで計算を進めています。まさに CPS です。
+
+# 継続モナド
 
 `Identity` の `bind` では、`k` はその場で呼ばれるだけです。呼び出し元が渡した `k` を、`Identity` の中に保持しておいて後で取り出す、ということはできません。
 
-継続を取り出せるようにするには、モナドの内部で「継続渡しスタイルの関数」そのものを保持する必要があります。
+そこで発想を変えます。値をそのまま持つのではなく、計算そのものを CPS で表現してしまいます。
 
-## 反転して Cont r a を作る
+## 型表記
 
-`Identity` は `runIdentity :: a` という形で値を直接持っていました。継続を保持する形にするには、これを反転させます。
+`Identity` は値をそのまま持っていました。これを、「最終的な受け手を受け取ったら、それを呼び出して答えを返す関数」に置き換えてみます。このように置き換えたモナドを**継続モナド**（`Cont`）と呼びます。
 
-```hs
-newtype Identity   a = Identity { runIdentity ::           a }
-newtype Cont     r a = Cont     { runCont     :: (a -> r) -> r }
+```hs:型表記
+Cont r a
 ```
 
-`Identity` が「値」を持っていたのに対して、`Cont` は「値を渡すと `r` を返す関数」を持ちます。これは `Identity` から値を引き算した形ではなく、CPS であることを利用して**関数として反転**させた形です。単純に値を引いてしまうと `Identity` 自身に戻るだけで、`(a -> r) -> r` は出てきません。
+* `r`: 最終的な答えの型です。
+* `a`: 継続モナドの中に含まれる値の型です。
 
-姉妹編の[CPS 変換から継続モナドへ](https://qiita.com/7shi/items/27b6f3169961299a6195)（JavaScript）が同じ筋をたどっています。核心を引用します。
+使用するには `Control.Monad.Trans.Cont` を import します。
 
-> 恒等モナドに継続を渡すことはできますが、外部から与えられるだけで取り出すことはできません。継続を取り出せるようにするため、モナド内部で継続渡しスタイルの関数を保持するようにしたのが**継続モナド**です。
+## runCont
 
-`return`・`>>=`・`evalCont` を実装します。
+```hs:型
+runCont :: Cont r a -> (a -> r) -> r
+```
+
+継続モナドから値を取り出す関数です。[9 回](https://qiita.com/7shi/items/2e9bff5d88302de1a9e9)の `runState` に相当しますが、渡すのは初期状態ではなく**最終的な受け手**（継続）です。
 
 ```hs
-newtype Cont r a = Cont { runCont :: (a -> r) -> r }
+import Control.Monad.Trans.Cont
 
-instance Functor (Cont r) where
-    fmap = liftM
+main = do
+    let a = return 1 :: Cont Int Int
+    print $ runCont a (+ 100)  -- 受け手に1が渡される
+```
+```text:実行結果
+101
+```
 
-instance Applicative (Cont r) where
-    pure x = Cont ($ x)
-    (<*>) = ap
+`runState` に状態を渡すと `(値, 状態)` が返って来たのに対して、`runCont` では渡した受け手が呼ばれます。値を**返してもらう**のではなく、値を**渡してもらう**、この向きの違いが「反転」の意味です。
 
-instance Monad (Cont r) where
-    m >>= k = Cont $ \c -> runCont m (\x -> runCont (k x) c)
+## evalCont
 
+```hs:型
 evalCont :: Cont r r -> r
+```
+
+受け手に `id`（何もしない関数）を指定して値を取り出す関数です。`runState` に対する `evalState` のような位置付けです。
+
+```hs
 evalCont = (`runCont` id)
 ```
 
-※ `Monad` のスーパークラスである `Functor`・`Applicative` のインスタンスも必要です。`Control.Monad` の `liftM`・`ap` で機械的に導出できます。
+`Identity` の `runIdentity` はこれに相当します。
 
-`evalCont` は、渡す継続に `id`（何もしない関数）を指定して値を取り出します。標準ライブラリでは `Control.Monad.Trans.Cont` にこれと同じものが用意されています。
+```hs
+import Control.Monad.Identity
+import Control.Monad.Trans.Cont
+
+main = do
+    print $ runIdentity (return 1 :: Identity Int)
+    print $ evalCont    (return 1 :: Cont Int Int)
+```
+```text:実行結果
+1
+1
+```
+
+## 内部関数
+
+```hs:型
+(a -> r) -> r
+```
+
+`runCont` に受け手を渡さずに部分適用したものが内部関数です。9 回の State モナドと並べます。
+
+* `State s a` の内部関数: `s -> (a, s)`（状態を受け取って、値と状態を返す）
+* `Cont  r a` の内部関数: `(a -> r) -> r`（受け手を受け取って、受け手を呼ぶ）
+
+## cont
+
+```hs:型
+cont :: ((a -> r) -> r) -> Cont r a
+```
+
+内部関数から継続モナドを作る関数です。`state` に相当します。
+
+中に `1` を含む継続モナドを自作してみます。
+
+```hs
+import Control.Monad.Trans.Cont
+
+main = do
+    let m1 = return 1             -- 1が入ったモナド
+        m2 = cont $ \c -> c 1     -- m1と等価: 受け手 -> 受け手に1を渡す
+    print $ evalCont m1
+    print $ evalCont m2
+```
+```text:実行結果
+1
+1
+```
+
+## bind
+
+`Identity` と `Cont` の `bind` を並べます。
+
+```hs
+m >>= k = k (runIdentity m)                              -- Identity
+m >>= k = cont $ \c -> runCont m (\x -> runCont (k x) c) -- Cont
+```
+
+`Identity` では `k` をその場で呼ぶだけでしたが、`Cont` では `\x -> runCont (k x) c` という関数を組み立てて `m` に渡しています。継続が関数の形で `Cont` の中に住んでいるのが違いです。
 
 ## 継続を保持できることから3つの自由が出る
 
@@ -167,14 +242,17 @@ callCC :: ((a -> Cont r b) -> Cont r a) -> Cont r a
 import Control.Monad (when)
 import Control.Monad.Trans.Cont (evalCont, callCC)
 
-f :: Int -> String
 f x = evalCont $ callCC $ \ret -> do
     when (x == 0) (ret "zero")
     return "non-zero"
+
+main = do
+    print $ f 0
+    print $ f 1
 ```
 ```text:実行結果
-"zero"    -- f 0
-"non-zero"  -- f 1
+"zero"
+"non-zero"
 ```
 
 `x == 0` のとき `ret "zero"` を呼ぶと、`return "non-zero"` には到達せず `"zero"` が結果になります。
@@ -184,13 +262,12 @@ f x = evalCont $ callCC $ \ret -> do
 `callCC` の実装を見ると、`ret` の正体がわかります。
 
 ```hs
-callCC :: ((a -> Cont r b) -> Cont r a) -> Cont r a
-callCC f = Cont $ \c -> runCont (f (\x -> Cont $ \_ -> c x)) c
+callCC f = cont $ \c -> runCont (f (\x -> cont $ \_ -> c x)) c
 ```
 
-`f` に渡される `\x -> Cont $ \_ -> c x` が「現在の継続」です。呼び出すと、自分の後に続くはずだった継続（`\_ -> ...` の `_` の部分）を無視して、外側の継続 `c` にいきなり `x` を渡します。これが「脱出」の実体です。
+`f` に渡される `\x -> cont $ \_ -> c x` が「現在の継続」です。呼び出すと、自分の後に続くはずだった継続（`\_ -> ...` の `_` の部分）を無視して、外側の継続 `c` にいきなり `x` を渡します。これが「脱出」の実体です。
 
-型を見ると `k :: a -> Cont r b` の `b` が多相（呼び出し側では決まらない）になっています。これは `k` を呼んだら二度と戻ってこないことを表しています。このように「呼んだら戻らない」性質を**abortive**（脱出専用）と呼びます。
+先ほどの型で `a -> Cont r b` となっていた `b` が多相（呼び出し側では決まらない）なのは、`ret` を呼んだら二度と戻ってこないことを表しています。このように「呼んだら戻らない」性質を**abortive**（脱出専用）と呼びます。
 
 ## 限定継続との関係
 
@@ -218,7 +295,6 @@ callCC f = Cont $ \c -> runCont (f (\x -> Cont $ \_ -> c x)) c
 - **捕まえた継続は合成できるか**：`callCC` は abortive です。`k` の戻り値を使おうとしても戻ってこないので効きません。
 
   ```hs
-  abortive :: Int
   abortive = evalCont $ callCC $ \k -> do
       x <- k 1
       return (x + 100)                -- 到達しない
@@ -232,7 +308,6 @@ callCC f = Cont $ \c -> runCont (f (\x -> Cont $ \_ -> c x)) c
   ```hs
   import Control.Monad.Trans.Cont (evalCont, reset, shift)
 
-  composable :: Int
   composable = evalCont $ reset $ do
       x <- shift $ \k -> return (k (k 3))
       return (1 + x)
@@ -244,7 +319,6 @@ callCC f = Cont $ \c -> runCont (f (\x -> Cont $ \_ -> c x)) c
   `reset` が区切りを作り、`shift` がその区切りまでの継続を `k` として値の形で捕まえます。捕まえた `k` は関数として何度でも呼べ、呼んだ結果をさらに計算に使えます。同じ `k` を2回使うことすらできます。
 
   ```hs
-  twice :: Int
   twice = evalCont $ reset $ do
       x <- shift $ \k -> return (k 10 + k 20)
       return (x * 2)
@@ -253,7 +327,7 @@ callCC f = Cont $ \c -> runCont (f (\x -> Cont $ \_ -> c x)) c
   60   -- (10*2) + (20*2)
   ```
 
-  `callCC` ではこの形は型からして書けません。`k :: a -> Cont r b` の `b` が多相なので、`k` を2回呼んで結果を組み合わせることはできないのです。
+  `callCC` ではこの形は型からして書けません。捕まえた継続の戻り値の型が多相なので、2回呼んで結果を組み合わせることはできないのです。
 
 まとめると、**`callCC` は「区切りの中の undelimited な `call/cc`」**です。`evalCont` という区切りの中に限定されてはいますが、その中では「呼んだら戻らない」完全な脱出継続として振る舞います。
 
@@ -304,32 +378,23 @@ import Control.Monad.Trans.Cont (Cont, evalCont, callCC)
 
 data Gen a = Done | Yield a (Cont (Gen a) (Gen a))
 
-type GenM a = Cont (Gen a)
-type Out a = Gen a -> GenM a ()
-
-yield :: Out a -> a -> GenM a ()
 yield ccOut v = callCC $ \next -> ccOut (Yield v (next ()))
 
-runGen :: (Out a -> GenM a x) -> Gen a
 runGen body = evalCont $ callCC $ \ccOut -> body ccOut >> return Done
 ```
 
 `yield` は `callCC` で「現在の継続」（`next`、再開ポイント）を捕まえ、`Yield` に包んで `ccOut`（`runGen` の外へ抜ける継続）に渡します。`ccOut` を呼ぶことで `callCC` の内側から抜け、値と再開用の継続の組を `runGen` の呼び出し元まで持ち出します。
 
 ```hs
-toList :: Gen a -> [a]
 toList Done = []
 toList (Yield v next) = v : toList (evalCont next)
 
-nats :: Gen Int
 nats = runGen $ \ccOut ->
     let loop n = yield ccOut n >> loop (n + 1)
     in loop 0
 
-finite :: Gen Int
 finite = runGen $ \ccOut -> mapM_ (yield ccOut) [1, 2, 3]
 
-main :: IO ()
 main = do
     print (take 5 (toList nats))
     print (toList finite)
@@ -368,33 +433,29 @@ import Control.Monad.Trans.Cont (Cont, evalCont, callCC)
 
 data Gen i o = Done | Yield o (i -> Cont (Gen i o) (Gen i o))
 
-type GenM i o = Cont (Gen i o)
-type Out i o = Gen i o -> GenM i o i
-
-yield :: Out i o -> o -> GenM i o i
 yield ccOut v = callCC $ \next -> ccOut (Yield v next)
 
-runGen :: (Out i o -> GenM i o x) -> Gen i o
 runGen body = evalCont $ callCC $ \ccOut -> body ccOut >> return Done
 
-feed :: Gen i o -> [i] -> [o]
 feed (Yield v next) (i:is) = v : feed (evalCont (next i)) is
 feed _ _ = []
 
 -- 累算器: 渡された値を足し込み、途中結果を yield する
-accum :: Gen Int Int
 accum = runGen $ \ccOut ->
     let loop s = yield ccOut s >>= \x -> loop (s + x)
     in loop 0
 
-main :: IO ()
 main = print (feed accum [1, 2, 3, 4])
 ```
 ```text:実行結果
 [0,1,3,6]
 ```
 
-`toList` が書けたのは、入力が `()` に潰れていて渡す値がなかったからです。入力が必要になると、代わりに入力列をまとめて渡す `feed :: Gen i o -> [i] -> [o]` になります。
+`toList` が書けたのは、入力が `()` に潰れていて渡す値がなかったからです。入力が必要になると、代わりに入力列をまとめて渡す `feed` になります。
+
+```hs:型
+feed :: Gen i o -> [i] -> [o]
+```
 
 ※ ジェネレーターは「まず出して、それから受け取る」ので入出力の個数がずれます。`accum` に `[1,2,3,4]` を渡すと `[0,1,3,6]` になり、最後の入力を反映した `6+4=10` は出力されません。
 
@@ -425,20 +486,17 @@ Haskell 1.0はこの継続 I/O と並行して、ストリームを扱う版の 
 ```hs
 import Control.Monad.Trans.Cont (Cont, evalCont, reset, shift)
 
-yield :: o -> Cont (Gen i o) i
 yield v = shift $ \k -> return (Yield v (return . k))
 
-runGen :: Cont (Gen i o) x -> Gen i o
 runGen body = evalCont $ reset (body >> return Done)
 
-accum :: Gen Int Int
 accum = runGen $ let loop s = yield s >>= \x -> loop (s + x) in loop 0
 ```
 ```text:実行結果
 [0,1,3,6]   -- callCC 版と一致
 ```
 
-`callCC` 版では脱出継続 `ccOut` を `yield` と `runGen` の間で引き回す必要がありましたが、`shift` は呼び出し元まで戻るのでその引き回しが要りません。`Out i o` という型ごと消えています。Scheme を扱った姉妹編（[限定継続でジェネレーターを実装する](https://qiita.com/7shi/items/6db3e19ddc1f8552d9a0)）が「限定継続では継続を保存しておく必要がなく、`yield` は外部の変数を参照しないため外で定義できる」と結論しているのと同じ現象が Haskell でも再現します。
+`callCC` 版では脱出継続 `ccOut` を `yield` と `runGen` の間で引き回す必要がありましたが、`shift` は呼び出し元まで戻るのでその引き回しが要りません。`yield` から引数が1つ消えています。Scheme を扱った姉妹編（[限定継続でジェネレーターを実装する](https://qiita.com/7shi/items/6db3e19ddc1f8552d9a0)）が「限定継続では継続を保存しておく必要がなく、`yield` は外部の変数を参照しないため外で定義できる」と結論しているのと同じ現象が Haskell でも再現します。
 
 それでも本記事の本線は `callCC` のままにします。理由は3つです。
 
@@ -453,15 +511,12 @@ accum = runGen $ let loop s = yield s >>= \x -> loop (s + x) in loop 0
 中断点から1歩進める `step` と、そこでの出力を覗く `peek` を用意します。
 
 ```hs
-step :: Gen i o -> i -> Gen i o
 step (Yield _ next) i = evalCont (next i)
 step Done _ = Done
 
-peek :: Gen i o -> Maybe o
 peek (Yield v _) = Just v
 peek Done = Nothing
 
-main :: IO ()
 main = do
     let g = step accum 10   -- 10 を渡した状態
     print (peek g)
@@ -490,14 +545,9 @@ import Control.Monad.IO.Class (liftIO)
 
 data Gen a = Done | Yield a (ContT (Gen a) IO (Gen a))
 
-type GenM a = ContT (Gen a) IO
-type Out a = Gen a -> GenM a ()
-
 -- yield の定義は純粋版と 1 文字も変わらない
-yield :: Out a -> a -> GenM a ()
 yield ccOut v = callCC $ \next -> ccOut (Yield v (next ()))
 
-runGen :: (Out a -> GenM a x) -> IO (Gen a)
 runGen body = evalContT $ callCC $ \ccOut -> body ccOut >> return Done
 ```
 
@@ -506,14 +556,12 @@ runGen body = evalContT $ callCC $ \ccOut -> body ccOut >> return Done
 ※ mtl 2.3 では `Control.Monad.Cont` が `liftIO` を再輸出しないため、`Control.Monad.IO.Class` から明示的に import する必要があります。
 
 ```hs
-noisy :: IO (Gen Int)
 noisy = runGen $ \ccOut ->
     let y n = do
             liftIO $ putStrLn ("  produce " ++ show n)
             yield ccOut n
     in mapM_ y [1, 2, 3]
 
-main :: IO ()
 main = do
     g <- noisy
     xs <- consume g
@@ -544,7 +592,6 @@ main = do
 `ContT r IO` では `toList` が `IO [a]` になるため、この遅延は効きません。無限のジェネレーターを打ち切るドライバーを自分で書く必要があります。しかも素朴に書くと、判断する前に1回余分に再開してしまいます。
 
 ```hs
-takeIOEager :: Int -> Gen a -> IO [a]
 takeIOEager 0 _ = return []
 takeIOEager _ Done = return []
 takeIOEager n (Yield v k) = do
@@ -562,7 +609,6 @@ takeIOEager n (Yield v k) = do
 再開の前に打ち切りを判定すれば直ります。
 
 ```hs
-takeIO :: Int -> Gen a -> IO [a]
 takeIO n _ | n <= 0 = return []
 takeIO _ Done = return []
 takeIO n (Yield v k)
@@ -588,18 +634,13 @@ takeIO n (Yield v k)
 
 ```hs
 data Gen i o = Done | Yield o (i -> ContT (Gen i o) IO (Gen i o))
-type GenM i o = ContT (Gen i o) IO
-type Out i o = Gen i o -> GenM i o i
 
 -- 純粋な双方向版と yield の定義は同一
-yield :: Out i o -> o -> GenM i o i
 yield ccOut v = callCC $ \next -> ccOut (Yield v next)
 
-runGen :: (Out i o -> GenM i o x) -> IO (Gen i o)
 runGen body = evalContT $ callCC $ \ccOut -> body ccOut >> return Done
 
 -- 出力を見てから次の入力を IO で決めるドライバー
-drive :: (o -> IO (Maybe i)) -> Gen i o -> IO ()
 drive _ Done = return ()
 drive f (Yield v next) = do
     mi <- f v
@@ -609,7 +650,6 @@ drive f (Yield v next) = do
 ```
 
 ```hs
-accum :: IO (Gen Int Int)
 accum = runGen $ \ccOut ->
     let loop s = do
             liftIO $ putStrLn ("  [gen] total = " ++ show s)
@@ -617,7 +657,6 @@ accum = runGen $ \ccOut ->
             loop (s + x)
     in loop 0
 
-main :: IO ()
 main = do
     g <- accum
     drive step g   -- 合計が 5 を超えたら打ち切る
@@ -658,7 +697,7 @@ main = do
 
 ## withFile と ContT の型が一致する
 
-`withFile path mode` を部分適用すると `(Handle -> IO r) -> IO r` という型になります。これは `ContT r IO Handle` の中身そのものです。
+`withFile path mode` を部分適用すると `(Handle -> IO r) -> IO r` という型になります。これは `ContT r IO Handle` の内部関数そのものです。
 
 ```hs:ネスト
 withFile src ReadMode $ \hSrc ->
@@ -668,18 +707,16 @@ withFile src ReadMode $ \hSrc ->
 ```
 
 ```hs:ContT
-copyFile :: FilePath -> FilePath -> ContT r IO ()
 copyFile src dest = do
     hSrc  <- ContT $ withFile src  ReadMode
     hDest <- ContT $ withFile dest WriteMode
     content <- liftIO $ hGetContents hSrc
     liftIO $ hPutStr hDest content
 
-main :: IO ()
 main = evalContT $ copyFile "a.txt" "b.txt"
 ```
 
-`ContT` で包むだけで、ネストしていた `with` 系の呼び出しが `do` の1行ずつに平坦になります。「継続を保持できるモナド」である `Cont r a`（`(a -> r) -> r`）が、標準ライブラリの `with` 系関数とまったく同じ形をしていた、という形で構成案2の話が回収できます。
+`ContT` で包むだけで、ネストしていた `with` 系の呼び出しが `do` の1行ずつに平坦になります。継続モナドの内部関数 `(a -> r) -> r` が、標準ライブラリの `with` 系関数とまったく同じ形をしていた、ということです。
 
 ※ 例外時にもリソースが解放される仕組み（`bracket`・`finally`）が `withFile` の内部で使われていますが、詳細には立ち入りません。
 
@@ -692,10 +729,8 @@ main = evalContT $ copyFile "a.txt" "b.txt"
 ```hs
 import Control.Monad (forM)
 
-openAll :: [FilePath] -> ContT r IO [Handle]
 openAll paths = forM paths $ \p -> ContT $ withFile p ReadMode
 
-main :: IO ()
 main = evalContT $ do
     hs <- openAll ["a.txt", "b.txt", "c.txt"]
     liftIO $ mapM_ (\h -> hGetContents h >>= putStr) hs
@@ -718,7 +753,6 @@ close A
 `callCC` で途中脱出しても、後片付けはきちんと走ります。
 
 ```hs
-escape :: IO ()
 escape = evalContT $ callCC $ \exit -> do
     a <- ContT $ withRes "A"
     liftIO $ putStrLn $ "use " ++ a
