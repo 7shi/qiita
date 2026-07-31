@@ -49,24 +49,42 @@ Haskell ではモナドと呼ばれる部品を組み合わせてプログラム
 他の言語でもおなじみのパターンとして、処理が終わった後に呼ばれるコールバックがあります。
 
 ```js:Node.js のコールバック
-readFile("input.txt", (data) => {
-    console.log(data);
+readFile("input.txt", (contents) => {
+    console.log(contents);
 });
 ```
 
 `readFile` は「読み終わったら何をするか」を表すコールバックを受け取ります。この「次にすること」を**継続**（continuation）と呼びます。
 
-ここで区別しておきたいのが、継続そのものと、継続の渡し方です。`readFile` は結果を返り値にせず、コールバックという形で継続を引数として受け取っています。このように継続を引数として渡すことを**継続渡し**（continuation-passing）、そのように書くスタイルを**CPS**（Continuation-Passing Style: 継続渡しスタイル）と呼びます。
+同じ形は `Python` の `with` にもあります。
 
-Haskell の `>>=`（bind）も同じ構造を持っています。`m >>= k` の `k` は「`m` の結果を受け取って続きを行う関数」、つまり継続です。`k` を引数として受け取る bind は、まさに継続渡しの形をしています。
+```py:Python の with
+with open("input.txt", "r") as f:
+    contents = f.read()
+    print(contents)
+```
+
+見た目はブロック構文ですが、`with` の本体は「ファイルを開いた後に何をするか」を表しています。ただし Python は本体を関数として渡すのではなく、構文としてその場に展開します。同じ役割を関数として明示的に受け取るのが Haskell の `withFile` です。
+
+```hs:Haskell の withFile
+withFile "input.txt" ReadMode $ \h -> do
+    contents <- hGetContents h
+    putStr contents
+```
+
+`withFile` はファイルを開き、そのハンドルをラムダに渡して、終わったら閉じます。`ReadMode` は読み込みモード、`hGetContents` はハンドルから内容を読み込む関数です。ここではラムダが継続にあたります。
+
+`readFile`・`with`・`withFile` は、いずれも「続きに何をするか」を先に切り出している点で同じ形です。渡し方だけが違います。
+
+ここで区別しておきたいのが、継続そのものと、継続の渡し方です。`readFile`・`withFile` は結果を返り値にせず、コールバックという形で継続を引数として受け取っています。このように継続を引数として渡すことを**継続渡し**（continuation-passing）、そのように書くスタイルを**CPS**（Continuation-Passing Style: 継続渡しスタイル）と呼びます。
+
+## bind と CPS
+
+Haskell の bind（`>>=`）も同じ構造を持っています。`m >>= k` の `k` は「`m` の結果を受け取って続きを行う関数」、つまり継続です。`k` を引数として受け取る bind は、まさに継続渡しの形をしています。
 
 IO モナドなら「次に実行するアクション」、Maybe モナドなら「値があったときに続ける処理」、リストモナドなら「各要素に対して行う処理」が継続にあたります。モナドの種類が変わっても `k` が継続だという構図は変わりません。
 
-継続はいつも `>>=` の中に隠れていて、直接触ることはできません。今回はこれを表に引っ張り出します。
-
-## bind は CPS
-
-bind が CPS の構造を持っていることを、最も単純なモナドである恒等モナド（`Identity`）で確認します。[10 回](https://qiita.com/7shi/items/4408b76624067c17e933)で説明した、中に値が入っているだけのモナドです。
+bind が CPS の構造を持っていることを、最も単純なモナドである恒等モナド（`Identity`）で確認します。中に値が入っているだけのモナドです。👉[Haskell モナド変換子 超入門](https://qiita.com/7shi/items/4408b76624067c17e933)
 
 ```hs
 import Control.Monad.Identity
@@ -81,7 +99,7 @@ main = print $ runIdentity (calc :: Identity Int)
 6
 ```
 
-`do` 記法は `>>=` の連鎖の糖衣構文です。展開すれば次のようになります。
+`do` 記法は `>>=` の連鎖の糖衣構文です。展開すれば次のようになります。👉[Haskell アクションとラムダ 超入門](https://qiita.com/7shi/items/4a8a2807bb5186576c61)
 
 ```hs
 calc =
@@ -91,7 +109,7 @@ calc =
 
 `return 3 >>= k` の `k`（`\x -> return (x * 2)`）が、まさに「`return 3` の後に続く継続」です。
 
-`Identity` の `bind` の定義を、この継続 `k` に注目して見てみます。
+`Identity` の bind の定義を、この継続 `k` に注目して見てみます。
 
 ```hs
 m >>= k = k (runIdentity m)
@@ -101,7 +119,7 @@ m >>= k = k (runIdentity m)
 
 # 継続モナド
 
-`Identity` の `bind` では、`k` はその場で呼ばれるだけです。呼び出し元が渡した `k` を、`Identity` の中に保持しておいて後で取り出す、ということはできません。
+`Identity` の bind では、`k` はその場で呼ばれるだけです。呼び出し元が渡した `k` を、`Identity` の中に保持しておいて後で取り出す、ということはできません。
 
 そこで発想を変えます。値をそのまま持つのではなく、計算そのものを CPS で表現してしまいます。
 
@@ -124,7 +142,7 @@ Cont r a
 runCont :: Cont r a -> (a -> r) -> r
 ```
 
-継続モナドから値を取り出す関数です。[9 回](https://qiita.com/7shi/items/2e9bff5d88302de1a9e9)の `runState` に相当しますが、渡すのは初期状態ではなく**最終的な受け手**（継続）です。
+継続モナドから値を取り出す関数です。`runState` に相当しますが、渡すのは初期状態ではなく**最終的な受け手**（継続）です。👉[Haskell 状態系モナド 超入門](https://qiita.com/7shi/items/2e9bff5d88302de1a9e9)
 
 ```hs
 import Control.Monad.Trans.Cont
@@ -172,7 +190,7 @@ main = do
 (a -> r) -> r
 ```
 
-`runCont` に受け手を渡さずに部分適用したものが内部関数です。9 回の State モナドと並べます。
+`runCont` に受け手を渡さずに部分適用したものが内部関数です。State モナドと並べます。👉[Haskell 状態系モナド 超入門](https://qiita.com/7shi/items/2e9bff5d88302de1a9e9)
 
 * `State s a` の内部関数: `s -> (a, s)`（状態を受け取って、値と状態を返す）
 * `Cont  r a` の内部関数: `(a -> r) -> r`（受け手を受け取って、受け手を呼ぶ）
@@ -203,7 +221,7 @@ main = do
 
 ## bind
 
-`Identity` と `Cont` の `bind` を並べます。
+`Identity` と `Cont` の bind を並べます。
 
 ```hs
 m >>= k = k (runIdentity m)                              -- Identity
@@ -359,7 +377,7 @@ Cycle in type synonym declarations:
   Gen.hs:3:1-44: type Gen a = Maybe (a, Cont (Gen a) (Gen a))
 ```
 
-`type` は単なる別名なので、使われた箇所でそのまま展開されます。`Gen a` の定義の中に `Gen a` 自身が現れているため、展開が終わりません。有限の木として型を表せず、[02 回](https://qiita.com/7shi/items/1ce76bde464b4a55c143)の「型シノニム」で説明した `type` の限界がここで表面化します。
+`type` は単なる別名なので、使われた箇所でそのまま展開されます。`Gen a` の定義の中に `Gen a` 自身が現れているため、展開が終わりません。有限の木として型を表せず、「型シノニム」で説明した `type` の限界がここで表面化します。👉[Haskell 代数的データ型 超入門](https://qiita.com/7shi/items/1ce76bde464b4a55c143)
 
 ## data で包んで解決する
 
@@ -537,7 +555,7 @@ Just 1010
 
 ## 副作用と交互に進む
 
-`ContT r IO` に持ち上げると、各 `yield` の間で IO アクションを実行できます。[10 回](https://qiita.com/7shi/items/4408b76624067c17e933)のモナドスタックの要領で `Cont` に `m`（ここでは `IO`）が挟まります。
+`ContT r IO` に持ち上げると、各 `yield` の間で IO アクションを実行できます。モナドスタックの要領で `Cont` に `m`（ここでは `IO`）が挟まります。👉[Haskell モナド変換子 超入門](https://qiita.com/7shi/items/4408b76624067c17e933)
 
 ```hs
 import Control.Monad.Trans.Cont (ContT, evalContT, callCC)
@@ -697,7 +715,7 @@ main = do
 
 ## withFile と ContT の型が一致する
 
-`withFile path mode` を部分適用すると `(Handle -> IO r) -> IO r` という型になります。これは `ContT r IO Handle` の内部関数そのものです。
+冒頭で継続の例として挙げた `withFile` に戻ります。`withFile path mode` を部分適用すると `(Handle -> IO r) -> IO r` という型になります。これは `ContT r IO Handle` の内部関数そのものです。
 
 ```hs:ネスト
 withFile src ReadMode $ \hSrc ->
@@ -720,7 +738,9 @@ main = evalContT $ copyFile "a.txt" "b.txt"
 
 ※ 例外時にもリソースが解放される仕組み（`bracket`・`finally`）が `withFile` の内部で使われていますが、詳細には立ち入りません。
 
-`Python` の `with`（`@contextmanager`）も同じ形をしています。`yield` の位置で `with` の本体（＝継続）が実行される、という作りは、ここまで作ってきたジェネレーターの `yield` と同じ仕組みです。コルーチンとリソース管理は、別の応用ではなく同じ仕組みの言い換えです。
+冒頭で見たように、`Python` の `with` は最初から平坦に並びます。Python が `with` を構文として組み込んでいて、本体を関数にせずその場に展開するからです。Haskell にはそういう構文がなく、`withFile` の本体は本物のラムダなので、素直に書けばネストします。`ContT` はそのネストを `do` の並びに戻す道具で、構文を持たない言語が同じ平坦さをライブラリだけで手に入れている、と言えます。
+
+その `with` を `@contextmanager` で書くと、両者が同じ形であることがはっきりします。`yield` の位置で `with` の本体（＝継続）が実行される、という作りは、ここまで作ってきたジェネレーターの `yield` と同じ仕組みです。コルーチンとリソース管理は、別の応用ではなく同じ仕組みの言い換えです。
 
 ## forM が効く
 
