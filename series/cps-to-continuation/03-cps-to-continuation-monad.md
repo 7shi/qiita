@@ -357,7 +357,7 @@ Cont { runCont: [Function (anonymous)] }
 2
 ```
 
-※ `k(1)` は継続を取り出して使用しています。振る舞いとしては限定継続と呼ばれるタイプですが、詳細は機会を改めます。
+※ `k` は渡された継続で、`k(1)` の戻り値が `r` として返ってきています。このように継続を呼び出すと呼び出し元へ返るのは限定継続（`shift`/`reset`）と同じ振る舞いです。👉[参考 (Scheme)](https://qiita.com/7shi/items/6db3e19ddc1f8552d9a0)
 
 継続モナドは関数をラップしているだけで、実際の計算はモナドがないかのように扱えることが望ましいです。最初のモナドから見えているのは `runCont` への引数なので、その部分でモナドを剝がしてから再度包むようにします。
 
@@ -486,7 +486,7 @@ function f(x) {
 
 継続モナドでの継続は bind で結合された範囲内に限定されるため、継続モナドから抜ければ呼び出し元に戻ります。継続モナドから抜けるときに継続を返すことで、後で継続モナドを再開することができます。
 
-※ 限定継続と似たような動きですが、細かい点が異なります。詳細は機会を改めます。
+※ 限定継続と似た動きですが、`callCC` で取り出した継続は bind で結合された後続を捨てるため、限定継続のようにその場へ値を返して計算を続けることはできません。そのため抜けるための継続と再開するための継続を別々に取り出して組み合わせる必要があります。
 
 これを利用すればジェネレーターが実装できます。
 
@@ -516,7 +516,7 @@ while (it = it.next().evalCont()) {
 3
 ```
 
-※ この実装は Haskell とも Scheme とも異なります。それについては次節で説明します。
+※ このジェネレーターは JavaScript で先に実装したもので、Haskell へは逆に移植しました。Scheme で `call/cc` を使う場合とは実装が異なります。詳細は次節で説明します。
 
 # Haskell と Scheme
 
@@ -555,6 +555,8 @@ evalCont = (`runCont` id)
 callCC :: ((a -> Cont r b) -> Cont r a) -> Cont r a
 callCC f = Cont $ \c -> runCont (f (\x -> Cont $ \_ -> c x)) c
 ```
+
+※ 現在の GHC では `Monad` のスーパークラスである `Functor` と `Applicative` のインスタンスも必要です。`Control.Monad` から `liftM` と `ap` を import して `fmap = liftM`、`(<*>) = ap` と書けば済みます。
 
 `callCC` の使用例は Haskell で先に動作確認しました。
 
@@ -600,8 +602,6 @@ main = go g
 ```
 
 `main` の `go` が JavaScript の `while (it = it.next().evalCont())` に相当します。値の有無は `undefined` の代わりに `Maybe` で表しました。
-
-※ 現在の GHC では `Monad` のスーパークラスである `Functor` と `Applicative` のインスタンスも必要です。`Control.Monad` から `liftM` と `ap` を import して `fmap = liftM`、`(<*>) = ap` と書けば済みます。
 
 型が循環する理由と、直和型で整理した実装は別記事にまとめました。
 
