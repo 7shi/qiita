@@ -1,4 +1,4 @@
--- shift/reset で双方向ジェネレーターを書き、callCC 版（../gen-bidirectional/GenBi.hs）と比較する。
+-- shift/reset で双方向ジェネレーターを書き、callCC 版（../13-gen-bidirectional/GenBi.hs）と比較する。
 -- Scheme の「限定継続でジェネレーターを実装する」が言う利点が Haskell でも再現するかの確認。
 import Control.Monad.Trans.Cont (Cont, evalCont, reset, shift)
 

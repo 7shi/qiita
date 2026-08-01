@@ -16,8 +16,8 @@
 ### 捕まえた継続は first class（ここは「限定的」ではない）
 
 捕まえた継続はただの Haskell の関数値。データ構造に格納でき
-（`gen-bidirectional` の `Yield o (i -> Cont ...)` がまさにそれ）、
-`evalCont` が返った後でも呼べ、**何度でも呼べる**（`../gen-bidirectional/GenClone.hs`）。
+（`13-gen-bidirectional` の `Yield o (i -> Cont ...)` がまさにそれ）、
+`evalCont` が返った後でも呼べ、**何度でも呼べる**（`../13-gen-bidirectional/GenClone.hs`）。
 
 **「真のコールスタックをいじらない」ことは first class 性を損なう理由ではなく、
 成り立たせている理由。** Scheme のネイティブ `call/cc` がスタックのコピーで達成する
@@ -98,7 +98,7 @@ Scheme の[限定継続でジェネレーターを実装する](https://qiita.co
 **これは Haskell でもそのまま再現した。**
 
 ```hs
--- callCC 版（../gen-bidirectional/GenBi.hs）: 脱出継続 ccOut を引き回す
+-- callCC 版（../13-gen-bidirectional/GenBi.hs）: 脱出継続 ccOut を引き回す
 type Out i o = Gen i o -> GenM i o i
 yield :: Out i o -> o -> GenM i o i
 yield ccOut v = callCC $ \next -> ccOut (Yield v next)
@@ -150,7 +150,7 @@ after    -- その外は必ず実行される
 `Shift.hs`:
 
 ```
-[0,1,3,6]   -- callCC 版（../gen-bidirectional/GenBi.hs）と一致
+[0,1,3,6]   -- callCC 版（../13-gen-bidirectional/GenBi.hs）と一致
 ```
 
 ## 記事構成への示唆

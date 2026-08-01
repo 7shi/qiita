@@ -15,14 +15,14 @@
 
 | 対象 | 場所 | 結論 |
 |---|---|---|
-| 6 (a) 双方向ジェネレーター | `check/gen-bidirectional/` | 型の循環は再発しない。生産専用版との差分は `(next ())` → `next` だけ |
-| 6 (a) 継続の再利用 | `check/gen-bidirectional/GenClone.hs` | 同じ中断点から何度でも再開でき、分岐して木になる。JS/Python では不可能 |
-| 6 (b) `ContT r IO` | `check/gen-io/` | `yield` の定義は変わらない。遅延がなくなることが見せ場 |
-| 6 (c) `await`・パーサー | `check/gen-await/` | **書けたが記事からは落とした**（(a) の部分集合・12 回の劣化版） |
-| `callCC` と限定継続 | `check/cont-delimited/Delimited.hs` | 到達範囲は `evalCont` まで。ただし `callCC` は abortive、`shift` は composable |
-| `shift` 版ジェネレーター | `check/cont-delimited/Shift.hs` | `ccOut` が消えて `callCC` 版より簡単に書ける。Scheme 記事と同じ比較が Haskell でも成立 |
-| 7 リソース管理 | `check/cont-resource/` | LIFO 解放・`callCC` 脱出時の解放・遅延 IO の罠を確認 |
-| 他言語との対応 | `check/js-async/` | Node コールバック = Haskell 1.0 の 2 継続、`co` = 6 (a)+(b)、Python `with` = ジェネレーター |
+| 6 (a) 双方向ジェネレーター | `check/13-gen-bidirectional/` | 型の循環は再発しない。生産専用版との差分は `(next ())` → `next` だけ |
+| 6 (a) 継続の再利用 | `check/13-gen-bidirectional/GenClone.hs` | 同じ中断点から何度でも再開でき、分岐して木になる。JS/Python では不可能 |
+| 6 (b) `ContT r IO` | `check/13-gen-io/` | `yield` の定義は変わらない。遅延がなくなることが見せ場 |
+| 6 (c) `await`・パーサー | `check/13-gen-await/` | **書けたが記事からは落とした**（(a) の部分集合・12 回の劣化版） |
+| `callCC` と限定継続 | `check/13-cont-delimited/Delimited.hs` | 到達範囲は `evalCont` まで。ただし `callCC` は abortive、`shift` は composable |
+| `shift` 版ジェネレーター | `check/13-cont-delimited/Shift.hs` | `ccOut` が消えて `callCC` 版より簡単に書ける。Scheme 記事と同じ比較が Haskell でも成立 |
+| 7 リソース管理 | `check/13-cont-resource/` | LIFO 解放・`callCC` 脱出時の解放・遅延 IO の罠を確認 |
+| 他言語との対応 | `check/13-js-async/` | Node コールバック = Haskell 1.0 の 2 継続、`co` = 6 (a)+(b)、Python `with` = ジェネレーター |
 | Haskell 1.0 の I/O | zenn リポジトリ `check/20260731-haskell-io-history/` | **単発記事へ分離済み**（下記） |
 
 ### 歴史は単発記事へ分離した
@@ -40,7 +40,7 @@
 以下は検討の結果として確定した設計。**覆す場合は理由を確認してから。**
 
 1. **`feed` は「リストを超えた証拠」ではない。** 役割を「リスト関数に潰せることを見せる」
-   方へ差し替えた。詳細は構成案 6 (a) と `check/gen-bidirectional/README.md` の訂正節。
+   方へ差し替えた。詳細は構成案 6 (a) と `check/13-gen-bidirectional/README.md` の訂正節。
    これに伴い、記事の線引きは「リストでは書けない」ではなく
    **「リストでも knot-tying なら書けるが、Haskell はそれを試して捨てた」**になる。
 2. **歴史の要点は 6 (a) の末尾に置く。**（1 の帰結。歴史が飾りではなく
@@ -73,12 +73,12 @@
 - 歴史記事は Zenn で公開済み（このリポジトリには残っていない）。
 - 検証コードの置き場所が 2 つのリポジトリに分かれている。
   - シリーズ本編用: `series/haskell-intro/check/`
-    （`cont-delimited`, `cont-resource`, `gen-await`, `gen-bidirectional`, `gen-io`, `js-async`）
+    （`13-cont-delimited`, `13-cont-resource`, `13-gen-await`, `13-gen-bidirectional`, `13-gen-io`, `13-js-async`）
   - 歴史記事用: zenn リポジトリ `check/20260731-haskell-io-history/`
     （元は `series/haskell-intro/check/stream-io/` にあったものを移動した）
 - 各 `check/*/README.md` に確認内容と実行結果を書いてある。**PLAN の記述の根拠はそこ。**
   記事を書くときは README を読めば実行結果を再取得せずに済む。
-- **`check/gen-bidirectional/README.md` には訂正節がある**（`feed` の役割）。
+- **`check/13-gen-bidirectional/README.md` には訂正節がある**（`feed` の役割）。
   古い記述を引かないよう、必ず訂正節まで読むこと。
 
 ## 経緯
@@ -166,7 +166,7 @@
    - 答えの型 `r` の役割を説明する（ここが後のコルーチンの伏線になる）。
      **`r` が何かという問いの答えの一つが「区切り」。** `evalCont` が prompt そのもので、
      その外の継続は捕まらない。ここは 1〜2 行で、限定継続という語はまだ出さなくてよい
-     （**検証済み**: [check/cont-delimited/README.md](check/cont-delimited/README.md)）。
+     （**検証済み**: [check/13-cont-delimited/README.md](check/13-cont-delimited/README.md)）。
 3. **callCC**
    - `callCC :: ((a -> Cont r b) -> Cont r a) -> Cont r a`
    - 早期脱出の例（`when (x == 0) (ret "zero")`）から入る。
@@ -238,7 +238,7 @@
    - 実行結果を載せるときの注意: ジェネレーターは「まず出して、それから受け取る」ので
      入出力の個数がずれる。`accum` に `[1,2,3,4]` を渡すと `[0,1,3,6]` で、
      `6+4=10` は出ない。一言説明しないと読者が数え違える。
-   - 検証コード・確認内容: [check/gen-bidirectional/README.md](check/gen-bidirectional/README.md)
+   - 検証コード・確認内容: [check/13-gen-bidirectional/README.md](check/13-gen-bidirectional/README.md)
      （標準の `Cont` 版と全部自前の最小実装版の両方。コルーチン部分は `diff` で同一）
    - **(a) の末尾に 3 つ置く。**
      1. **歴史の要点**（決定事項 2、下の「Haskell 1.0 の I/O」節）。数行＋リンク。
@@ -246,7 +246,7 @@
         と落とせる。5 の「リストで十分では」への史実による回答にもなる。
      2. **`shift` 版との比較**（決定事項 5）。構成案 3 末尾で説明した `shift`/`reset` を
         使ってジェネレーターを書き直し、`ccOut` の引き回しが消えることを実際のコードで示す。
-        読者が確実に持つ疑問への回答（検証: [check/cont-delimited/README.md](check/cont-delimited/README.md)
+        読者が確実に持つ疑問への回答（検証: [check/13-cont-delimited/README.md](check/13-cont-delimited/README.md)
         の `Shift.hs` 節、コードは `Shift.hs` そのもの）。Scheme 記事へのリンクは
         「意味論のより詳しい解説」として添える。
      3. **「既存のジェネレーターを使えばよいのでは」への答え**（下の「既存のジェネレーターより
@@ -270,11 +270,11 @@
      本当の境界**（検証済み）。ただし「リストでは書けない」ではなく
      「リストでやるなら knot-tying が要る」が正確な言い方（決定事項 1・構成案 5）。
      (b) は短くする方針だが、この例を (a) の締めに置く構成も検討する。
-   - 検証コード・確認内容: [check/gen-io/README.md](check/gen-io/README.md)
+   - 検証コード・確認内容: [check/13-gen-io/README.md](check/13-gen-io/README.md)
    - ~~**(c) 入力を消費する側のコルーチン**~~ — **検証の結果、落とした**（下記）。
      **境界は (a)(b) の 2 つとする。** (a) を本編、(b) は短く、が基本線。
      (a) は記事全体の山でもある。
-   - **(c) を落とした理由**（検証記録: [check/gen-await/README.md](check/gen-await/README.md)）
+   - **(c) を落とした理由**（検証記録: [check/13-gen-await/README.md](check/13-gen-await/README.md)）
      1. **`await` は (a) の部分集合。** 消費側 `Sink i r` は双方向ジェネレーター
         `Gen i o` の出力を潰した `o = ()` の場合でしかない。「継続は関数だから
         引数を渡せる」を (a) で見せた時点で消費側は示せており、新しい概念がない。
@@ -331,10 +331,10 @@
    - `callCC` で途中脱出しても後片付けは走る（構成案 3 の回収になる）。**検証済み**。
    - **導入で Python の `with`（`@contextmanager`）に触れる**。`yield` の位置で
      `with` の本体（＝継続）が走るので、**6 で作ったものが 7 の正体**だと繋がる。
-     出力は `cont-resource/Order.hs` と完全に一致することを確認済み。
+     出力は `13-cont-resource/Order.hs` と完全に一致することを確認済み。
    - **分量は短く。** `copyFile` 程度の一例＋ `forM` ＋注意点で足りる。
      深追いすると本線が薄まる。
-   - 検証コード・確認内容: [check/cont-resource/README.md](check/cont-resource/README.md)
+   - 検証コード・確認内容: [check/13-cont-resource/README.md](check/13-cont-resource/README.md)
 8. **練習**
    - 早期脱出を使う関数を `callCC` で書き換える。
    - `toList` の逆（リストからジェネレーターを作る）。
@@ -377,11 +377,11 @@
    具体物だった。構成案 2 で「`r` は抽象的で掴みにくい」と言った後の実例になる。
    実際に `Cont` で包んで `do` 記法にしたら Figure 6（モナド版）と同形になった。
 3. **`~`（遅延パターン）の必要性が、こちらの落とし穴と同じもの。**
-   `~` を外すと Figure 3 はデッドロックする。そして `gen-bidirectional` の
+   `~` を外すと Figure 3 はデッドロックする。そして `13-gen-bidirectional` の
    `feed`（入力を先にパターンマッチする版）を knot-tying で使うと**同じくデッドロックした**。
    出力を先に出す形に直すと通る。つまり `~` でやっていた配慮が、コルーチンでは
    ドライバー側に移り、プログラム本体では意識せずに済む。
-   `gen-io` の「素朴な `take` が 1 つ余分に生産する」も同じ型の同期のずれ。
+   `13-gen-io` の「素朴な `take` が 1 つ余分に生産する」も同じ型の同期のずれ。
    **純粋なら遅延が吸収するが、副作用が付くと露出する**という一点に集約される。
    → **構成案 5 の線引き（「リストでも knot-tying なら書ける」）の根拠がこれ。**
 
@@ -399,7 +399,7 @@
 ## 限定継続との関係
 
 **「継続モナドは真のコールスタックをいじらないので、限定継続では？」への答え。**
-**検証済み**: [check/cont-delimited/README.md](check/cont-delimited/README.md)
+**検証済み**: [check/13-cont-delimited/README.md](check/13-cont-delimited/README.md)
 
 争点を 2 つに分けると整理できる。**到達範囲としては限定的だが、`shift`/`reset` とは別物。**
 
@@ -424,7 +424,7 @@
 
 Scheme の[限定継続でジェネレーターを実装する](https://qiita.com/7shi/items/6db3e19ddc1f8552d9a0)は
 `call/cc` 版と限定継続版を並べ、限定継続版の方が簡単だと結論している。
-**これは Haskell でもそのまま再現する**（`check/cont-delimited/Shift.hs`）。
+**これは Haskell でもそのまま再現する**（`check/13-cont-delimited/Shift.hs`）。
 
 ```hs
 -- callCC 版: 脱出継続 ccOut を引き回す
@@ -477,14 +477,14 @@ yield v = shift $ \k -> return (Yield v (return . k))
 強い対応ではあったが、`co`/regenerator のドライバーを説明しないと成立せず、
 Haskell シリーズの軸から最も遠いので代償は小さい。
 
-`check/js-async/README.md` で確認した内容は、対応関係の裏取りとして持っておくだけでよい。
+`check/13-js-async/README.md` で確認した内容は、対応関係の裏取りとして持っておくだけでよい。
 
 ### 本編に残す 2 つ
 
 1. **既存のジェネレーターより能力が上**（6 (a) の末尾。**本記事オリジナルの主張はここだけ**）
 
    **`Gen i o` は純粋な値なので、同じ中断点から何度でも再開できる**（検証済み、
-   `check/gen-bidirectional/GenClone.hs`）。違う入力で再開すれば分岐して木になる。
+   `check/13-gen-bidirectional/GenClone.hs`）。違う入力で再開すれば分岐して木になる。
 
    ```hs
    let g = step accum 10
@@ -505,7 +505,7 @@ Haskell シリーズの軸から最も遠いので代償は小さい。
 2. **Python の `with` はジェネレーターで実装できる**（`@contextmanager`。構成案 7 の導入）
 
    `yield` の位置で `with` の本体（＝継続）が走る。手で駆動すると `with_` が `runContT`、
-   `body` が継続だと露わになる。出力は `cont-resource/Order.hs` と完全に一致した。
+   `body` が継続だと露わになる。出力は `13-cont-resource/Order.hs` と完全に一致した。
    → **構成案 6（コルーチン）と 7（リソース管理）は別の応用ではなく同じ仕組み。**
    7 を「おまけの実用例」ではなく**本線の言い換え**として位置付け直せる。
 
@@ -590,23 +590,23 @@ Haskell シリーズの軸から最も遠いので代償は小さい。
 
 **検証と配置の判断はすべて完了。本文は初稿ができており、残っているのは推敲以降。**
 
-- [x] (a) 双方向ジェネレーターを実装する → `check/gen-bidirectional/`
-- [x] (b) `ContT r IO` に持ち上げる → `check/gen-io/`
-- [x] (c) `await` と簡単なパーサー → `check/gen-await/`。**書けたが記事からは落とした。**
+- [x] (a) 双方向ジェネレーターを実装する → `check/13-gen-bidirectional/`
+- [x] (b) `ContT r IO` に持ち上げる → `check/13-gen-io/`
+- [x] (c) `await` と簡単なパーサー → `check/13-gen-await/`。**書けたが記事からは落とした。**
 - [x] (a)(b)(c) の分量を見て (c) をどうするか → **切り出さず落とす。** 境界は (a)(b)。
 - [x] Haskell 1.0 のストリーム I/O との関連付け・単発記事への分離 → Zenn で公開
 - [x] 歴史の要点の置き場所 → **6 (a) の末尾**（決定事項 2）
 - [x] 「他言語との対応」と「Haskell 1.0 の I/O」を統合するか
       → **どちらの節も作らない。async/await にも触れない**（決定事項 3）
-- [x] async/await・`with` との対応の裏取り → `check/js-async/`
+- [x] async/await・`with` との対応の裏取り → `check/13-js-async/`
 - [x] 既存記事の棚卸し → JS 側は 2020 年の記事が覆っているのでリンクで済ませる
-- [x] 既存のジェネレーターに対する優位性 → `check/gen-bidirectional/GenClone.hs`。**残す。**
+- [x] 既存のジェネレーターに対する優位性 → `check/13-gen-bidirectional/GenClone.hs`。**残す。**
 - [x] 限定継続に触れるか → **触れる。3 箇所に分ける**（決定事項 5）
-- [x] `shift` 版ジェネレーターとの関係 → `check/cont-delimited/Shift.hs`。
+- [x] `shift` 版ジェネレーターとの関係 → `check/13-cont-delimited/Shift.hs`。
       **本線は `callCC` のまま、6 (a) 末尾で比較に触れる。**
 - [x] 構成案 2 の CPS の小例をどうするか
       → **`Identity` からの地続きにして `addK` は落とす**（決定事項 4）
-- [x] 構成案 7（リソース管理）の動作確認 → `check/cont-resource/`
+- [x] 構成案 7（リソース管理）の動作確認 → `check/13-cont-resource/`
 - [x] 構成案 7 の位置 → **本線の後**で確定
 - [x] 構成案 7 で `bracket`/`finally` にどこまで触れるか
       → **`withFile` で入り、`bracket` は 1 行の言及のみ。`forM` の論点を追加**（決定事項 6）

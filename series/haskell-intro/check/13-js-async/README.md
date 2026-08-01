@@ -96,14 +96,14 @@ drive(function* () {
 そして `drive` は Haskell 側の
 
 ```hs
-drive :: (o -> IO (Maybe i)) -> Gen i o -> IO ()   -- check/gen-io/GenBiIO.hs
+drive :: (o -> IO (Maybe i)) -> Gen i o -> IO ()   -- check/13-gen-io/GenBiIO.hs
 ```
 
 と同じ形。ジェネレーターが「やってほしいこと」を `yield` し、ドライバーが
 実行して結果を渡して再開する。**構成案 6 (a) + (b) を組み合わせたものが
 async/await の実装方式だった**ということになる。
 
-交互に進む様子も `gen-io` の出力と同形だった。
+交互に進む様子も `13-gen-io` の出力と同形だった。
 
 ```
   [gen] request 1
@@ -138,7 +138,7 @@ close B
 close A
 ```
 
-**`../cont-resource/Order.hs` の出力と完全に一致する。**
+**`../13-cont-resource/Order.hs` の出力と完全に一致する。**
 
 さらにジェネレーターを手で駆動すると、`with` の本体が継続であることが露わになる。
 

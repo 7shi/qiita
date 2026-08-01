@@ -145,6 +145,6 @@ escape cc p = cont (\_ -> evalCont (cc p))
 
 ## 関連
 
-- 生産側（双方向）: `../gen-bidirectional/`
-- IO との交互実行: `../gen-io/`
-- リソース管理: `../cont-resource/`
+- 生産側（双方向）: `../13-gen-bidirectional/`
+- IO との交互実行: `../13-gen-io/`
+- リソース管理: `../13-cont-resource/`

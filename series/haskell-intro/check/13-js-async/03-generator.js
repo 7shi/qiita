@@ -4,7 +4,7 @@
 //
 // Haskell 側の
 //   drive :: (o -> IO (Maybe i)) -> Gen i o -> IO ()
-// （check/gen-io/GenBiIO.hs）と同じ形。
+// （check/13-gen-io/GenBiIO.hs）と同じ形。
 const fs = require('fs');
 
 const readFileK = path => k => fs.readFile(path, 'utf8', (err, data) => k(err, data));

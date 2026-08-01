@@ -10,7 +10,7 @@ GHC 9.6.6 / transformers 0.6.1.0。実行は `runghc {ファイル名}`。
 | `GenBiIO.hs` | (a) の双方向と (b) の IO を組み合わせたもの |
 
 純粋版は zenn リポジトリの `check/20260730-haskell-generator/GenStd.hs`、
-双方向の純粋版は `../gen-bidirectional/`。
+双方向の純粋版は `../13-gen-bidirectional/`。
 
 ## 確認できたこと
 
@@ -32,7 +32,7 @@ yield ccOut v = callCC $ \next -> ccOut (Yield v (next ()))
 それだけ。PLAN の「`StateT` と同じ要領で `Cont` に `m` が挟まる」で足りることを確認した。
 
 `liftIO` は `Control.Monad.IO.Class` から明示的に import が必要
-（`Control.Monad.Trans.Cont` は再輸出しない）。`../cont-resource/` と同じ注意点。
+（`Control.Monad.Trans.Cont` は再輸出しない）。`../13-cont-resource/` と同じ注意点。
 
 ### 生産と消費が交互に進む
 
