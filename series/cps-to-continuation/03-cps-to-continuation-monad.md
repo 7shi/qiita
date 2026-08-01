@@ -135,13 +135,13 @@ return はコンテナの内部構造を抽象化しているため、必ずし�
 class Identity {
     constructor(value) { this.value = value; }
     static ret(value) { return new Identity(value); }
-    bind(f) { return f(this.value); }
+    bind(k) { return k(this.value); }
 }
 ```
 
 値をそのまま保持するため、`ret` からは単にコンストラクタを呼ぶだけです。
 
-`bind` に渡す `f` は `Identity` を返すため、`bind` の戻り値も `Identity` となります。
+`bind` に渡す `k` は `Identity` を返すため、`bind` の戻り値も `Identity` となります。
 
 ※ 型を TypeScript で書けば以下の通りです。
 
@@ -149,7 +149,7 @@ class Identity {
 class Identity<T> {
     constructor(public value: T) { }
     static ret<T>(value: T): Identity<T> { return new Identity(value); }
-    bind<U>(f: (value: T) => Identity<U>): Identity<U> { return f(this.value); }
+    bind<U>(k: (value: T) => Identity<U>): Identity<U> { return k(this.value); }
 }
 ```
 
@@ -232,10 +232,10 @@ async function () {
 恒等モナドの `bind` を再掲します。
 
 ```js:再掲
-    bind(f) { return f(this.value); }
+    bind(k) { return k(this.value); }
 ```
 
-`bind` を CPS として見れば `f` は継続となります。そういう目で恒等モナドの使用例を見れば、bind によって継続をつないでいます。
+`bind` を CPS として見れば `k` は継続となります。そういう目で恒等モナドの使用例を見れば、bind によって継続をつないでいます。
 
 ```js:再掲
 > Identity.ret(1).bind(x => Identity.ret(x + 1).bind(y => Identity.ret(x * y)))
@@ -343,23 +343,16 @@ Cont { runCont: [Function (anonymous)] }
 | `K`（bind に渡す関数） | 値 | モナド |
 | `C`（`runCont` に渡す継続） | 値 | 結果 |
 
-まず、bind を介さずに `M` と `C` を直接つなぎます。
+`M` に `C` を渡せば、`M` が保持している CPS の関数が呼ばれて結果が得られます。
 
 ```js
 > M.runCont(C)
 1
 ```
 
-継続を後から受け取れるように包み直しても、結果は変わりません。受け取った継続をそのまま内部に渡すだけだからです。
+bind は、この `C` の位置に `K` をつなぎ込む操作です。しかし `C` の位置に置けるのは値から結果を返す関数です。`K` が返すのはモナドなので、剝がして型を合わせる必要があります。
 
-```js:M を包み直した形
-> new Cont(c => M.runCont(c)).runCont(C)
-1
-```
-
-bind は、この `c` の位置に `K` をつなぎ込む操作だと考えられます。しかし `c` の位置に置けるのは `C` と同じ型、つまり値から結果を返す関数です。`K` が返すのはモナドなので、剝がして型を合わせます。
-
-まず `K` を呼ぶと、モナドが得られます。
+`M` から得られた `1` で `K` を呼べば、モナドが得られます。
 
 ```js:値 → モナド
 > K(1)
@@ -373,30 +366,57 @@ Cont { runCont: [Function (anonymous)] }
 [Function (anonymous)]
 ```
 
-その CPS の関数に継続を渡せば、ようやく結果になります。
+その CPS の関数に継続を渡せば、ようやく結果が得られます。
 
 ```js:値 → 結果
 > K(1).runCont(C)
 2
 ```
 
-ここまで直接書いてきた `1` は `M` が内部で継続に渡す値なので、bind の時点では決まっていません。そこで `1` の位置を仮引数 `x` に変えて、後から受け取れるようにします。
+ここまで直接書いてきた `1` は `M` が内部で継続に渡す値なので、bind の時点では決まっていません。そこで `1` を仮引数 `x` に変えて、外部から与えられるようにします。
 
-```js
-> (x => K(x).runCont(C))(1)
+```js:値を仮引数に分離
+> K1 = x => K(x).runCont(C)
+[Function: K1]
+> K1(1)
 2
 ```
 
-これで `x => K(x).runCont(C)` が `c` と同じ型になったため、包み直した形の `c` の位置に入れます。
+これで `K1` が値から結果を返す関数になったため、`M.runCont(C)` の `C` の位置につなぎ込みます。
 
-```js:c の位置に K をつなぎ込む
-> new Cont(c => M.runCont(c)).runCont(C)
+```js:C の位置に K をつなぎ込む
+> M.runCont(C)
 1
-> new Cont(c => M.runCont(x => K(x).runCont(c))).runCont(C)
+> M.runCont(K1)
 2
 ```
 
-末尾の `.runCont(C)` を取り除いた部分が bind です。`M` を `this`、`K` を引数にすればメソッドになります。これが最初に示した実装です。
+ここまで直接書いてきた `C` は bind の時点では決まっていないため、仮引数 `c` に変えて、外部から与えられるようにします。
+
+```js:継続を仮引数に分離
+> M_K = c => M.runCont(K1)
+[Function: M_K]
+> M_K(C)
+2
+```
+
+bind はモナドを返すため、`M_K` をモナドに包みます。
+
+```js:モナドに包む
+> M_bind_K = new Cont(M_K)
+Cont { runCont: [Function: M_K] }
+> M_bind_K.runCont(C)
+2
+```
+
+`M_bind_K` をインライン展開します。
+
+```js:インライン展開
+> M_bind_K = new Cont(c => M.runCont(x => K(x).runCont(C)))
+Cont { runCont: [Function (anonymous)] }
+```
+
+`M` を `this`、`K` を引数 `k` にしてメソッドにすることで、最初に示した実装が得られます。
 
 ```js:メソッドにする
     bind(k) { return new Cont(c => this.runCont(x => k(x).runCont(c))); }
@@ -404,9 +424,11 @@ Cont { runCont: [Function (anonymous)] }
 
 かなり複雑な実装になりましたが、要点をまとめます。
 
-* bind に渡す関数（モナドを返す）と `runCont` に渡す継続（結果を返す）は別物で、bind は前者を後者の形に変換している。
-* bind の戻り値は `K` が返したモナドそのものではなく、`M` の継続の位置に `K` をつなぎ込んで組み立て直した新しいモナドとなる。
-  ※ 実装の詳細を追うのでなければ、実用上は `K` が返したモナドがそのまま戻ると思って扱える。
+* `m.bind(k)` において、`bind` に渡す関数 `k`（モナドを返す）と `runCont` に渡す継続 `c`（結果を返す）は型が異なるため、bind は `k` を `c` の型に変換する必要がある。
+* 具体的には `x => k(x).runCont(c)` として、`k` の返したモナドを `runCont` で剝がして継続 `c` を渡す。これで値から結果を返す関数に変換できる。
+* 恒等モナドの bind は `m` が持つ値で `k` を即座に呼び、`k` が返すモナドがそのまま bind の戻り値となる。それに対して、継続モナドでは bind の時点では `k` はまだ呼ばれず、変換した `k` を `m` に結合した新しいモナドが bind の戻り値となる。
+
+※ モナドとしての表面上の使い方は恒等モナドと継続モナドとで大きく違わないため、実装の詳細に踏み込まなくても、実用上は評価のタイミングだけ意識しておけば使うことは可能です。
 
 ### bind による結合
 
@@ -450,15 +472,15 @@ function callCC(f) {
 x => new Cont(_ => c(x))
 ```
 
-※ 取り出される継続は値を受け取ってモナドを返すため、bind に渡す `K` と同じ型です。そのため後続に bind でつなげます。中で使っている `c` は `runCont` に渡された継続で、2 種類の継続を橋渡ししている点は bind と同じです。
+※ `callCC` に渡す `f` が受け取るのは値ではなく継続なので、bind に渡す `k` とは別物です。取り出される継続、つまり `f` の引数の方が値を受け取ってモナドを返すため、`k` と同じ型です。そのため後続に bind でつなげられます。中で使っている `c` は `runCont` に渡された継続で、2 種類の継続を橋渡ししている点は bind と同じです。ただし向きは逆です。bind は `x => k(x).runCont(c)` として `k` を `c` の型に合わせるのに対して、ここでは `x => new Cont(_ => c(x))` として `c` を `k` の型に合わせています。
 
 これを呼び出すことで `bind` によって結合された後続の継続を飛ばして、`callCC` の継続に処理が移ります。
 
 ※ 関数が継続モナドで構成されていれば、関数から抜けると見なせます。
 
-最後の `.runCont(c)` の部分は、引数として渡される継続を呼ばなかったときだけ使われます。
+最後の `.runCont(c)` で渡した `c` は、引数として渡される継続を呼ばなかったときだけ使われます。
 
-※ 引数として渡される継続を呼び出すと `c(x)` と `.runCont(c)` で `c` を二重に適用しているように見えますが、`_ => c(x)` で引数を無視することによって bind で結合された継続は処理されないため `.runCont(c)` も処理されません。
+※ 引数として渡される継続を呼び出すと `c(x)` と `.runCont(c)` で `c` を二重に適用しているように見えます。しかし `.runCont(c)` が渡す継続は、bind で結合された後続の末尾に `c` が埋め込まれたものです。`_ => c(x)` がその継続を丸ごと無視するため末尾の `c` には到達せず、`c` が適用されるのは `c(x)` の 1 回だけです。
 
 ### 使用例
 
