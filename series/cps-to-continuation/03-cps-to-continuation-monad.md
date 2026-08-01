@@ -391,10 +391,10 @@ Cont { runCont: [Function (anonymous)] }
 2
 ```
 
-ここまで直接書いてきた `C` は bind の時点では決まっていないため、仮引数 `c` に変えて、外部から与えられるようにします。
+ここまで直接書いてきた `C` は bind の時点では決まっていないため、仮引数 `c` に変えて、外部から与えられるようにします。`K1` の中に `C` が埋まっているため、インライン展開して書き換えます。
 
 ```js:継続を仮引数に分離
-> M_K = c => M.runCont(K1)
+> M_K = c => M.runCont(x => K(x).runCont(c))
 [Function: M_K]
 > M_K(C)
 2
@@ -412,7 +412,7 @@ Cont { runCont: [Function: M_K] }
 `M_bind_K` をインライン展開します。
 
 ```js:インライン展開
-> M_bind_K = new Cont(c => M.runCont(x => K(x).runCont(C)))
+> M_bind_K = new Cont(c => M.runCont(x => K(x).runCont(c)))
 Cont { runCont: [Function (anonymous)] }
 ```
 
@@ -575,6 +575,8 @@ while (it = it.next().evalCont()) {
 3
 ```
 
+※ `yield` は strict mode の予約語のため、この関数定義が使えるのは sloppy mode（REPL や `"use strict"` を書かない `.js`）だけです。ES モジュールなどでは `yld` などに改名してください。
+
 ※ このジェネレーターは JavaScript で先に実装したもので、Haskell へは逆に移植しました。Scheme で `call/cc` を使う場合とは実装が異なります。詳細は次節で説明します。
 
 # Haskell と Scheme
@@ -615,7 +617,19 @@ callCC :: ((a -> Cont r b) -> Cont r a) -> Cont r a
 callCC f = Cont $ \c -> runCont (f (\x -> Cont $ \_ -> c x)) c
 ```
 
-※ 現在の GHC では `Monad` のスーパークラスである `Functor` と `Applicative` のインスタンスも必要です。`Control.Monad` から `liftM` と `ap` を import して `fmap = liftM`、`(<*>) = ap` と書けば済みます。
+※ 現在の GHC では `Monad` のスーパークラスである `Functor` と `Applicative` のインスタンスも必要です。`Control.Monad` から `liftM` と `ap` を import して、`return` は `pure` に移します。
+
+```hs:現在の GHC 向け修正
+instance Functor (Cont r) where
+    fmap = liftM
+
+instance Applicative (Cont r) where
+    pure x = Cont ($ x)
+    (<*>)  = ap
+
+instance Monad (Cont r) where
+    m >>= k = Cont $ \c -> runCont m (\x -> runCont (k x) c)
+```
 
 `callCC` の使用例は Haskell で先に動作確認しました。
 
