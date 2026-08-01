@@ -20,7 +20,7 @@ GHC 9.6.6 / transformers 0.6.1.0。実行は `runghc {ファイル名}`。
 
 ### 型の循環は再発しない
 
-PLAN.md の型スケッチがそのまま通った。
+13-PLAN.md の型スケッチがそのまま通った。
 
 ```hs
 data Gen i o

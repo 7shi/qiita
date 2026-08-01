@@ -649,7 +649,8 @@ Haskell シリーズの軸から最も遠いので代償は小さい。
 ## 補足
 
 - 検証コードは `series/haskell-intro/check/` に置く（CLAUDE.md の「検証コード」の方式）。
-  ファイル名が大文字のみの `.md`（`PLAN.md`, `NOTES.md`, `README.md`）は
+  ファイル名が大文字のみの `.md`（`README.md`, `NOTES.md`, このファイル `13-PLAN.md` など。
+  数字やハイフンは大小の区別がないので接頭辞が付いていても除外される）は
   `ARTICLES.tsv` の収集対象から除外される。
   歴史記事の検証コードだけは記事に合わせて
   zenn リポジトリの `check/20260731-haskell-io-history/` に置いた。
