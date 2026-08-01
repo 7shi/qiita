@@ -26,11 +26,31 @@ composable = evalCont $ reset $ do
     x <- shift $ \k -> return (k (k 3))
     return (1 + x)
 
--- (2c) 同じ k を 2 回使って結果を組み合わせる。callCC では書けない形。
+-- (2c) 同じ k を 2 回使って結果を組み合わせる。
 twice :: Int
 twice = evalCont $ reset $ do
     x <- shift $ \k -> return (k 10 + k 20)
     return (x * 2)
+
+-- (2d) callCC でも同じ形は「書ける」（型検査は通る）。
+-- mtl / transformers の callCC は rank-2 ではなく
+--   callCC :: ((a -> Cont r b) -> Cont r a) -> Cont r a
+-- なので b は本体の中で 1 つの型に単一化される。x1, x2 はどちらも Int。
+-- ただし最初の k 10 で後続が捨てられるため、結果は 10。
+-- 合成できないのは型の制約ではなく実行時の振る舞い。
+notTwice :: Int
+notTwice = evalCont $ callCC $ \k -> do
+    x1 <- k 10
+    x2 <- k 20                      -- 到達しない
+    return ((x1 + x2) * 2)
+
+-- (2e) b が本体内で 1 つに決まることの裏取り。以下は型エラーになる。
+-- （n が Int に決まると s も Int になり length s が通らない）
+--   bad = evalCont $ callCC $ \ret -> do
+--       n <- ret (1 :: Int)
+--       s <- ret (2 :: Int)
+--       return (n + length s)
+-- 真の rank-2（forall b.）なら逆にこれが通る。
 
 -- (3) 捕まえた継続は多重呼び出しできる第一級の値（callCC でも同じ）。
 -- 「戻り値を捨てて飛ぶ」ことしかできないだけで、値としては普通の関数。
@@ -53,5 +73,6 @@ main = do
     print abortive     -- 1   （+100 されない）
     print composable   -- 5
     print twice        -- 60  （(10*2) + (20*2)）
+    print notTwice     -- 10  （型は通るが最初の k 10 で脱出）
     print multishot    -- [1]
     print nested       -- 130 （(1*10 + 2*10) + 100）
