@@ -387,9 +387,11 @@ Cont { runCont: [Function (anonymous)] }
 2
 ```
 
-これで `x => K(x).runCont(C)` が `C` と同じ型になったため、包み直した形の `c` の位置に入れられます。埋め込んだ `C` も bind の時点では決まっていないため、ここでは仮引数 `c` を使います。
+これで `x => K(x).runCont(C)` が `c` と同じ型になったため、包み直した形の `c` の位置に入れます。
 
 ```js:c の位置に K をつなぎ込む
+> new Cont(c => M.runCont(c)).runCont(C)
+1
 > new Cont(c => M.runCont(x => K(x).runCont(c))).runCont(C)
 2
 ```
