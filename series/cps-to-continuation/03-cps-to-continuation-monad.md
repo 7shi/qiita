@@ -323,108 +323,110 @@ Cont { runCont: [Function (anonymous)] }
 
 配列や恒等モナドでは値を直接保持しているため `bind` で計算が行われます。それに対して継続モナドでは bind はモナドと関数の結合だけを行い、結合が完了したモナドに継続を渡した（`evalCont` が呼ばれた）ときに計算が行われます。（[結合の様子は後述](#bind-による結合)）
 
-bind がどのように実装されるのか、段階を追って説明します。
+bind がどのように実装されるのか、段階を追って説明します。bind される側のモナドを `M`、bind に渡す関数を `K`、値を取り出すための継続を `C` とします。
 
-単純なケースでは bind を `runCont` に置き換えても動きます。
-
-```js
-> m = Cont.ret(1)
-Cont { runCont: [Function (anonymous)] }
-> k = x => Cont.ret(x + 1)
-[Function: k]
-> m.bind(k).evalCont()
-2
-> m.runCont(k).evalCont()
-2
-```
-
-これを仮にクラス外の関数として定義します。
-
-```js:仮実装
-> function bind1(m, k) { return m.runCont(k); }
-undefined
-> bind1(m, k).evalCont()
-2
-```
-
-bind にはモナドを返す関数を渡す仕様のため、この実装では継続からモナドが返されます。状況を確認するため `Cont.ret` を使わずに継続の返り値を覗いてみます。
+※ 仮引数と区別するため大文字にします。
 
 ```js
-> mlog = new Cont(k => { let r = k(1); console.log(r); return r; })
+> M = Cont.ret(1)
 Cont { runCont: [Function (anonymous)] }
-> bind1(mlog, k).evalCont()
-Cont { runCont: [Function (anonymous)] }
-2
+> K = x => Cont.ret(x + 1)
+[Function: K]
+> C = x => x
+[Function: C]
 ```
 
-※ `k` は渡された継続で、`k(1)` の戻り値が `r` として返ってきています。このように継続を呼び出すと呼び出し元へ返るのは限定継続（`shift`/`reset`）と同じ振る舞いです。👉[参考 (Scheme)](https://qiita.com/7shi/items/6db3e19ddc1f8552d9a0)
+`K` と `C` はどちらも継続と呼ばれますが、型が違うことに注意が必要です。
 
-継続モナドは関数をラップしているだけで、実際の計算はモナドがないかのように扱えることが望ましいです。最初のモナドから見えているのは `runCont` への引数なので、その部分でモナドを剝がしてから再度包むようにします。
+| | 受け取るもの | 返すもの |
+|---|---|---|
+| `K`（bind に渡す関数） | 値 | モナド |
+| `C`（`runCont` に渡す継続） | 値 | 結果 |
 
-```js:仮実装
-> function bind2(m, k) { return new Cont(m.runCont(x => k(x).runCont)); }
-undefined
-> bind2(m, k).evalCont()
-2
-> bind2(mlog, k).evalCont()
+まず、bind を介さずに `M` と `C` を直接つなぎます。
+
+```js
+> M.runCont(C)
+1
+```
+
+継続を後から受け取れるように包み直しても、結果は変わりません。受け取った継続をそのまま内部に渡すだけだからです。
+
+```js:M を包み直した形
+> new Cont(c => M.runCont(c)).runCont(C)
+1
+```
+
+bind は、この `c` の位置に `K` をつなぎ込む操作だと考えられます。しかし `c` の位置に置けるのは `C` と同じ型、つまり値から結果を返す関数です。`K` が返すのはモナドなので、剝がして型を合わせます。
+
+まず `K` を呼ぶと、モナドが得られます。
+
+```js:値 → モナド
+> K(1)
+Cont { runCont: [Function (anonymous)] }
+```
+
+モナドから `runCont` を取り出せば、中の CPS の関数が得られます。これがモナドを剝がす操作です。
+
+```js:値 → CPS の関数
+> K(1).runCont
 [Function (anonymous)]
+```
+
+その CPS の関数に継続を渡せば、ようやく結果になります。
+
+```js:値 → 結果
+> K(1).runCont(C)
 2
 ```
 
-`k(1)` は関数です。これは CPS との対応を考えると分かります。
+ここまで直接書いてきた `1` は `M` が内部で継続に渡す値なので、bind の時点では決まっていません。そこで `1` の位置を仮引数 `x` に変えて、後から受け取れるようにします。
 
-```js:モナドを介さない CPS
-> (k => k(1))(x => k => k(x + 1))(x => x)
+```js
+> (x => K(x).runCont(C))(1)
 2
 ```
 
-継続として受け取った `k` は上記 CPS の `x => k => k(x + 1)` に対応するため、`k(1)` は `x = 1` とした `k => k(x + 1)` となります。（部分適用）
+これで `x => K(x).runCont(C)` が `C` と同じ型になったため、包み直した形の `c` の位置に入れられます。埋め込んだ `C` も bind の時点では決まっていないため、ここでは仮引数 `c` を使います。
 
-CPS をラップするという考え方ではこれで良さそうですが、一歩進めて `k` を直接スタイルの関数として扱えるようにします。これは bind 完了後に `evalCont` などで渡される継続を適用することで行えます。
-
-```js:仮実装
-> function bind3(m, k) { return new Cont(c => m.runCont(x => k(x).runCont(c))); }
-undefined
-> bind3(m, k).evalCont()
-2
-> bind3(mlog, k).evalCont()
-2
+```js:c の位置に K をつなぎ込む
+> new Cont(c => M.runCont(x => K(x).runCont(c))).runCont(C)
 2
 ```
 
-メソッドとして実装すれば完成です。
+末尾の `.runCont(C)` を取り除いた部分が bind です。`M` を `this`、`K` を引数にすればメソッドになります。これが最初に示した実装です。
 
-```js:再掲
+```js:メソッドにする
     bind(k) { return new Cont(c => this.runCont(x => k(x).runCont(c))); }
 ```
 
 かなり複雑な実装になりましたが、要点をまとめます。
 
-* 取り出した継続はモナドを含まずに、直接スタイルの関数として扱える。
-* bind に渡した関数が返すモナドがそのまま bind の戻り値とはならずに、再構築されたものが返される。
-  ※ 実装の詳細を追うのでなければ、実用上はそのまま戻されたと思って扱える。
+* bind に渡す関数（モナドを返す）と `runCont` に渡す継続（結果を返す）は別物で、bind は前者を後者の形に変換している。
+* bind の戻り値は `K` が返したモナドそのものではなく、`M` の継続の位置に `K` をつなぎ込んで組み立て直した新しいモナドとなる。
+  ※ 実装の詳細を追うのでなければ、実用上は `K` が返したモナドがそのまま戻ると思って扱える。
 
 ### bind による結合
 
-bind でどのように結合されるのか、インライン展開したものを式変形して確認します。式変形で操作する個所を赤字で示します。
+bind でどのように結合されるのか、インライン展開したものを式変形して確認します。次の行で書き換える箇所を赤字で示します。
 
-1. `m`
-   → `new Cont(c => m.runCont(c))` ※ 比較用
-2. `m.bind(k1)`
-   → `new Cont(c => m.runCont(x => k1(x).runCont(c)))`
-3. <code><font color="red"><b>m.bind(k1)</b></font>.bind(k2)</code>
-   → <code>new Cont(c => m.runCont(x => k1(x).runCont(c)))<font color="red"><b>.bind(k2)</b></font></code>
-   → <code><font color="red"><b>new Cont</b></font>(c => new Cont(c => m.runCont(x => k1(x).runCont(c)))<font color="red"><b>.runCont</b></font>(x => k2(x).runCont(c)))</code>
-   → <code><font color="red"><b>(c => </b></font>new Cont(c => m.runCont(x => k1(x).runCont(<font color="red"><b>c</b></font>)))<font color="red"><b>(x => k2(x).runCont(c)))</b></font></code>
-   → `new Cont(c => m.runCont(x => k1(x).runCont(x => k2(x).runCont(c))))`
+1. `M`
+   → `new Cont(c => M.runCont(c))` ※ 比較用
+2. `M.bind(K1)`
+   → `new Cont(c => M.runCont(x => K1(x).runCont(c)))`
+3. <code><font color="red"><b>M.bind(K1)</b></font>.bind(K2)</code>
+   → <code>new Cont(c => M.runCont(x => K1(x).runCont(c)))<font color="red"><b>.bind(K2)</b></font></code>
+   → <code><font color="red"><b>new Cont</b></font>(c => new Cont(c => M.runCont(x => K1(x).runCont(c)))<font color="red"><b>.runCont</b></font>(x => K2(x).runCont(c)))</code>
+   → <code><font color="red"><b>(c => </b></font>new Cont(c => M.runCont(x => K1(x).runCont(<font color="red"><b>c</b></font>)))<font color="red"><b>(x => K2(x).runCont(c)))</b></font></code>
+   → `new Cont(c => M.runCont(x => K1(x).runCont(x => K2(x).runCont(c))))`
 
 ※ 3 はラムダ式に適用した実引数を仮引数に展開しています。このような式変形をベータ簡約と呼びます。
 
 式変形の過程を省略して並べます。`runCont(c)` の `c` に継続が埋め込まれる様子が分かります（赤字部分）。
 
-1. <code>new Cont(c => m.runCont(<font color="red"><b>c</b></font>))</code>
-2. <code>new Cont(c => m.runCont(<font color="red"><b>x => k1(x).runCont(c)</b></font>))</code>
-3. <code>new Cont(c => m.runCont(x => k1(x).runCont(<font color="red"><b>x => k2(x).runCont(c)</b></font>)))</code>
+1. <code>new Cont(c => M.runCont(<font color="red"><b>c</b></font>))</code>
+2. <code>new Cont(c => M.runCont(<font color="red"><b>x => K1(x).runCont(c)</b></font>))</code>
+3. <code>new Cont(c => M.runCont(x => K1(x).runCont(<font color="red"><b>x => K2(x).runCont(c)</b></font>)))</code>
 
 ※ 2 を単独で見る（bind の実装）と複雑に見えますが、1 と 3 を並べることでパターンが明確になります。
 
@@ -445,6 +447,8 @@ function callCC(f) {
 ```js:現在の継続
 x => new Cont(_ => c(x))
 ```
+
+※ 取り出される継続は値を受け取ってモナドを返すため、bind に渡す `K` と同じ型です。そのため後続に bind でつなげます。中で使っている `c` は `runCont` に渡された継続で、2 種類の継続を橋渡ししている点は bind と同じです。
 
 これを呼び出すことで `bind` によって結合された後続の継続を飛ばして、`callCC` の継続に処理が移ります。
 
@@ -486,7 +490,7 @@ function f(x) {
 
 継続モナドでの継続は bind で結合された範囲内に限定されるため、継続モナドから抜ければ呼び出し元に戻ります。継続モナドから抜けるときに継続を返すことで、後で継続モナドを再開することができます。
 
-※ 限定継続と似た動きですが、`callCC` で取り出した継続は bind で結合された後続を捨てるため、限定継続のようにその場へ値を返して計算を続けることはできません。そのため抜けるための継続と再開するための継続を別々に取り出して組み合わせる必要があります。
+※ このように継続の対象が一定の範囲に閉じているという性質は、限定継続（`shift`/`reset`）と呼ばれる仕組みと共通します。ただし `callCC` で取り出した継続は bind で結合された後続を捨てるため、限定継続のようにその場へ値を返して計算を続けることはできません。そのため抜けるための継続と再開するための継続を別々に取り出して組み合わせる必要があります。👉[参考 (Scheme)](https://qiita.com/7shi/items/6db3e19ddc1f8552d9a0)
 
 これを利用すればジェネレーターが実装できます。
 
