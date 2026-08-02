@@ -10,6 +10,16 @@
 |---|---|
 | `Delimited.hs` | 到達範囲・abortive / composable の確認 |
 | `Shift.hs` | `shift`/`reset` で双方向ジェネレーターを書き、`callCC` 版と比較 |
+| `ShiftGen.hs` | 記事の掲載コード。値を出すだけの版（`../13-gen-basic/Gen.hs` の `shift` 版）|
+
+記事は双方向版を扱わないことにしたため、掲載コードは `ShiftGen.hs` の方。
+`Shift.hs` は双方向で書けることの検証記録として残してある。
+
+```
+1         -- ShiftGen.hs: callCC 版（../13-gen-basic/Gen.hs）と一致
+2
+3
+```
 
 ## 確認できたこと
 

@@ -20,7 +20,7 @@ url: ''
 slide: false
 ---
 
-Haskell ではモナドと呼ばれる部品を組み合わせてプログラムを作ります。`>>=`（bind）の中に隠れている**継続**を取り出し、それを値として扱えるようにした**継続モナド**を説明します。継続を値として取り出せると何が嬉しいのかを、実際に動くコルーチン（ジェネレーター）の実装を通して示します。
+Haskell ではモナドと呼ばれる部品を組み合わせてプログラムを作ります。`>>=`（bind）の中に隠れている**継続**を取り出し、それを値として扱えるようにした**継続モナド**を説明します。継続を値として取り出せると何が嬉しいのかを、実際に動くジェネレーターの実装を通して示します。
 
 シリーズの記事です。
 
@@ -56,7 +56,7 @@ readFile("input.txt", (contents) => {
 
 `readFile` は「読み終わったら何をするか」を表すコールバックを受け取ります。この「次にすること」を**継続**（continuation）と呼びます。
 
-同じ形は `Python` の `with` にもあります。
+同じ形は Python の `with` にもあります。
 
 ```py:Python の with
 with open("input.txt", "r") as f:
@@ -246,7 +246,7 @@ bind が CPS の形をしているのは `Cont` に限らずすべてのモナ�
 callCC :: ((a -> Cont r b) -> Cont r a) -> Cont r a
 ```
 
-`callCC` 自体も CPS の形をしています。`callCC f` として関数 `f` を渡せば、`f` が `callCC` の継続として呼び出されます。`callCC` は `f` に引数として現在の継続 `a -> Cont r b` を渡します。`f` の中でこの継続を呼び出せば、それ以降の処理を飛ばして `callCC` から抜けられます。
+`callCC` 自体も CPS の形をしています。`callCC f` として関数 `f` を渡せば、`f` に引数として現在の継続 `a -> Cont r b` が渡されて呼び出されます。`f` の中でこの継続を呼び出せば、それ以降の処理を飛ばして `callCC` から抜けられます。
 
 ```hs
 import Control.Monad (when)
@@ -286,351 +286,113 @@ bind と `callCC` は互いに逆方向の型変換をしています。
 
 bind は `k` の戻り値からモナドを剥がしていたのに対して、`callCC` は逆に `c` の戻り値をモナドで包んでいます。👉[詳細 (JavaScript)](https://qiita.com/7shi/items/27b6f3169961299a6195)
 
-# 応用: コルーチン
+# ジェネレーター
 
-継続を保持できることの一番の見せ場が、`k` を**後で**呼ぶ自由です。これを使うとコルーチン（ジェネレーター）が実装できます。
+継続を保持できることが最もはっきり効いてくるのが、`k` を後で呼ぶ自由です。これを使えばジェネレーターが実装できます。
 
-## 型が循環する
+## 実装
 
-生成した値をその場で返さず、いったん抜けて後から再開する。これがジェネレーターの動きです。「抜ける」ときに、再開のための継続を一緒に持ち出す必要があります。
+Python や JavaScript のジェネレーターは、`yield` で値を 1 つ返してその場で中断し、呼び出し元が次を要求したら中断した位置から再開します。中断して呼び出し元まで戻るところは `callCC` による脱出と同じで、後から再開できるところが、継続を値として保持できることに対応します。
 
-```hs:NG
-type Gen a = Maybe (a, Cont (Gen a) (Gen a))
-```
-
-このように `type` で素直に書こうとすると、コンパイルが通りません。
-
-```text:エラー
-Cycle in type synonym declarations:
-  Gen.hs:3:1-44: type Gen a = Maybe (a, Cont (Gen a) (Gen a))
-```
-
-`type` は単なる別名なので、使われた箇所でそのまま展開されます。`Gen a` の定義の中に `Gen a` 自身が現れているため、展開が終わりません。有限の木として型を表せず、「型シノニム」で説明した `type` の限界がここで表面化します。👉[Haskell 代数的データ型 超入門](https://qiita.com/7shi/items/1ce76bde464b4a55c143)
-
-## data で包んで解決する
-
-`data`・`newtype` はこれとは事情が違います。名前そのものが型として自立するので、展開せずに循環を畳み込めます。
+そのため中断のたびに、生成した値と、そこから再開するための継続を組にして呼び出し元へ渡します。もう値がないことも伝える必要があるため、「値と継続の組」か「終了」かの 2 択になります。これを直和型で表します。👉[Haskell 代数的データ型 超入門](http://qiita.com/7shi/items/1ce76bde464b4a55c143)
 
 ```hs
-data Gen a = Done | Yield a (Cont (Gen a) (Gen a))
+data Gen a = Yield a (Cont (Gen a) (Gen a)) | Done
 ```
 
-コンストラクタを1枚挟むだけで、同じ「自己参照する型」がそのまま定義できます。対価はコンストラクタの付け外しだけです。
-
-これでジェネレーターの型が用意できました。
+`Yield` は生成した値と再開用の継続を持ち、`Done` は終了を表します。再開用の継続を評価すれば次の中断点まで進むので、そこでまた `Gen a` が返ります。そのため `Gen a` の定義の中に `Gen a` 自身が現れる再帰的な型になります。
 
 ```hs
 import Control.Monad.Trans.Cont (Cont, evalCont, callCC)
 
-data Gen a = Done | Yield a (Cont (Gen a) (Gen a))
-
-yield ccOut v = callCC $ \next -> ccOut (Yield v (next ()))
+data Gen a = Yield a (Cont (Gen a) (Gen a)) | Done
 
 runGen body = evalCont $ callCC $ \ccOut -> body ccOut >> return Done
-```
-
-`yield` は `callCC` で「現在の継続」（`next`、再開ポイント）を捕まえ、`Yield` に包んで `ccOut`（`runGen` の外へ抜ける継続）に渡します。`ccOut` を呼ぶことで `callCC` の内側から抜け、値と再開用の継続の組を `runGen` の呼び出し元まで持ち出します。
-
-```hs
-toList Done = []
-toList (Yield v next) = v : toList (evalCont next)
-
-nats = runGen $ \ccOut ->
-    let loop n = yield ccOut n >> loop (n + 1)
-    in loop 0
-
-finite = runGen $ \ccOut -> mapM_ (yield ccOut) [1, 2, 3]
-
-main = do
-    print (take 5 (toList nats))
-    print (toList finite)
-```
-```text:実行結果
-[0,1,2,3,4]
-[1,2,3]
-```
-
-無限のジェネレーター（`nats`）も有限のジェネレーター（`finite`）も同じ `yield` で書け、`take`・`mapM_` のような既存のコンビネーターがそのまま使えます。
-
-## 双方向のやり取り
-
-ここまでは値を出すだけの一方通行でしたが、`yield` は再開時に渡された値を戻り値として受け取れます（JavaScript の `it.next(x)` に相当）。出力の型 `o` と入力の型 `i` を分けます。
-
-```hs
-data Gen i o = Done | Yield o (i -> Cont (Gen i o) (Gen i o))
-```
-
-再開用の継続が `i -> ...` という関数になっただけで、型の循環は同じように `data` で解決します。`RankNTypes` のような拡張も要りません。
-
-生産専用版との差分はこれだけです。
-
-```hs
--- 生産専用
 yield ccOut v = callCC $ \next -> ccOut (Yield v (next ()))
-
--- 双方向
-yield ccOut v = callCC $ \next -> ccOut (Yield v  next    )
 ```
 
-**`(next ())` が `next` になっただけ。** 生産専用版は捕まえた継続に `()` を渡してその場で潰していただけで、渡さずそのまま格納すれば双方向になります。「捕まえた継続は関数だから引数を渡せる」という `callCC` の性質が、コードの差分そのものとして目に見えます。
+`runGen` は本体（`body`）を `callCC` で包み、脱出用の継続 `ccOut` を本体に渡します。途中で `ccOut` が呼ばれればその時点で `callCC` を抜け、最後まで走り切れば `return Done` に到達します。どちらの場合も結果は `Gen a` になり、`evalCont` で値を取り出します。継続モナドの結果の型 `r` が `Gen a` なのはこのためです。
 
-```hs
-import Control.Monad.Trans.Cont (Cont, evalCont, callCC)
+`yield` には継続が 2 つ登場します。
 
-data Gen i o = Done | Yield o (i -> Cont (Gen i o) (Gen i o))
+| 継続 | 呼ぶと何が起きるか |
+|---|---|
+| `ccOut` | `runGen` の外へ抜ける（`callCC` で取り出した脱出用の継続）|
+| `next` | `yield` の次の行から本体を再開する（`yield` 自身の現在の継続）|
 
-yield ccOut v = callCC $ \next -> ccOut (Yield v next)
+`yield` はまず `callCC` で自分の現在の継続 `next` を取り出します。これが再開ポイントです。値を渡して再開させる作りではないため、`next ()` のように `()` を渡した形にして `Yield` に格納します。そうして値と再開用の継続を組にしたものを `ccOut` に渡すと、`runGen` の `callCC` を一気に抜けて、`Yield` がそのまま `runGen` の結果になります。
 
-runGen body = evalCont $ callCC $ \ccOut -> body ccOut >> return Done
+抜けるときに再開用の継続を一緒に持ち出すのがポイントです。抜けた後も継続は普通の値として手元に残るので、受け取った側は好きなタイミングでそれを `evalCont` で評価できます。評価すれば `yield` の次の行から本体が再開し、次の `yield` でまた `ccOut` が呼ばれて次の `Yield` が返ります。本体が終われば `return Done` に到達して `Done` が返ります。
 
-feed (Yield v next) (i:is) = v : feed (evalCont (next i)) is
-feed _ _ = []
+`do` の中に `yield` を並べるだけで、他の言語のジェネレーターと同じ書き味になります。簡単な例を示します。
 
--- 累算器: 渡された値を足し込み、途中結果を yield する
-accum = runGen $ \ccOut ->
-    let loop s = yield ccOut s >>= \x -> loop (s + x)
-    in loop 0
+```hs:例
+loop (Yield v next) = print v >> loop (evalCont next)
+loop Done = return ()
 
-main = print (feed accum [1, 2, 3, 4])
+gen = runGen $ \ccOut -> do
+    yield ccOut 1
+    yield ccOut 2
+    yield ccOut 3
+
+main = loop gen
 ```
 ```text:実行結果
-[0,1,3,6]
+1
+2
+3
 ```
 
-`toList` が書けたのは、入力が `()` に潰れていて渡す値がなかったからです。入力が必要になると、代わりに入力列をまとめて渡す `feed` になります。
+取り出す側の `loop` は、`Yield` から値と継続を取り出し、値を表示してから継続を評価するのを `Done` が来るまで繰り返します。
 
-```hs:型
-feed :: Gen i o -> [i] -> [o]
+ジェネレーターの利点は、値を全部作ってから渡すのではなく、必要になった時点で 1 つずつ生成できることです。ただし Haskell では、値が必要になるまで計算されない**遅延評価**のため、リストも同じ性質を持ちます。この例なら `[1, 2, 3]` と書けば済みますし、`[1 ..]` のような無限リストでも先頭から必要な分だけ計算されます。
+
+つまり値を出すだけのジェネレーターは、Haskell ではリストで代用できます。ここで確認しているのは、継続を保持することで同じ動きが組み立てられるという点です。
+
+## 何度でも再開できる
+
+`Gen a` は純粋な値なので、同じ中断点から何度でも再開できます。
+
+先ほどの `gen` と `loop` をそのまま使います。`runGen` が返した最初の `Gen` を変数に保管しておき、その先は `loop` に任せます。取り出し終わった後で、保管しておいた `Gen` をもう一度 `loop` に掛けます。
+
+```hs
+main = do
+    let g = gen  -- 最初の Gen を保管しておく
+    loop g
+    loop g       -- 保管しておいた Gen をもう一度
 ```
+```text:実行結果
+1
+2
+3
+1
+2
+3
+```
+
+`callCC` で取り出した継続は普通の関数なので、何度でも呼べます。`loop` は継続を評価しながら最後まで進みますが、それによって `g` が変化することはありません。何度使っても消費されないため、2 回目も同じ中断点から取り直せます。
 
 :::note info
-ジェネレーターは「まず出して、それから受け取る」ので入出力の個数がずれます。`accum` に `[1,2,3,4]` を渡すと `[0,1,3,6]` になり、最後の入力を反映した `6+4=10` は出力されません。
+JavaScript や Python のジェネレーターは消費すると元の状態が失われるため、これができません。👉[参考 (JavaScript)](https://qiita.com/7shi/items/6575cbb98c5a710a2945)
+
+`Promise` も `resolve` を 2 回呼べないという点で同様です。👉[参考 (JavaScript)](https://qiita.com/7shi/items/a2bb35f27cd4a56f7bac)
 :::
-
-### feed が示すもの
-
-`feed` の型は `[i] -> [o]`、つまりリストからリストへの関数です。ここだけを見ると「結局リストに戻るなら継続は要らなかったのでは」と思うかもしれません。実際、`accum` の結果 `[0,1,3,6]` は `init (scanl (+) 0 [1,2,3,4])` と同じで、既存のリスト関数に置き換えられます。
-
-**`feed` が示しているのは「継続がリストを超えた証拠」ではなく、逆に「入力を先に全部与えるなら、双方向コルーチンはリスト関数に潰せる」ということです。** この線引きは後で改めて整理します。
-
-### 歴史上の先例
-
-`feed` の型 `[i] -> [o]` には歴史上の先例があります。IO モナド導入前の Haskell 1.0（1990年）は、遅延ストリームで副作用を扱っており、プログラムの型が次のように定義されていました。
-
-```hs
-type Behaviour = [Response] -> [Request]
-```
-
-`feed prog` の型はこの `Behaviour` と一致します。つまり**双方向コルーチンを2本の遅延リストで表したもの**が、まさに Haskell 1.0のプログラムだったことになります。当時は正しい順序で計算させるために遅延パターン `~` が必要で、これを外すとデッドロックしました。この経緯と詳細は単発記事にまとめています。
-
-https://zenn.dev/7shi/articles/20260731-haskell-io-history
-
-Haskell 1.0はこの継続 I/O と並行して、ストリームを扱う版の I/O も持っていました。両者はモナド版（Haskell 1.3、1996年）に置き換えられ、現在の `IO` モナドに至ります。
-
-### 既存のジェネレーターより能力が上
-
-「実用には既存のジェネレーターを使えばよいのでは」という疑問に対する答えがこれです。`Gen i o` は純粋な値なので、**同じ中断点から何度でも再開できます。**
-
-中断点から1歩進める `step` と、そこでの出力を覗く `peek` を用意します。
-
-```hs
-step (Yield _ next) i = evalCont (next i)
-step Done _ = Done
-
-peek (Yield v _) = Just v
-peek Done = Nothing
-
-main = do
-    let g = step accum 10   -- 10 を渡した状態
-    print (peek g)
-    print (peek (step g 1))
-    print (peek (step g 100))
-    print (peek (step g 1000))
-```
-```text:実行結果
-Just 10
-Just 11
-Just 110
-Just 1010
-```
-
-`g` は何度使っても消費されません。違う入力を渡せば分岐し、分岐した先をさらに分岐させれば木になります。JavaScript や Python のジェネレーターはこれができません（消費すると元の状態が失われます）。[イテレーターのクローンもどき](https://qiita.com/7shi/items/6575cbb98c5a710a2945)が最初からやり直す回避策を書いているのが、その裏返しです。`Promise` も `resolve` を2回呼べないという点で同様で、[非同期APIをPromiseでラップしてasync/awaitで使う](https://qiita.com/7shi/items/a2bb35f27cd4a56f7bac)が相違点として挙げています。
-
-`callCC` で捕まえた継続は普通の関数値なので、何度でも呼べます。これが「実用上も自前で組んだ方が能力が上」という形で表に出ています。
-
-## 副作用と交互に進む
-
-`ContT r IO` に持ち上げると、各 `yield` の間で IO アクションを実行できます。モナドスタックの要領で `Cont` に `m`（ここでは `IO`）が挟まります。👉[Haskell モナド変換子 超入門](https://qiita.com/7shi/items/4408b76624067c17e933)
-
-```hs
-import Control.Monad.Trans.Cont (ContT, evalContT, callCC)
-import Control.Monad.IO.Class (liftIO)
-
-data Gen a = Done | Yield a (ContT (Gen a) IO (Gen a))
-
--- yield の定義は純粋版と 1 文字も変わらない
-yield ccOut v = callCC $ \next -> ccOut (Yield v (next ()))
-
-runGen body = evalContT $ callCC $ \ccOut -> body ccOut >> return Done
-```
-
-差分は機械的です。`Cont` が `ContT ... IO` に、`evalCont` が `evalContT` になり、`runGen` の結果が `IO (Gen a)` になります。生産側で `liftIO` を使う必要はありますが、`yield` の定義自体は1文字も変わりません。
-
-:::note info
-mtl 2.3 では `Control.Monad.Cont` が `liftIO` を再輸出しないため、`Control.Monad.IO.Class` から明示的に import する必要があります。
-:::
-
-```hs
-noisy = runGen $ \ccOut ->
-    let y n = do
-            liftIO $ putStrLn ("  produce " ++ show n)
-            yield ccOut n
-    in mapM_ y [1, 2, 3]
-
-main = do
-    g <- noisy
-    xs <- consume g
-    print xs
-  where
-    consume Done = return []
-    consume (Yield v k) = do
-        putStrLn ("  consume " ++ show v)
-        g <- evalContT k
-        (v :) <$> consume g
-```
-```text:実行結果
-  produce 1
-  consume 1
-  produce 2
-  consume 2
-  produce 3
-  consume 3
-[1,2,3]
-```
-
-生産側と消費側の IO が期待通り交互に実行されています。
-
-### 遅延がなくなる
-
-ここが `ContT r IO` の本当の見せ場です。純粋版では `take 5 (toList nats)` が遅延評価のおかげでそのまま動きました。無限のジェネレーターでも、必要な分だけ計算されるからです。
-
-`ContT r IO` では `toList` が `IO [a]` になるため、この遅延は効きません。無限のジェネレーターを打ち切るドライバーを自分で書く必要があります。しかも素朴に書くと、判断する前に1回余分に再開してしまいます。
-
-```hs
-takeIOEager 0 _ = return []
-takeIOEager _ Done = return []
-takeIOEager n (Yield v k) = do
-    g <- evalContT k              -- 必要か判断する前に再開してしまう
-    (v :) <$> takeIOEager (n - 1) g
-```
-```text:実行結果（takeIOEager 3）
-  produce 0
-  produce 1
-  produce 2
-  produce 3     ← 3 個しか要らないのに 4 回生産される
-[0,1,2]
-```
-
-再開の前に打ち切りを判定すれば直ります。
-
-```hs
-takeIO n _ | n <= 0 = return []
-takeIO _ Done = return []
-takeIO n (Yield v k)
-    | n == 1 = return [v]         -- ここで止めれば余分な生産は起きない
-    | otherwise = do
-        g <- evalContT k
-        (v :) <$> takeIO (n - 1) g
-```
-```text:実行結果（takeIO 3）
-  produce 0
-  produce 1
-  produce 2
-[0,1,2]
-```
-
-純粋なジェネレーターでは遅延評価が黙って吸収してくれていたことが、副作用を付けた瞬間に目に見える形で露出しました。「リストで十分」と思える場面が実は遅延に頼った偶然の一致だったことが、ここでわかります。
-
-## リストとの境界
-
-ここまでの例はどれも遅延リストで書き直せます。`[1,2,3]`、`[0 ..]`、`map (^ 2) [1 .. 5]` はもちろん、一般の状態機械も `unfoldr`（`Just (値, 次の状態)` が `yield` に相当）で表現できます。生産専用版で `toList` が書けたのも、双方向版で `feed` が既存のリスト関数に潰せたのも、この裏返しです。
-
-ではどこからがリストで素直に書けなくなるのでしょうか。正確な境界は「双方向のジェネレーターに、出力を見てから次の入力を IO で決めるループ」を組み合わせたところです。「双方向のやり取り」と「副作用と交互に進む」をそのまま組み合わせます。
-
-```hs
-data Gen i o = Done | Yield o (i -> ContT (Gen i o) IO (Gen i o))
-
--- 純粋な双方向版と yield の定義は同一
-yield ccOut v = callCC $ \next -> ccOut (Yield v next)
-
-runGen body = evalContT $ callCC $ \ccOut -> body ccOut >> return Done
-
--- 出力を見てから次の入力を IO で決めるドライバー
-drive _ Done = return ()
-drive f (Yield v next) = do
-    mi <- f v
-    case mi of
-        Nothing -> return ()
-        Just i -> evalContT (next i) >>= drive f
-```
-
-```hs
-accum = runGen $ \ccOut ->
-    let loop s = do
-            liftIO $ putStrLn ("  [gen] total = " ++ show s)
-            x <- yield ccOut s
-            loop (s + x)
-    in loop 0
-
-main = do
-    g <- accum
-    drive step g   -- 合計が 5 を超えたら打ち切る
-  where
-    step total = do
-        putStrLn ("  [drv] got " ++ show total)
-        if total > 5
-            then do putStrLn "  [drv] stop"; return Nothing
-            else do
-                let n = total + 1
-                putStrLn ("  [drv] send " ++ show n)
-                return (Just n)
-```
-```text:実行結果
-  [gen] total = 0
-  [drv] got 0
-  [drv] send 1
-  [gen] total = 1
-  [drv] got 1
-  [drv] send 2
-  [gen] total = 3
-  [drv] got 3
-  [drv] send 4
-  [gen] total = 7
-  [drv] got 7
-  [drv] stop
-```
-
-出力を見てから次の入力を IO で決める、というループはリストでは（遅延させても）書けません。
-
-ただし「リストでは書けない」と言い切ってしまうのは正確ではありません。先ほど見たように `Haskell 1.0` はこれを遅延リストの**knot-tying**で実現していました。`~`（遅延パターン）に頼った書き方で、壊れやすく、最終的に Haskell はこれを試した上で捨てました。
-
-正確な線引きはこうなります。**「リストでも書けるが、遅延に頼った knot-tying が要り、Haskell はそれを試して捨てた」。** これは思弁ではなく史実です。継続モナドによるコルーチンは、Haskell がかつて遅延リストで実現していたものを、副作用を明示するモナドの形で作り直したものだと言えます。
 
 # 限定継続
 
-「継続を保持できる」ことの威力を `callCC` で確認してきましたが、`callCC` は継続を扱う唯一の方法ではありません。もう一つの道具である**限定継続**（delimited continuation）を導入し、ここまで作ったコルーチンの実装がどう単純化されるかを確認します。
+「継続を保持できる」ことの威力を `callCC` で確認してきましたが、`callCC` は継続を扱う唯一の方法ではありません。もう一つの道具である**限定継続**（delimited continuation）を導入し、ここまで作ったジェネレーターの実装がどう単純化されるかを確認します。
 
 ## 区切り
 
-「継続を保持できる」と言っても、捕まえた継続がどこまで届くかには制約があります。`callCC` で確認します。
+「継続を保持できる」と言っても、取り出した継続がどこまで届くかには制約があります。`callCC` で確認します。
 
 ```hs
 main = do
     let r = evalCont $ callCC $ \ret -> do
-                _ <- ret (1 :: Int)
-                return 999          -- ここには来ない
+            _ <- ret (1 :: Int)
+            return 999           -- ここには来ない
     print r
-    putStrLn "after"                -- 脱出はここまで飛べない
+    putStrLn "after"             -- 脱出はここまで飛べない
 ```
 ```text:実行結果
 1
@@ -639,7 +401,7 @@ after
 
 `ret` を呼んで `callCC` を脱出しても、`evalCont` の外側（`putStrLn "after"`）は必ず実行されます。bind で連結された `Cont` ひとつがひとまとまりの単位で、`evalCont` はその外側で結果を取り出すだけの関数だからです。
 
-この「継続が届く範囲」の境界を**区切り**（delimiter）と呼びます。`Cont` では bind で連結された範囲ひとつ、`evalCont` の呼び出しがその境界にあたります。`callCC` で捕まえた継続は、この区切りの中でしか意味を持ちません。
+この「継続が届く範囲」の境界を**区切り**（delimiter）と呼びます。`Cont` では bind で連結された範囲ひとつ、`evalCont` の呼び出しがその境界にあたります。`callCC` で取り出した継続は、この区切りの中でしか意味を持ちません。
 
 ## shift/reset
 
@@ -692,11 +454,11 @@ main = print viaShift
 
 `callCC` の `ret` と同じく、`shift` の `k` もここで呼び出されます。ただし `ret` と違って、呼んだ時点で残りのコードが捨てられることはありません。呼んだ場所に戻ってきて `do` ブロックの続きがそのまま実行されます。`do` ブロックが（ふつうの関数のように）最後まで進むと、そこで得られた値がそのまま `shift` を抜けて区切り全体の値になります。
 
-1. `k` には「`shift` の後に続くコード」、つまり戻り値の `x` への束縛と `return (2 * (1 + x))` が、`reset` の区切りの終端まであらかじめ1つの関数にまとめられて渡されます。`reset` の外側（呼び出し元やそれ以降のコード）は含まれません。渡された時点で完成した、ただの関数です。
+1. `k` には「`shift` の後に続くコード」、つまり戻り値の `x` への束縛と `return (2 * (1 + x))` が、`reset` の区切りの終端まであらかじめ 1 つの関数にまとめられて渡されます。`reset` の外側（呼び出し元やそれ以降のコード）は含まれません。渡された時点で完成した、ただの関数です。
 2. `k 5` を呼ぶと、その関数がその場で実行されます。引数の `5` が `shift` の戻り値として `x` に束縛され、続けて `2 * (1 + 5)` が計算され、`12` という値が呼んだ場所にそのまま返ります。
 3. `12` が `n` に束縛され、`do` ブロックが最後の `return (2 + n)` に到達して `14` になります。この値がそのまま区切り（`reset`）全体の値になります。
 
-注意したいのは、`shift` の `do` ブロックを抜けた先が、テキスト上で外に書かれている `return (2 * (1 + x))` ではないことです。`shift` は本体を抜けると常に区切り（`reset`）へ直接抜けます。外側の続きが実行されるのは `k` を呼んだときだけで、この例では手順2の `k 5` の中で実行されています。手順 3 で本体を抜けた後にもう一度実行されることはありません。
+注意したいのは、`shift` の `do` ブロックを抜けた先が、テキスト上で外に書かれている `return (2 * (1 + x))` ではないことです。`shift` は本体を抜けると常に区切り（`reset`）へ直接抜けます。外側の続きが実行されるのは `k` を呼んだときだけで、この例では手順 2 の `k 5` の中で実行されています。手順 3 で本体を抜けた後にもう一度実行されることはありません。
 
 `callCC` では `ret 5` の後に書いた `2 + n` の部分が捨てられて `12` になるのに対し、`shift` では `k 5` が呼んだ場所に戻ってくるため `2 + n` が生き残って `14` になります。
 
@@ -717,7 +479,7 @@ noCall = evalCont $ reset $ do
 
 `f` が `999` を返すだけで `k` を呼ばなかったため、その `999` がそのまま区切り全体の値になります。`return (2 * (1 + x))` は `k` の中身として渡されているだけで、`k` を呼ばない限り実行されることはありません。
 
-逆に `k` は呼べば戻ってくる普通の関数なので、同じ `k` を2回呼ぶこともできます。
+逆に `k` は呼べば戻ってくる普通の関数なので、同じ `k` を 2 回呼ぶこともできます。
 
 ```hs
 twice = evalCont $ reset $ do
@@ -728,7 +490,7 @@ twice = evalCont $ reset $ do
 60
 ```
 
-`k 10` は `10 * 2`、`k 20` は `20 * 2` を返し、足して `60` になります。`callCC` の `ret` は呼べばその場で脱出するので、呼ばなければ本体が最後まで進むだけ、2回書いても2回目には到達しません。呼ぶ回数で外側の続きを操作するという選択肢自体がありません。
+`k 10` は `10 * 2`、`k 20` は `20 * 2` を返し、足して `60` になります。`callCC` の `ret` は呼べばその場で脱出するので、呼ばなければ本体が最後まで進むだけ、2 回書いても 2 回目には到達しません。呼ぶ回数で外側の続きを操作するという選択肢自体がありません。
 
 ### 実装
 
@@ -743,59 +505,88 @@ shift f = cont $ \k -> evalCont (f k)
 
 `callCC` の実装と並べると、対比がはっきりします。
 
-| | 捕まえる関数の型 | 呼んだときの挙動 |
+| | 取り出す関数の型 | 呼んだときの挙動 |
 |---|---|---|
 | `callCC` の `ret` | `a -> Cont r b`（モナドに包まれる） | その場で `callCC` を脱出する |
 | `shift` の `k` | `a -> r`（素の値を返す関数） | 呼び出した場所に戻り、結果を式の中で使える |
 
 `callCC` の `ret` は「呼ぶと戻らない」関数として渡されるのに対し、`shift` の `k` は「呼べば戻ってくる」普通の関数として渡されます。
 
-## コルーチンを shift/reset で書き直す
+## ジェネレーターを shift/reset で書き直す
 
-`shift`・`reset` を使うと、前節で組み立てたコルーチンはもっと簡単に書けます。
+`shift`・`reset` を使うと、前節で組み立てたジェネレーターはもっと簡単に書けます。
 
 ```hs
 import Control.Monad.Trans.Cont (Cont, evalCont, reset, shift)
 
-data Gen i o = Done | Yield o (i -> Cont (Gen i o) (Gen i o))
-
-yield v = shift $ \k -> return (Yield v (return . k))
+data Gen a = Yield a (Cont (Gen a) (Gen a)) | Done
 
 runGen body = evalCont $ reset (body >> return Done)
+yield v = shift $ \next -> return (Yield v (return (next ())))
 
-feed (Yield v next) (i:is) = v : feed (evalCont (next i)) is
-feed _ _ = []
+loop (Yield v next) = print v >> loop (evalCont next)
+loop Done = return ()
 
--- 累算器: 渡された値を足し込み、途中結果を yield する
-accum = runGen $ let loop s = yield s >>= \x -> loop (s + x) in loop 0
+gen = runGen $ do
+    yield 1
+    yield 2
+    yield 3
 
-main = print (feed accum [1, 2, 3, 4])
+main = loop gen
 ```
 ```text:実行結果
-[0,1,3,6]
+1
+2
+3
 ```
 
-`Gen` と `feed` は `callCC` 版と同じもので、結果も一致します。違うのは `yield`・`runGen`・`accum` の3つだけです。
+`Gen` と `loop` は `callCC` 版と同じもので、結果も一致します。違うのは `yield`・`runGen` と、`ccOut` が消えた本体だけです。
 
-`callCC` 版では脱出継続 `ccOut` を `yield` と `runGen` の間で引き回す必要がありましたが、`shift` は呼び出し元まで戻るのでその引き回しが要りません。`yield` から引数が1つ消えています。👉[参考 (Scheme)](https://qiita.com/7shi/items/6db3e19ddc1f8552d9a0)
+`callCC` 版では脱出継続 `ccOut` を `yield` と `runGen` の間で引き回す必要がありましたが、`shift` は呼び出し元まで戻るのでその引き回しが要りません。`yield` から引数が 1 つ消えています。👉[参考 (Scheme)](https://qiita.com/7shi/items/6db3e19ddc1f8552d9a0)
 
 ## 共通部品としての限定継続
 
-`shift`・`reset` は抽象的な道具で、それが何を可能にするのか定義だけからは掴みにくいものです。その具体的な応用例がコルーチンです。多くの言語が処理系の専用構文として組み込んでいるコルーチンが、限定継続を土台にすれば数行で書けます。
+`shift`・`reset` は抽象的な道具で、それが何を可能にするのか定義だけからは掴みにくいものです。その具体的な応用例がジェネレーターです。多くの言語が処理系の専用構文として組み込んでいるジェネレーターが、限定継続を土台にすれば数行で書けます。
 
-Python や JavaScript の `yield` は「関数の途中で止まり、呼び出し元へ値を返し、後で同じ場所から再開する」という動きをします。「`yield` から関数の終わりまでの残り」を保留したまま呼び出し元へ抜け、後からその続きを再開する、という点で `shift` と対応します。保留される範囲がその関数の中に収まる点も、`reset` の区切りと同じ構図です。`await` から先を後で再開する async/await も同様で、コルーチンとして一つにくくれます。👉[参考 (JavaScript)](https://qiita.com/7shi/items/a2bb35f27cd4a56f7bac)
+Python や JavaScript の `yield` は「関数の途中で止まり、呼び出し元へ値を返し、後で同じ場所から再開する」という動きをします。「`yield` から関数の終わりまでの残り」を保留したまま呼び出し元へ抜け、後からその続きを再開する、という点で `shift` と対応します。保留される範囲がその関数の中に収まる点も、`reset` の区切りと同じ構図です。`await` から先を後で再開する async/await も同じ構図です。👉[参考 (JavaScript)](https://qiita.com/7shi/items/a2bb35f27cd4a56f7bac)
 
 対応するのはあくまで振る舞いで、実現方法までは同じとは限りません。処理系が中断した実行状態をそのまま保持する形で実装することも、状態機械へ変換することもあり、いずれにせよ継続が第一級の値として手に入るとは限りません。言語組み込みのジェネレーターが同じ中断点から一度しか再開できないのは、この違いによるものです。
 
 つまり限定継続は、各言語が個別の構文として作り込んできたこれらの機能を、共通の部品として取り出したものだと言えます。専用構文は書きやすい代わりに処理系が決めた使い方しかできませんが、部品として持っていれば `Gen` のような型も再開の仕方も自分で決められます。何度でも再開できるジェネレーターが書けたのは、その一例です。
 
-# 実用: リソース管理
+# リソース管理
 
-ここまでは原理を通すことを優先してきましたが、`ContT` は実用でも使われています。ここで実用面を回収します。
+ここまでは原理を通すことを優先してきましたが、継続モナドは実用でも使われています。ここで実用面を回収します。
+
+対象はファイルなどのリソースを扱う `withFile` で、IO が絡みます。ここまで使ってきた `Cont` のままでは IO を扱えないため、まず継続モナドのモナド変換子を導入します。👉[Haskell モナド変換子 超入門](https://qiita.com/7shi/items/4408b76624067c17e933)
+
+## ContT モナド変換子
+
+```hs:型表記
+ContT r m a
+```
+
+`Cont r a` に対して `m` が増えています。`Cont` が持っていた関数 `(a -> r) -> r` は、`m` が挟まって `(a -> m r) -> m r` になります。出し入れする関数も `T` が付いた版を使います。
+
+| `Cont` | `ContT` | `ContT` 版の型 |
+|---|---|---|
+| `runCont` | `runContT` | `ContT r m a -> (a -> m r) -> m r` |
+| `cont` | `ContT` | `((a -> m r) -> m r) -> ContT r m a` |
+| `evalCont` | `evalContT` | `ContT r m r -> m r` |
+
+包むのは `cont` に相当する関数ではなく、`ContT` という構築子そのものです。また `evalCont` が継続に `id` を渡すのに対して、`evalContT` は `return` を渡します。
+
+`State` と `StateT` の関係と同じく、`m` に何もしない `Identity` を指定して変換子を無効化したものが `Cont` です。
+
+```hs:定義
+type Cont r a = ContT r Identity a
+```
+
+`m` に `IO` を指定した `ContT r IO` が、以下で使うモナドです。IO アクションは `liftIO` で持ち上げます。
 
 ## withFile と ContT の型が一致する
 
-冒頭で継続の例として挙げた `withFile` に戻ります。`withFile path mode` を部分適用すると `(Handle -> IO r) -> IO r` という型になります。これは `ContT r IO Handle` が `runContT` の位置に持つ関数そのものです。
+冒頭で継続の例として挙げた `withFile` に戻ります。`withFile path mode` を部分適用すれば `(Handle -> IO r) -> IO r` という型になります。これは `ContT r IO Handle` が `runContT` として持つ関数そのものです。
 
 ```hs:ネスト
 withFile src ReadMode $ \hSrc ->
@@ -814,19 +605,19 @@ copyFile src dest = do
 main = evalContT $ copyFile "a.txt" "b.txt"
 ```
 
-`ContT` で包むだけで、ネストしていた `with` 系の呼び出しが `do` の1行ずつに平坦になります。`Cont` が持つ `(a -> r) -> r` が、標準ライブラリの `with` 系関数とまったく同じ形をしていた、ということです。
+`ContT` で包むだけで、ネストしていた `with` 系の呼び出しが `do` の 1 行ずつに平坦になります。`Cont` が持つ `(a -> r) -> r` が、標準ライブラリの `with` 系関数とまったく同じ形をしていた、ということです。
 
 :::note info
-例外時にもリソースが解放される仕組み（`bracket`・`finally`）が `withFile` の内部で使われていますが、詳細には立ち入りません。
+例外時にもリソースが解放される仕組み（`bracket`・`finally`）が `withFile` の内部で使われています。
 :::
 
-冒頭で見たように、`Python` の `with` は最初から平坦に並びます。Python が `with` を構文として組み込んでいて、本体を関数にせずその場に展開するからです。Haskell にはそういう構文がなく、`withFile` の本体は本物のラムダなので、素直に書けばネストします。`ContT` はそのネストを `do` の並びに戻す道具で、構文を持たない言語が同じ平坦さをライブラリだけで手に入れている、と言えます。
+Python の `with` は構文なので、本体を関数にせずその場に展開されます。Haskell にはそういう構文がなく、`withFile` の本体は本物のラムダなので、素直に書けばネストします。`ContT` はそのネストを `do` の並びに戻す道具で、構文を持たない言語が同じ平坦さをライブラリだけで手に入れている、と言えます。
 
-その `with` を `@contextmanager` で書くと、両者が同じ形であることがはっきりします。`yield` の位置で `with` の本体（＝継続）が実行される、という作りは、ここまで作ってきたジェネレーターの `yield` と同じ仕組みです。コルーチンとリソース管理は、別の応用ではなく同じ仕組みの言い換えです。
+その `with` を `@contextmanager` で書くと、両者が同じ形であることがはっきりします。`yield` の位置で `with` の本体（＝継続）が実行される、という作りは、ここまで作ってきたジェネレーターの `yield` と同じ仕組みです。ジェネレーターとリソース管理は、別の応用ではなく同じ仕組みの言い換えです。
 
 ## forM が効く
 
-ファイルを1つコピーするだけならネストのままでも大差ありませんが、複数のファイルを開こうとすると差が出ます。`with` 系のままではリストに対する明示的な再帰が必要になりますが、`ContT` なら `forM` が使えます。
+ファイルを 1 つコピーするだけならネストのままでも大差ありませんが、複数のファイルを開こうとすると差が出ます。`with` 系のままではリストに対する明示的な再帰が必要になりますが、`ContT` なら `forM` が使えます。
 
 ```hs
 import Control.Monad (forM)
@@ -838,7 +629,7 @@ main = evalContT $ do
     liftIO $ mapM_ (\h -> hGetContents h >>= putStr) hs
 ```
 
-「モナドにすると既存のコンビネーターが効く」というジェネレーターの `mapM_`・`take` と同じ構図が、実用の場面でも鳴っています。
+モナドとして扱えるようにしたことで、`forM` のような既存のコンビネーターがそのまま効いています。
 
 ## 解放の順序と注意点
 
@@ -877,7 +668,7 @@ done
 Left a.txt: hGetContents: illegal operation (delayed read on closed handle)
 ```
 
-`with` 系全般に共通する罠ですが、`ContT` では「どこでリソースが閉じるか」が `do` の見た目から消えるため、特に踏みやすくなっています。副作用が付いた瞬間に遅延の前提が壊れるという構図は、ジェネレーターの節で見た「純粋なら遅延が吸収するが、副作用が付くと露出する」の再演です。
+`with` 系全般に共通する罠ですが、`ContT` では「どこでリソースが閉じるか」が `do` の見た目から消えるため、特に踏みやすくなっています。
 
 `ContT` によるリソース管理の入り方は、以下の記事を参考にしました。`forM` が効くという論点は特に強く、そのまま取り込みました。
 
@@ -886,8 +677,8 @@ Left a.txt: hGetContents: illegal operation (delayed read on closed handle)
 
 # まとめ
 
-`m >>= k` の `k` という、これまで `>>=` の中に隠れていた継続を、`Cont r a` というモナドの中に保持できる値として取り出しました。取り出せることから3つの自由（呼ばない・後で呼ぶ・何度も呼ぶ）が生まれ、それぞれが早期脱出（`callCC`）・ジェネレーター・分岐するジェネレーターという形で実現できることを見ました。
+`m >>= k` の `k` という、これまで `>>=` の中に隠れていた継続を、`Cont r a` というモナドの中に保持できる値として取り出しました。取り出せることから 3 つの自由（呼ばない・後で呼ぶ・何度も呼ぶ）が生まれ、それぞれが早期脱出（`callCC`）・ジェネレーター・何度でも再開できるジェネレーターという形で実現できることを見ました。
 
-応用として実装したコルーチンは、リストで素直に書ける範囲を丁寧に確認しながら進めることで、「リストでは書けない」という言い切りではなく「リストでも遅延に頼った knot-tying なら書けるが、Haskell はそれを実際に試して捨てた」という史実に基づいた線引きにたどり着きました。
+応用として実装したジェネレーターは、値を出すだけならリストでも書けるものですが、継続を値として持つことで何度でも再開できるという、既存のジェネレーターにはない性質が得られました。
 
-`callCC` でコルーチンを組み上げた後で振り返った限定継続の節では、`shift`・`reset` という別の道具が「区切り」と「合成可能性」の両方を持つこと、そしてそれを使うと同じコルーチンがより簡潔に書けることを確認しました。最後に見た `ContT` によるリソース管理は、原理としては同じ仕組みが実用の場面でどう使われているかの実例です。
+`callCC` でジェネレーターを組み上げた後で振り返った限定継続の節では、`shift`・`reset` という別の道具が「区切り」と「合成可能性」の両方を持つこと、そしてそれを使うと同じジェネレーターがより簡潔に書けることを確認しました。最後に見た `ContT` によるリソース管理は、原理としては同じ仕組みが実用の場面でどう使われているかの実例です。
