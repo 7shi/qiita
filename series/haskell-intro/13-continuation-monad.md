@@ -584,38 +584,51 @@ type Cont r a = ContT r Identity a
 
 `m` に `IO` を指定した `ContT r IO` が、以下で使うモナドです。IO アクションは `liftIO` で持ち上げます。
 
-## withFile と ContT の型が一致する
+以下のコードは共通して次の import を前提とします。`ContT` を構築子として使うため `(..)` が必要です。
 
-冒頭で継続の例として挙げた `withFile` に戻ります。`withFile path mode` を部分適用すれば `(Handle -> IO r) -> IO r` という型になります。これは `ContT r IO Handle` が `runContT` として持つ関数そのものです。
-
-```hs:ネスト
-withFile src ReadMode $ \hSrc ->
-    withFile dest WriteMode $ \hDest -> do
-        content <- hGetContents hSrc
-        hPutStr hDest content
+```hs
+import Control.Monad.Trans.Cont (ContT (..), evalContT, callCC)
+import Control.Monad.IO.Class (liftIO)
+import System.IO
 ```
 
-```hs:ContT
-copyFile src dest = do
+## withFile と ContT の型が一致
+
+冒頭で継続の例として挙げた `withFile` に戻ります。
+
+2 つのファイルを開いて中身をコピーする処理を考えます。`withFile` をネストして書くと以下のようになります。
+
+```hs:ネスト
+copyFile src dest =
+    withFile src ReadMode $ \hSrc ->
+        withFile dest WriteMode $ \hDest -> do
+            content <- hGetContents hSrc
+            hPutStr hDest content
+
+main = copyFile "a.txt" "b.txt"
+```
+
+`withFile path mode` を部分適用すれば `(Handle -> IO r) -> IO r` という型になります。これは `ContT r IO Handle` が `runContT` として持つ関数そのもののため、`ContT` で包むことができます。
+
+これによって、ネストしていた `with` 系の呼び出しが `do` の中ではフラットになります。
+
+```hs:ContT でフラット化
+copyFile src dest = evalContT $ do
     hSrc  <- ContT $ withFile src  ReadMode
     hDest <- ContT $ withFile dest WriteMode
     content <- liftIO $ hGetContents hSrc
     liftIO $ hPutStr hDest content
 
-main = evalContT $ copyFile "a.txt" "b.txt"
+main = copyFile "a.txt" "b.txt"
 ```
 
-`ContT` で包むだけで、ネストしていた `with` 系の呼び出しが `do` の 1 行ずつに平坦になります。`Cont` が持つ `(a -> r) -> r` が、標準ライブラリの `with` 系関数とまったく同じ形をしていた、ということです。
+見た目がフラットになっても、`withFile` がラムダを包んでいる構造は変わりません。`hSrc` 以降の行はすべて `withFile src ReadMode` に渡されたラムダの中身なので、`do` ブロックを抜けるときにハンドルは確実に解放されます。いわゆる RAII（Resource Acquisition Is Initialization）です。
 
 :::note info
-例外時にもリソースが解放される仕組み（`bracket`・`finally`）が `withFile` の内部で使われています。
+Python の `with` を `@contextmanager` で書くと、`yield` の位置で `with` の本体（＝継続）が実行されます。ここまで作ってきたジェネレーターの `yield` と原理的には同じ仕組みで、ジェネレーターとリソース管理が密接に関係することが見て取れます。
 :::
 
-Python の `with` は構文なので、本体を関数にせずその場に展開されます。Haskell にはそういう構文がなく、`withFile` の本体は本物のラムダなので、素直に書けばネストします。`ContT` はそのネストを `do` の並びに戻す道具で、構文を持たない言語が同じ平坦さをライブラリだけで手に入れている、と言えます。
-
-その `with` を `@contextmanager` で書くと、両者が同じ形であることがはっきりします。`yield` の位置で `with` の本体（＝継続）が実行される、という作りは、ここまで作ってきたジェネレーターの `yield` と同じ仕組みです。ジェネレーターとリソース管理は、別の応用ではなく同じ仕組みの言い換えです。
-
-## forM が効く
+## forM
 
 ファイルを 1 つコピーするだけならネストのままでも大差ありませんが、複数のファイルを開こうとすると差が出ます。`with` 系のままではリストに対する明示的な再帰が必要になりますが、`ContT` なら `forM` が使えます。
 
@@ -633,28 +646,48 @@ main = evalContT $ do
 
 ## 解放の順序と注意点
 
-解放は取得の逆順（LIFO）になり、ネストで書いた場合と同じ順序になります。
+解放の順序を確かめるため、取得と解放をログ出力する疑似リソースを用意します。`withFile` と同じく、本体を受け取って前後を挟む形です。
 
+```hs
+withRes name body = do
+    putStrLn $ "open " ++ name
+    r <- body name
+    putStrLn $ "close " ++ name
+    return r
+
+main = evalContT $ do
+    a <- ContT $ withRes "A"
+    b <- ContT $ withRes "B"
+    liftIO $ putStrLn $ "use " ++ a ++ b
+```
 ```text:実行結果
-open  A
-open  B
+open A
+open B
 use AB
 close B
 close A
 ```
 
+解放は取得の逆順（LIFO）になり、ネストで書いた場合と同じ順序です。
+
+:::note info
+この `withRes` は順序を見るためのもので、例外時の解放は考えていません。実際の `withFile` は `Control.Exception` の `bracket` を使っており、本体が例外で終わっても解放されます。
+:::
+
 `callCC` で途中脱出しても、後片付けはきちんと走ります。
 
 ```hs
-escape = evalContT $ callCC $ \exit -> do
+escape = evalContT $ callCC $ \ret -> do
     a <- ContT $ withRes "A"
     liftIO $ putStrLn $ "use " ++ a
-    exit ()                            -- ここで脱出
-    b <- ContT $ withRes "B"           -- 実行されない
+    ret ()                           -- ここで脱出
+    b <- ContT $ withRes "B"         -- 実行されない
     liftIO $ putStrLn $ "use " ++ b
+
+main = escape >> putStrLn "done"
 ```
 ```text:実行結果
-open  A
+open A
 use A
 close A
 done
@@ -662,23 +695,59 @@ done
 
 脱出以降で取得するはずだったリソース（B）はそもそも取得されないため、A の解放だけがきちんと走ります。
 
-注意点が一つあります。`hGetContents` の結果を `ContT` の外へ持ち出すと、ハンドルが閉じた後に読むことになってエラーになります。
+注意点として、`hGetContents` の結果を `ContT` の外へ持ち出すと、ハンドルが閉じた後に読むことになってエラーになります。
 
-```text:エラー
-Left a.txt: hGetContents: illegal operation (delayed read on closed handle)
+```hs
+main = do
+    content <- evalContT $ do
+        h <- ContT $ withFile "a.txt" ReadMode
+        liftIO $ hGetContents h  -- 遅延読み込みなのでまだ読んでいない
+    putStr content               -- 読むのはここ（ハンドルは閉じた後）
 ```
+```text:実行結果（エラー）
+a.txt: hGetContents: illegal operation (delayed read on closed handle)
+```
+
+`ContT` を抜ける前に読み切ってしまえば、後は普通の文字列として扱えます。`hGetContents'` は最後まで読んでから返す正格版です。
+
+```hs
+main = do
+    content <- evalContT $ do
+        h <- ContT $ withFile "a.txt" ReadMode
+        liftIO $ hGetContents' h  -- 読み切ってから返す
+    putStr content
+```
+
+:::note info
+`hGetContents'` は base 4.15（GHC 9.0）以降で使えます。それより古い環境では、`evaluate` で式をその場で評価して読み切る必要があります。👉[Haskell 例外処理 超入門](https://qiita.com/7shi/items/73e534c47bbebc71b37e)
+
+```hs
+main = do
+    content <- evalContT $ do
+        h <- ContT $ withFile "a.txt" ReadMode
+        s <- liftIO $ hGetContents h
+        liftIO $ evaluate (length s)  -- ここで読み切る
+        return s
+    putStr content
+```
+:::
 
 `with` 系全般に共通する罠ですが、`ContT` では「どこでリソースが閉じるか」が `do` の見た目から消えるため、特に踏みやすくなっています。
 
-`ContT` によるリソース管理の入り方は、以下の記事を参考にしました。`forM` が効くという論点は特に強く、そのまま取り込みました。
-
-* [Haskellでリソースの管理を継続モナドで行う](https://qiita.com/tanakh/items/81fc1a0d9ae0af3865cb)
-* [継続モナド(ContT)のリソース管理活用](https://qiita.com/sparklingbaby/items/2eacabb4be93b9b64755)
-
 # まとめ
 
-`m >>= k` の `k` という、これまで `>>=` の中に隠れていた継続を、`Cont r a` というモナドの中に保持できる値として取り出しました。取り出せることから 3 つの自由（呼ばない・後で呼ぶ・何度も呼ぶ）が生まれ、それぞれが早期脱出（`callCC`）・ジェネレーター・何度でも再開できるジェネレーターという形で実現できることを見ました。
+`m >>= k` の `k` という、これまで `>>=` の中に隠れていた継続を、`Cont r a` というモナドの中に保持できる値として取り出しました。取り出した継続は `callCC` の `ret` のようにその場で呼んで脱出することも、後から呼ぶこともできます。後者の応用がジェネレーターです。
 
-応用として実装したジェネレーターは、値を出すだけならリストでも書けるものですが、継続を値として持つことで何度でも再開できるという、既存のジェネレーターにはない性質が得られました。
+そのジェネレーターは、値を出すだけならリストでも書けるものです。そしてリストと同じく `Gen a` も純粋な値なので、消費されることなく同じ中断点から何度でも再開できます。一度消費すると元の状態が失われる他言語のジェネレーターとは、ここが違います。
 
-`callCC` でジェネレーターを組み上げた後で振り返った限定継続の節では、`shift`・`reset` という別の道具が「区切り」と「合成可能性」の両方を持つこと、そしてそれを使うと同じジェネレーターがより簡潔に書けることを確認しました。最後に見た `ContT` によるリソース管理は、原理としては同じ仕組みが実用の場面でどう使われているかの実例です。
+限定継続として `shift`・`reset` を導入しました。`reset` で区切りを明示でき、`shift` の `k` は呼べば戻ってくる普通の関数なので、呼ぶかどうかも回数もコード側で決められます。これを使えば脱出継続の引き回しが不要になり、同じジェネレーターがより簡潔に書けました。
+
+最後に見た `ContT` によるリソース管理は、原理としては同じ仕組みが実用の場面でどう使われているかの実例です。
+
+# 参考
+
+`ContT` によるリソース管理について、以下の記事を参考にしました。
+
+https://qiita.com/tanakh/items/81fc1a0d9ae0af3865cb
+
+https://qiita.com/sparklingbaby/items/2eacabb4be93b9b64755
