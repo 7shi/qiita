@@ -286,6 +286,37 @@ bind と `callCC` は互いに逆方向の型変換をしています。
 
 bind は `k` の戻り値からモナドを剥がしていたのに対して、`callCC` は逆に `c` の戻り値をモナドで包んでいます。👉[詳細 (JavaScript)](https://qiita.com/7shi/items/27b6f3169961299a6195)
 
+## 練習
+
+【問1】次の `main` が実行結果の通りになるように、リストを先頭から見ていき負の数が現れたらそこで打ち切る関数 `sumUntilNegative :: [Int] -> Maybe Int` を `callCC` を使って実装してください。
+
+```hs
+main = do
+    print $ sumUntilNegative [1, 2, 3]
+    print $ sumUntilNegative [1, -2, 3]
+```
+```text:実行結果
+Just 6
+Nothing
+```
+
+<details><summary>解答例</summary>
+
+```hs
+import Control.Monad.Trans.Cont (evalCont, callCC)
+
+sumUntilNegative :: [Int] -> Maybe Int
+sumUntilNegative xs = evalCont $ callCC $ \ret -> go ret 0 xs
+  where
+    go _   acc []     = return (Just acc)
+    go ret acc (x:rest)
+        | x < 0     = ret Nothing
+        | otherwise = go ret (acc + x) rest
+```
+
+負の数に出会った時点で `ret Nothing` を呼べば、それ以降の再帰（`go`）には進まずそのまま `Nothing` が返ります。
+</details>
+
 # ジェネレーター
 
 継続を保持できることが最もはっきり効いてくるのが、`k` を後で呼ぶ自由です。これを使えばジェネレーターが実装できます。
@@ -377,6 +408,29 @@ JavaScript や Python のジェネレーターは消費すると元の状態が�
 
 `Promise` も `resolve` を 2 回呼べないという点で同様です。👉[参考 (JavaScript)](https://qiita.com/7shi/items/a2bb35f27cd4a56f7bac)
 :::
+
+## 練習
+
+【問2】次の `main` が実行結果の通りになるように、この節の `Gen a`・`runGen`・`yield`・`loop` を使って、`toList` の逆にあたる `fromList :: [a] -> Gen a` を実装してください。
+
+```hs
+main = loop (fromList [10, 20, 30])
+```
+```text:実行結果
+10
+20
+30
+```
+
+<details><summary>解答例</summary>
+
+```hs
+fromList :: [a] -> Gen a
+fromList xs = runGen $ \ccOut -> mapM_ (yield ccOut) xs
+```
+
+`mapM_ (yield ccOut) xs` でリストの各要素に `yield` を適用するだけで、`yield` が中断と再開を担ってくれます。
+</details>
 
 # 限定継続
 
@@ -554,6 +608,29 @@ Python や JavaScript の `yield` は「関数の途中で止まり、呼び出�
 
 つまり限定継続は、各言語が個別の構文として作り込んできたこれらの機能を、共通の部品として取り出したものだと言えます。専用構文は書きやすい代わりに処理系が決めた使い方しかできませんが、部品として持っていれば `Gen` のような型も再開の仕方も自分で決められます。何度でも再開できるジェネレーターが書けたのは、その一例です。
 
+## 練習
+
+【問3】次の `main` が実行結果の通りになるように、問2の `fromList` を、この節の `shift`/`reset` 版の `runGen`・`yield` を使って書き直してください。
+
+```hs
+main = loop (fromList [10, 20, 30])
+```
+```text:実行結果
+10
+20
+30
+```
+
+<details><summary>解答例</summary>
+
+```hs
+fromList :: [a] -> Gen a
+fromList xs = runGen $ mapM_ yield xs
+```
+
+`yield` から `ccOut` の引数が消えたことで、`fromList` 側も `mapM_ (yield ccOut) xs` から `mapM_ yield xs` へと単純になります。
+</details>
+
 # リソース管理
 
 ここまでは原理を通すことを優先してきましたが、継続モナドは実用でも使われています。ここで実用面を回収します。
@@ -646,15 +723,9 @@ main = evalContT $ do
 
 ## 解放の順序と注意点
 
-解放の順序を確かめるため、取得と解放をログ出力する疑似リソースを用意します。`withFile` と同じく、本体を受け取って前後を挟む形です。
+解放の順序を確かめるため、取得と解放をログ出力する疑似リソース `withRes` を用意します。`withFile` と同じく、本体を受け取って前後を挟む形です（具体的な実装は、後の練習問題4で扱います）。
 
 ```hs
-withRes name body = do
-    putStrLn $ "open " ++ name
-    r <- body name
-    putStrLn $ "close " ++ name
-    return r
-
 main = evalContT $ do
     a <- ContT $ withRes "A"
     b <- ContT $ withRes "B"
@@ -733,6 +804,40 @@ main = do
 :::
 
 `with` 系全般に共通する罠ですが、`ContT` では「どこでリソースが閉じるか」が `do` の見た目から消えるため、特に踏みやすくなっています。
+
+## 練習
+
+【問4】この節で実装を伏せてきた `withRes` を実装してください。取得・解放をログ出力する疑似リソースで、`ContT` で3つ以上ネストしたときも解放が取得の逆順（LIFO）になります。次の `main` が実行結果の通りになることを確認してください。
+
+```hs
+main = evalContT $ do
+    a <- ContT $ withRes "A"
+    b <- ContT $ withRes "B"
+    c <- ContT $ withRes "C"
+    liftIO $ putStrLn $ "use " ++ a ++ b ++ c
+```
+```text:実行結果
+open A
+open B
+open C
+use ABC
+close C
+close B
+close A
+```
+
+<details><summary>解答例</summary>
+
+```hs
+withRes name body = do
+    putStrLn $ "open " ++ name
+    r <- body name
+    putStrLn $ "close " ++ name
+    return r
+```
+
+`ContT` で3つ包んだだけですが、解放は `with` 系をネストして書いた場合と同じく取得の逆順（C → B → A）になります。
+</details>
 
 # まとめ
 
