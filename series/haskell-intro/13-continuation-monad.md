@@ -286,80 +286,6 @@ bind と `callCC` は互いに逆方向の型変換をしています。
 
 bind は `k` の戻り値からモナドを剥がしていたのに対して、`callCC` は逆に `c` の戻り値をモナドで包んでいます。👉[詳細 (JavaScript)](https://qiita.com/7shi/items/27b6f3169961299a6195)
 
-## 限定継続との関係
-
-「継続モナドは実際のコールスタックを操作しないので、限定継続（delimited continuation）ではないか」という疑問が浮かぶかもしれません。答えは半分正しく半分ミスリードです。
-
-争点を2つに分けます。
-
-- **捕まえた継続はどこまで届くか**：`evalCont` の外へは出られません。脱出しても `evalCont` の外側は必ず実行されます。
-
-  ```hs
-  main = do
-      let r = evalCont $ callCC $ \k -> do
-                  _ <- k (1 :: Int)
-                  return 999          -- ここには来ない
-      print r
-      putStrLn "after"                -- 脱出はここまで飛べない
-  ```
-  ```text:実行結果
-  1
-  after
-  ```
-
-  ここは確かに限定的です。bind で連結された `Cont` ひとつが区切りの単位で、`evalCont` はその外側で結果を取り出すだけの関数だからです。
-
-- **捕まえた継続は合成できるか**：`callCC` は abortive です。`k` の戻り値を使おうとしても戻ってこないので効きません。
-
-  ```hs
-  abortive = evalCont $ callCC $ \k -> do
-      x <- k 1
-      return (x + 100)                -- 到達しない
-  ```
-  ```text:実行結果
-  1
-  ```
-
-  ここが決定的な差です。真の限定継続の道具である `shift`・`reset`（`Control.Monad.Trans.Cont` に標準で用意されています）では、捕まえた継続は値を返す普通の関数なので、結果を合成できます。**composable**と呼ばれる性質です。
-
-  ```hs
-  import Control.Monad.Trans.Cont (evalCont, reset, shift)
-
-  composable = evalCont $ reset $ do
-      x <- shift $ \k -> return (k (k 3))
-      return (1 + x)
-  ```
-  ```text:実行結果
-  5   -- 1 + (1 + 3)
-  ```
-
-  `reset` が区切りを作り、`shift` がその区切りまでの継続を `k` として値の形で捕まえます。捕まえた `k` は関数として何度でも呼べ、呼んだ結果をさらに計算に使えます。同じ `k` を2回使うことすらできます。
-
-  ```hs
-  twice = evalCont $ reset $ do
-      x <- shift $ \k -> return (k 10 + k 20)
-      return (x * 2)
-  ```
-  ```text:実行結果
-  60   -- (10*2) + (20*2)
-  ```
-
-  `callCC` でも同じ形を書くこと自体はできます。ただし合成にはなりません。
-
-  ```hs
-  notTwice = evalCont $ callCC $ \k -> do
-      x1 <- k 10
-      x2 <- k 20                      -- 到達しない
-      return ((x1 + x2) * 2)
-  ```
-  ```text:実行結果
-  10   -- 最初の k 10 で脱出する
-  ```
-
-  型検査は通りますが、最初の `k 10` を呼んだ時点で後続が捨てられるため、`k 20` にも `(x1 + x2) * 2` にも到達しません。合成できないのは型の制約ではなく、捕まえた継続が abortive だという実行時の振る舞いによるものです。
-
-まとめると、**`callCC` は「区切りの中の undelimited な `call/cc`」**です。`evalCont` という区切りの中に限定されてはいますが、その中では「呼んだら戻らない」完全な脱出継続として振る舞います。
-
 # 応用: コルーチン
 
 継続を保持できることの一番の見せ場が、`k` を**後で**呼ぶ自由です。これを使うとコルーチン（ジェネレーター）が実装できます。
@@ -500,31 +426,6 @@ type Behaviour = [Response] -> [Request]
 https://zenn.dev/7shi/articles/20260731-haskell-io-history
 
 Haskell 1.0はこの継続 I/O と並行して、ストリームを扱う版の I/O も持っていました。両者はモナド版（Haskell 1.3、1996年）に置き換えられ、現在の `IO` モナドに至ります。
-
-### shift/reset で書き直す
-
-「限定継続との関係」の節で `callCC` は abortive、`shift` は composable だと説明しました。`shift`・`reset` を使うと、このジェネレーターはもっと簡単に書けます。
-
-```hs
-import Control.Monad.Trans.Cont (Cont, evalCont, reset, shift)
-
-yield v = shift $ \k -> return (Yield v (return . k))
-
-runGen body = evalCont $ reset (body >> return Done)
-
-accum = runGen $ let loop s = yield s >>= \x -> loop (s + x) in loop 0
-```
-```text:実行結果
-[0,1,3,6]   -- callCC 版と一致
-```
-
-`callCC` 版では脱出継続 `ccOut` を `yield` と `runGen` の間で引き回す必要がありましたが、`shift` は呼び出し元まで戻るのでその引き回しが要りません。`yield` から引数が1つ消えています。Scheme を扱った姉妹編（[限定継続でジェネレーターを実装する](https://qiita.com/7shi/items/6db3e19ddc1f8552d9a0)）が「限定継続では継続を保存しておく必要がなく、`yield` は外部の変数を参照しないため外で定義できる」と結論しているのと同じ現象が Haskell でも再現します。
-
-それでも本記事の本線は `callCC` のままにします。理由は3つです。
-
-1. 記事の狙いである「bind は継続を抽象化したもの」に対して、`callCC` は `Cont` の定義から直接出てきます。`shift`・`reset` はもう一段上の抽象で、区切りという別概念が必要です。
-2. 直前で見せた `(next ())` → `next` という差分は `callCC` 版の方が鮮明です（純粋な削除になります）。
-3. 姉妹編の[CPS 変換から継続モナドへ](https://qiita.com/7shi/items/27b6f3169961299a6195)も `callCC` で書いており、シリーズとしての連続性があります。
 
 ### 既存のジェネレーターより能力が上
 
@@ -715,6 +616,159 @@ main = do
 
 正確な線引きはこうなります。**「リストでも書けるが、遅延に頼った knot-tying が要り、Haskell はそれを試して捨てた」。** これは思弁ではなく史実です。継続モナドによるコルーチンは、Haskell がかつて遅延リストで実現していたものを、副作用を明示するモナドの形で作り直したものだと言えます。
 
+# 限定継続
+
+「継続を保持できる」ことの威力を `callCC` で確認してきましたが、`callCC` は継続を扱う唯一の方法ではありません。もう一つの道具である**限定継続**（delimited continuation）を導入し、ここまで作ったコルーチンがどう簡単になるかを見ます。
+
+## 区切り
+
+「継続を保持できる」と言っても、捕まえた継続がどこまで届くかには制約があります。`callCC` で確認します。
+
+```hs
+main = do
+    let r = evalCont $ callCC $ \k -> do
+                _ <- k (1 :: Int)
+                return 999          -- ここには来ない
+    print r
+    putStrLn "after"                -- 脱出はここまで飛べない
+```
+```text:実行結果
+1
+after
+```
+
+`k` を呼んで `callCC` を脱出しても、`evalCont` の外側（`putStrLn "after"`）は必ず実行されます。bind で連結された `Cont` ひとつがひとまとまりの単位で、`evalCont` はその外側で結果を取り出すだけの関数だからです。
+
+この「継続が届く範囲」の境界を**区切り**（delimiter）と呼びます。`Cont` では bind で連結された範囲ひとつ、`evalCont` の呼び出しがその境界にあたります。`callCC` で捕まえた継続は、この区切りの中でしか意味を持ちません。
+
+## shift/reset
+
+区切りを明示的に作るのが `reset`、区切りまでの継続を値として取り出すのが `shift` です。どちらも `Control.Monad.Trans.Cont` に標準で用意されています。
+
+```hs:型
+reset :: Cont r r -> Cont r' r
+shift :: ((a -> r) -> Cont r r) -> Cont r a
+```
+
+`reset e` は `e` をひとつの区切りにします。`shift f` は `f` に「`reset` までの継続」を関数として渡し、`f` の中でそれを呼び出せるようにします。
+
+同じ形の式を `callCC` と `shift`/`reset` の両方で書き、挙動を比較します。
+
+まず `callCC` です。
+
+```hs
+import Control.Monad.Trans.Cont (evalCont, callCC)
+
+viaCallCC = evalCont $ do
+    x <- callCC $ \k -> do
+        n <- k 5
+        return (2 + n)  -- 到達しない
+    return (2 * (1 + x))
+
+main = print viaCallCC
+```
+```text:実行結果
+12
+```
+
+`k 5` を呼ぶと `callCC` から即座に `5` が返り、`x` に `5` が入って `2 * (1 + 5)` が計算されて `12` になります。`k 5` の継続である `return (2 + n)` は実行されません。
+
+次に同じ形を `shift`・`reset` で書きます。
+
+```hs
+import Control.Monad.Trans.Cont (evalCont, reset, shift)
+
+viaShift = evalCont $ reset $ do
+    x <- shift $ \k -> do
+        n <- return (k 5)
+        return (2 + n)  -- 到達する
+    return (2 * (1 + x))
+
+main = print viaShift
+```
+```text:実行結果
+14
+```
+
+`callCC` の `ret` と同じく、`shift` の `k` もここで呼び出されます。ただし `ret` と違って、呼んだ時点で残りのコードが捨てられることはありません。呼んだ場所に戻ってきて `do` ブロックの続きがそのまま実行されます。`do` ブロックが（ふつうの関数のように）最後まで進むと、そこで得られた値がそのまま `shift` を抜けて `reset` 全体の結果になります。
+
+1. `k` には「`shift` の後に続くコード」、つまり戻り値の `x` への束縛と `return (2 * (1 + x))` が、`reset` の区切りの終端まであらかじめ1つの関数にまとめられて渡されます。`reset` の外側（呼び出し元やそれ以降のコード）は含まれません。渡された時点で完成した、ただの関数です。
+2. `k 5` を呼ぶと、その関数がその場で実行されて `2 * (1 + 5)` が計算され、`12` という値が呼んだ場所にそのまま返ります。
+3. `12` が `n` に束縛され、`do` ブロックが最後の `return (2 + n)` に到達して `14` になります。この値がそのまま `shift` の結果、そして `reset` 全体の結果になります。
+
+テキスト上は `return (2 * (1 + x))` が `shift $ \k -> ...` の外に書かれていますが、実行順序としては手順2の `k 5` の呼び出しの中で先に実行し終わっています。`do` ブロックが手順3で最後まで到達した時点では、外側にはもう実行すべきコードは残っていません。
+
+`callCC` では `k 5` の後に書いた `2 + n` の部分が捨てられて `12` になるのに対し、`shift` では `k 5` が呼んだ場所に戻ってくるため `2 + n` が生き残って `14` になります。
+
+## 呼ぶ回数は自由
+
+`shift` の `k` はただの関数として渡されるので、`f` の中で呼ぶかどうか、何回呼ぶかはコード次第です。
+
+`k` を一度も呼ばなければ、外側の続きはそもそも実行されません。
+
+```hs
+noCall = evalCont $ reset $ do
+    x <- shift $ \k -> return 999
+    return (2 * (1 + x))
+```
+```text:実行結果
+999
+```
+
+`f` が `999` を返すだけで `k` を呼ばなかったため、`evalCont (f k)` はその `999` をそのまま `shift` の結果にします。`return (2 * (1 + x))` は `k` の中身として渡されているだけで、`k` を呼ばない限り実行されることはありません。
+
+逆に `k` は呼べば戻ってくる普通の関数なので、同じ `k` を2回呼ぶこともできます。
+
+```hs
+twice = evalCont $ reset $ do
+    x <- shift $ \k -> return (k 10 + k 20)
+    return (x * 2)
+```
+```text:実行結果
+60   -- (10*2) + (20*2)
+```
+
+`k 10` の呼び出しも `k 20` の呼び出しも、それぞれ普通の関数呼び出しとして値を返します。`callCC` の `ret` は呼べばその場で脱出するだけなので、0回や2回という選択肢自体がありません。
+
+### 実装
+
+```hs
+reset e = cont $ \k -> k (evalCont e)
+shift f = cont $ \k -> evalCont (f k)
+```
+
+`reset e` は `evalCont e` で `e` を評価し切って値を取り出します。区切りの内側を先に「ただの値」まで還元してから、外側の継続 `k` に渡しています。
+
+`shift f` では `cont $ \k -> ...` の `k` こそが「`reset` までの継続」です。`shift f` の後に続くコードは、bind によってこの `k` として `f` に渡されます。`f` の中で `k` を呼べば、呼んだ場所に結果が返ってくる普通の関数呼び出しとして働きます。呼ばなければ `evalCont (f k)` が `f` の結果をそのまま区切りの値として使います。
+
+`callCC` の実装と並べると、対比がはっきりします。
+
+| | 捕まえる関数の型 | 呼んだときの挙動 |
+|---|---|---|
+| `callCC` の `ret` | `a -> Cont r b`（モナドに包まれる） | その場で `callCC` を脱出する |
+| `shift` の `k` | `a -> r`（素の値を返す関数） | 呼び出した場所に戻り、結果を式の中で使える |
+
+`callCC` の `ret` は「呼ぶと戻らない」関数として渡されるのに対し、`shift` の `k` は「呼べば戻ってくる」普通の関数として渡されます。
+
+## コルーチンを shift/reset で書き直す
+
+`shift`・`reset` を使うと、前節で組み立てたコルーチンはもっと簡単に書けます。
+
+```hs
+import Control.Monad.Trans.Cont (Cont, evalCont, reset, shift)
+
+yield v = shift $ \k -> return (Yield v (return . k))
+
+runGen body = evalCont $ reset (body >> return Done)
+
+accum = runGen $ let loop s = yield s >>= \x -> loop (s + x) in loop 0
+```
+```text:実行結果
+[0,1,3,6]   -- callCC 版と一致
+```
+
+`callCC` 版では脱出継続 `ccOut` を `yield` と `runGen` の間で引き回す必要がありましたが、`shift` は呼び出し元まで戻るのでその引き回しが要りません。`yield` から引数が1つ消えています。👉[参考 (Scheme)](https://qiita.com/7shi/items/6db3e19ddc1f8552d9a0)
+
 # 実用: リソース管理
 
 ここまでは原理を通すことを優先してきましたが、`ContT` は実用でも使われています。ここで実用面を回収します。
@@ -814,4 +868,6 @@ Left a.txt: hGetContents: illegal operation (delayed read on closed handle)
 
 `m >>= k` の `k` という、これまで `>>=` の中に隠れていた継続を、`Cont r a` というモナドの中に保持できる値として取り出しました。取り出せることから3つの自由（呼ばない・後で呼ぶ・何度も呼ぶ）が生まれ、それぞれが早期脱出（`callCC`）・ジェネレーター・分岐するジェネレーターという形で実現できることを見ました。
 
-応用として実装したコルーチンは、リストで素直に書ける範囲を丁寧に確認しながら進めることで、「リストでは書けない」という言い切りではなく「リストでも遅延に頼った knot-tying なら書けるが、Haskell はそれを実際に試して捨てた」という史実に基づいた線引きにたどり着きました。最後に見た `ContT` によるリソース管理は、原理としては同じ仕組みが実用の場面でどう使われているかの実例です。
+応用として実装したコルーチンは、リストで素直に書ける範囲を丁寧に確認しながら進めることで、「リストでは書けない」という言い切りではなく「リストでも遅延に頼った knot-tying なら書けるが、Haskell はそれを実際に試して捨てた」という史実に基づいた線引きにたどり着きました。
+
+`callCC` でコルーチンを組み上げた後で振り返った限定継続の節では、`shift`・`reset` という別の道具が「区切り」と「合成可能性」の両方を持つこと、そしてそれを使うと同じコルーチンがより簡潔に書けることを確認しました。最後に見た `ContT` によるリソース管理は、原理としては同じ仕組みが実用の場面でどう使われているかの実例です。
