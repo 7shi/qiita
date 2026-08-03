@@ -710,16 +710,18 @@ Python の `with` を `@contextmanager` で書くと、`yield` の位置で `wit
 ファイルを 1 つコピーするだけならネストのままでも大差ありませんが、複数のファイルを開こうとすると差が出ます。`with` 系のままではリストに対する明示的な再帰が必要になりますが、`ContT` なら `forM` が使えます。
 
 ```hs
-import Control.Monad (forM)
+import Control.Monad (forM, forM_)
 
 openAll paths = forM paths $ \p -> ContT $ withFile p ReadMode
 
 main = evalContT $ do
     hs <- openAll ["a.txt", "b.txt", "c.txt"]
-    liftIO $ mapM_ (\h -> hGetContents h >>= putStr) hs
+    liftIO $ forM_ hs (\h -> hGetContents h >>= putStr)
 ```
 
-モナドとして扱えるようにしたことで、`forM` のような既存のコンビネーターがそのまま効いています。
+:::note info
+`forM` と `forM_` の違いは、`forM` は結果をリストとして返すのに対し、`forM_` は結果を返さずにアクションだけを実行する点です。ここではハンドルのリストを取得するために `forM` を使っています。👉[Haskell アクションとラムダ 超入門](http://qiita.com/7shi/items/4a8a2807bb5186576c61)
+:::
 
 ## 解放の順序と注意点
 
