@@ -3,7 +3,12 @@
 シリーズ目次で「【予定】」のまま保留になっている回のプラン。
 記事番号は 13、ファイル名は [13-continuation-monad.md](13-continuation-monad.md)。
 **本文は完成。Qiita へは未投稿**（フロントマターの `id`・`url` が空）。
-残っているのは練習問題（構成案 8）の検討のみ。
+
+**この記事は Zenn 側で公開する**（2026.08.03 決定）。
+Zenn リポジトリに [20260803-haskell-continuation-monad.md](../../../zenn/articles/20260803-haskell-continuation-monad.md)
+として複製・変換済み（手順は qiita 側 [CLAUDE.md](../../CLAUDE.md) の「Zenn への移植」節）。
+**移動ではなく複製**なので、この Qiita 側のファイルはそのまま残置し、`id`・`url` は空のままにする
+（Qiita へ投稿する予定はない）。
 
 ## 現在の状況（2026.08.03 時点）
 
@@ -649,7 +654,9 @@ Haskell シリーズの軸から最も遠いので代償は小さい。
       題材は当初案の (a) 双方向ジェネレーターの代わりに、本文に実在する題材（callCC 早期脱出・
       生産専用ジェネレーター・shift/reset・ContT リソース管理の4本柱）に合わせて作り直した。
       全問 GHC 9.6.6 で動作確認済み（`# 練習` 節として本文に追加）。
-- [ ] Qiita へ投稿する。投稿後にフロントマターの `id`・`url`・`updated_at` を埋める。
+- [x] **Qiita へは投稿しない。Zenn 側で公開する**（2026.08.03 決定）。
+      Zenn リポジトリ [20260803-haskell-continuation-monad.md](../../../zenn/articles/20260803-haskell-continuation-monad.md) として複製・変換済み。
+      この Qiita 側ファイルの `id`・`url`・`updated_at` は空のまま残す（同期対象外）。
 
 ## 今回は入れなかった話（今後の回へ）
 

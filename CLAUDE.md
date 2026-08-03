@@ -46,6 +46,33 @@ Qiita 独自の記法（`:::note` による補足説明、`<details>` による�
 
 未投稿の記事へリンクする場合は相対パス（`haskell-generator.md` など）で書き、投稿後に Qiita の URL へ差し替える。
 
+## Zenn への移植
+
+Qiita の記事を Zenn 側でも公開したい場合の手順。**移動ではなく複製**として扱う。
+Qiita 側のファイルはそのまま残置し、`id`・`url` などフロントマターも変更しない。
+
+1. Zenn リポジトリ（`~/repos/zenn`）の流儀を確認する。
+   - `README.md`・`CLAUDE.md`・`NOTATIONS.md`（Zenn 独自記法）
+2. slug を決めて記事を初期化する（Zenn 側 CLAUDE.md の手順どおり）。
+   ```
+   npx zenn new:article --slug YYYYMMDD-xxx
+   ```
+3. Qiita 記事の本文（フロントマターを除く部分）をコピーし、フロントマターを Zenn 形式
+   （`title`/`emoji`/`type`/`topics`/`published`）に置き換える。
+4. Qiita 独自記法を Zenn 記法に変換する。
+   - `:::note info` → `:::message`
+   - `:::note alert` / `:::note warn` → `:::message alert`
+   - `<details><summary>タイトル</summary> ... </details>` → `:::details タイトル ... :::`
+5. Zenn リポジトリの慣例として、Claude Code で執筆した記事の冒頭に以下を入れる
+   （既存の Zenn 記事に倣う。必須ではないが揃えておく）。
+   ```
+   :::message
+   本記事の執筆には Claude Code (バージョン) を利用しました。
+   :::
+   ```
+6. Qiita 上にしか存在しない記事へのリンク（シリーズ目次・参考リンクなど）はそのまま
+   Qiita の URL で残す。書き換えない。
+
 ## ARTICLES.tsv
 
 - `articles/` と `series/` を走査して機械生成するインデックス。手で編集しない。
