@@ -83,6 +83,21 @@ uv run scripts/extract_series.py [-m MODEL] [-o OUTPUT]
 
 ### 3. ローカル記事の Qiita への反映
 
+#### 未反映記事の確認
+
+Qiita へ未反映の記事（フロントマターの `updated_at` が空のもの）を列挙します。
+
+```bash
+make status
+```
+
+- `ARTICLES.tsv` を走査するため、事前に `make articles` で最新化しておきます。
+- `id` が空の記事（未投稿）には `(未投稿)` が付きます。
+- `ZENN.tsv` に載っている記事は Zenn 側で公開するものとして除外されます。
+- 直接実行する場合は `uv run scripts/update_article.py`（引数なし）です。
+
+#### 記事の更新
+
 `articles/` や `series/` で編集した既存記事（フロントマターの `id` が既に設定されているもの）を、Qiita 側へ PATCH で反映します。新規記事（`id` が空）の投稿には対応していません。
 
 ```bash

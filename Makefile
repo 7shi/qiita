@@ -1,4 +1,4 @@
-.PHONY: help all extract articles sync
+.PHONY: help all extract articles sync status
 
 help:
 	@echo "Available targets:"
@@ -8,6 +8,7 @@ help:
 	@echo "  extract      - Extract items from json to md"
 	@echo "  articles     - Aggregate articles from the articles/ directory"
 	@echo "  sync         - Sync article bodies with the Zenn repository (ZENN.tsv)"
+	@echo "  status       - List articles not yet reflected on Qiita"
 
 all: data/7shi-1.json data/7shi-2.json data/7shi-3.json extract
 
@@ -22,3 +23,6 @@ articles:
 
 sync:
 	uv run scripts/sync_zenn.py
+
+status:
+	uv run scripts/update_article.py

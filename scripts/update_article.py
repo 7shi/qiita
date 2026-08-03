@@ -11,6 +11,7 @@ import yaml
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 ARTICLES_TSV = REPO_ROOT / 'ARTICLES.tsv'
+ZENN_TSV = REPO_ROOT / 'ZENN.tsv'
 
 
 def split_frontmatter(text):
@@ -22,16 +23,29 @@ def split_frontmatter(text):
     return front, body
 
 
+def load_zenn_paths():
+    """ZENN.tsv に載っている Qiita 側パスの集合を返す（Zenn で公開する記事）"""
+    if not ZENN_TSV.exists():
+        return set()
+    with open(ZENN_TSV, encoding='utf-8', newline='') as f:
+        return {row['qiita'] for row in csv.DictReader(f, delimiter='\t') if row.get('qiita')}
+
+
 def list_pending():
     """ARTICLES.tsv を走査し、updated_at が空の記事（Qiita へ未反映）を列挙する"""
     if not ARTICLES_TSV.exists():
         print(f'{ARTICLES_TSV} が見つかりません。make articles で生成してください', file=sys.stderr)
         sys.exit(1)
 
+    zenn_paths = load_zenn_paths()
+
     count = 0
     with open(ARTICLES_TSV, encoding='utf-8', newline='') as f:
         for row in csv.DictReader(f, delimiter='\t'):
-            path = REPO_ROOT / row['directory'] / f'{row["slug"]}.md'
+            rel = f'{row["directory"]}/{row["slug"]}.md'
+            if rel in zenn_paths:
+                continue
+            path = REPO_ROOT / rel
             if not path.exists():
                 print(f'{path.relative_to(REPO_ROOT)}: ファイルがありません', file=sys.stderr)
                 continue
