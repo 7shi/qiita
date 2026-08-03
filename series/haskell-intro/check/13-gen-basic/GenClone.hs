@@ -1,5 +1,6 @@
 -- 記事「何度でも再開できる」節の掲載コード。
--- Gen.hs と同じ定義のまま、main で同じ Gen を 2 回 loop に掛ける。
+-- Gen.hs と同じ定義のまま、main で最初の1個を取り出してから
+-- そのときの継続を 2 回 loop に掛ける。
 import Control.Monad.Trans.Cont (Cont, evalCont, callCC)
 
 data Gen a = Yield a (Cont (Gen a) (Gen a)) | Done
@@ -16,6 +17,7 @@ gen = runGen $ \ccOut -> do
     yield ccOut 3
 
 main = do
-    let g = gen  -- 最初の Gen を保管しておく
-    loop g
-    loop g       -- 保管しておいた Gen をもう一度
+    let Yield v next = gen  -- 最初の1個だけ取り出す
+    print v
+    loop (evalCont next)    -- 続きを最後まで
+    loop (evalCont next)    -- 同じ中断点からもう一度
