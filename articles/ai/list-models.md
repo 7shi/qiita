@@ -11,7 +11,7 @@ tags:
 - name: Gemini
   versions: []
 title: Gemini APIで使えるモデル
-updated_at: '2026-06-04T11:44:12+09:00'
+updated_at: '2026-08-03T21:54:43+09:00'
 url: https://qiita.com/7shi/items/ac3c2b1bea3bb4e9eb70
 slide: false
 ---
@@ -21,7 +21,7 @@ Google AI Studio で生成した API key で使用できるモデルを調べま
 環境変数 `GEMINI_API_KEY` をセットする必要があります。
 
 ```sh:準備
-pip install google-genai
+uv add google-genai
 ```
 ```py:ls.py
 import os
@@ -36,21 +36,22 @@ for model in client.models.list():
 <details><summary>履歴保存スクリプト</summary>
 特定のディレクトリ内に YYYYMMDD.txt の形式で履歴を保存するスクリプトです。
 <pre>#!/bin/bash
+set -e
 &nbsp;
 # 1. まずtmpとして出力
-python ls.py > tmp
+uv run ls.py &gt; tmp
 &nbsp;
 LATEST="LATEST"
 &nbsp;
 # 2. 最終版（LATEST)とcmpして、差がなければtmpを削除してその旨表示して終了
 # -e はファイルやシンボリックリンクの存在を確認
 if [ -e "$LATEST" ]; then
-&nbsp;&nbsp;if cmp -s tmp "$LATEST"; then
-&nbsp;&nbsp;&nbsp;&nbsp;echo "変更はありませんでした。"
-&nbsp;&nbsp;&nbsp;&nbsp;rm tmp
-&nbsp;&nbsp;&nbsp;&nbsp;exit 0
-&nbsp;&nbsp;fi
-&nbsp;&nbsp;fiecho "変更が検出されました。"
+&nbsp;&nbsp;&nbsp;&nbsp;if cmp -s tmp "$LATEST"; then
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;echo "変更はありませんでした。"
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rm tmp
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exit 0
+&nbsp;&nbsp;&nbsp;&nbsp;fi
+&nbsp;&nbsp;&nbsp;&nbsp;echo "変更が検出されました。"
 fi
 &nbsp;
 # 3. dateコマンドで日付を取得
@@ -63,17 +64,13 @@ echo "新しいファイルを作成しました: $FILENAME"
 &nbsp;
 # 5. 画面にLATESTとのdiffを標示
 if [ -e "$LATEST" ]; then
-&nbsp;&nbsp;fiecho "LATESTとの差分:"
-&nbsp;&nbsp;fidiff -u0 --color "$LATEST" "$FILENAME"
+&nbsp;&nbsp;&nbsp;&nbsp;echo "LATESTとの差分:"
+&nbsp;&nbsp;&nbsp;&nbsp;diff -u0 --color "$LATEST" "$FILENAME" || true
 fi
 &nbsp;
 # LATESTシンボリックリンクを更新
 ln -sf "$FILENAME" "$LATEST"
 echo "LATESTシンボリックリンクを $FILENAME に更新しました。"
-&nbsp;
-# クリップボードにコピー
-xsel -b < $FILENAME
-echo "$FILENAME の内容をクリップボードにコピーしました。"
 </pre>
 </details>
 
@@ -81,7 +78,7 @@ echo "$FILENAME の内容をクリップボードにコピーしました。"
 取得したすべてのモデルが使用可能かは未確認です。
 :::
 
-# 2026/06/04
+# 2026/08/03
 
 name|display_name
 ----|----
@@ -111,12 +108,17 @@ gemini-3-pro-image|Nano Banana Pro
 nano-banana-pro-preview|Nano Banana Pro
 gemini-3.1-flash-image-preview|Nano Banana 2
 gemini-3.1-flash-image|Nano Banana 2
+gemini-3.1-flash-lite-image|Nano Banana 2 Lite
 gemini-3.5-flash|Gemini 3.5 Flash
+gemini-3.5-flash-lite|Gemini 3.5 Flash Lite
+gemini-omni-flash-preview|Gemini Omni Flash Preview
+gemini-3.6-flash|Gemini 3.6 Flash
 lyria-3-clip-preview|Lyria 3 Clip Preview
 lyria-3-pro-preview|Lyria 3 Pro Preview
 gemini-3.1-flash-tts-preview|Gemini 3.1 Flash TTS Preview
 gemini-robotics-er-1.5-preview|Gemini Robotics-ER 1.5 Preview
 gemini-robotics-er-1.6-preview|Gemini Robotics-ER 1.6 Preview
+gemini-robotics-er-2-preview|Gemini Robotics-ER 2 Preview
 gemini-2.5-computer-use-preview-10-2025|Gemini 2.5 Computer Use Preview 10-2025
 antigravity-preview-05-2026|Antigravity Agent Preview
 deep-research-max-preview-04-2026|Deep Research Max Preview (Apr-21-2026)
@@ -129,9 +131,6 @@ aqa|Model that performs Attributed Question Answering.
 imagen-4.0-generate-001|Imagen 4
 imagen-4.0-ultra-generate-001|Imagen 4 Ultra
 imagen-4.0-fast-generate-001|Imagen 4 Fast
-veo-2.0-generate-001|Veo 2
-veo-3.0-generate-001|Veo 3
-veo-3.0-fast-generate-001|Veo 3 fast
 veo-3.1-generate-preview|Veo 3.1
 veo-3.1-fast-generate-preview|Veo 3.1 fast
 veo-3.1-lite-generate-preview|Veo 3.1 lite
@@ -139,9 +138,23 @@ gemini-2.5-flash-native-audio-latest|Gemini 2.5 Flash Native Audio Latest
 gemini-2.5-flash-native-audio-preview-09-2025|Gemini 2.5 Flash Native Audio Preview 09-2025
 gemini-2.5-flash-native-audio-preview-12-2025|Gemini 2.5 Flash Native Audio Preview 12-2025
 gemini-3.1-flash-live-preview|Gemini 3.1 Flash Live Preview
+gemini-robotics-er-2-streaming-preview|Gemini Robotics-ER 2 Streaming Preview
+gemini-3.5-live-translate-preview|Gemini 3.5 Live Translate Preview
 
 # 差分
 
+```diff:2026/06/04 と 2026/08/03 の差分
++gemini-3.1-flash-lite-image|Nano Banana 2 Lite
++gemini-3.5-flash-lite|Gemini 3.5 Flash Lite
++gemini-omni-flash-preview|Gemini Omni Flash Preview
++gemini-3.6-flash|Gemini 3.6 Flash
++gemini-robotics-er-2-preview|Gemini Robotics-ER 2 Preview
++gemini-robotics-er-2-streaming-preview|Gemini Robotics-ER 2 Streaming Preview
++gemini-3.5-live-translate-preview|Gemini 3.5 Live Translate Preview
+-veo-2.0-generate-001|Veo 2
+-veo-3.0-generate-001|Veo 3
+-veo-3.0-fast-generate-001|Veo 3 fast
+```
 ```diff:2026/04/16 と 2026/06/04 の差分
 -gemma-3-1b-it|Gemma 3 1B
 -gemma-3-4b-it|Gemma 3 4B
