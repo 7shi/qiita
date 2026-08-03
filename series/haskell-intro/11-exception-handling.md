@@ -13,7 +13,7 @@ tags:
 - name: Haskell
   versions: []
 title: Haskell 例外処理 超入門
-updated_at: '2016-07-03T12:14:50+09:00'
+updated_at: '2026-08-03T16:19:55+09:00'
 url: https://qiita.com/7shi/items/73e534c47bbebc71b37e
 slide: false
 ---

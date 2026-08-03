@@ -13,7 +13,7 @@ tags:
 - name: Haskell
   versions: []
 title: Haskell 状態系モナド 超入門
-updated_at: '2020-02-11T05:58:54+09:00'
+updated_at: '2026-08-03T16:19:42+09:00'
 url: https://qiita.com/7shi/items/2e9bff5d88302de1a9e9
 slide: false
 ---

@@ -16,7 +16,7 @@ tags:
   versions:
   - '6'
 title: Haskell Maybeモナド 超入門
-updated_at: '2016-07-03T01:20:20+09:00'
+updated_at: '2026-08-03T16:19:36+09:00'
 url: https://qiita.com/7shi/items/c7d7eec066af0fe0688d
 slide: false
 ---

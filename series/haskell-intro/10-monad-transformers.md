@@ -11,7 +11,7 @@ tags:
 - name: Haskell
   versions: []
 title: Haskell モナド変換子 超入門
-updated_at: '2019-10-13T19:34:43+09:00'
+updated_at: '2026-08-03T16:19:49+09:00'
 url: https://qiita.com/7shi/items/4408b76624067c17e933
 slide: false
 ---

@@ -3,7 +3,7 @@ coediting: false
 comments_count: 0
 created_at: '2014-12-19T02:37:24+09:00'
 id: deb19c4cba933590ffbf
-likes_count: 41
+likes_count: 42
 private: false
 reactions_count: 0
 stocks_count: 30
@@ -14,7 +14,7 @@ tags:
   versions:
   - '2015'
 title: Haskell リストモナド 超入門
-updated_at: '2016-07-31T13:26:02+09:00'
+updated_at: '2026-08-03T16:19:31+09:00'
 url: https://qiita.com/7shi/items/deb19c4cba933590ffbf
 slide: false
 ---

@@ -13,7 +13,7 @@ tags:
 - name: parsec
   versions: []
 title: Haskell 構文解析 超入門
-updated_at: '2016-12-27T02:36:21+09:00'
+updated_at: '2026-08-03T16:20:01+09:00'
 url: https://qiita.com/7shi/items/b8c741e78a96ea2c10fe
 slide: false
 ---

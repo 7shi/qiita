@@ -11,7 +11,7 @@ tags:
 - name: Haskell
   versions: []
 title: Haskell アクションとラムダ 超入門
-updated_at: '2015-07-31T15:55:19+09:00'
+updated_at: '2026-08-03T16:19:19+09:00'
 url: https://qiita.com/7shi/items/4a8a2807bb5186576c61
 slide: false
 ---
