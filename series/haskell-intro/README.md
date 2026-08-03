@@ -46,7 +46,7 @@ Zenn は投稿すると自動的に英語版が生成されるため、13回以�
 ## 予定
 
 13. [Haskell 継続モナド 超入門](13-continuation-monad.md)（Zenn で公開）
-14. Haskell 型クラス 超入門
+14. [Haskell 型クラス 超入門](14-type-classes.md)（Zenn で公開）
 15. Haskell モナドとゆかいな仲間たち（Functor・Applicativeの話。型クラスの知識が前提のため14の後に回す）
 16. Haskell Freeモナド 超入門
 17. Haskell Operationalモナド 超入門
