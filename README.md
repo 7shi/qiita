@@ -81,6 +81,18 @@ uv run scripts/extract_series.py [-m MODEL] [-o OUTPUT]
 - **デフォルトモデル**: `ollama:gemma4:31b-it-qat`
 - **出力**: `series.jsonl`
 
+### 3. ローカル記事の Qiita への反映
+
+`articles/` や `series/` で編集した既存記事（フロントマターの `id` が既に設定されているもの）を、Qiita 側へ PATCH で反映します。新規記事（`id` が空）の投稿には対応していません。
+
+```bash
+QIITA_TOKEN=xxx uv run scripts/update_article.py series/haskell-intro/01-intro.md
+```
+
+- 環境変数 `QIITA_TOKEN` に Qiita API のアクセストークン（`write_qiita` スコープ）が必要です。
+- 対象ファイルの `updated_at` が既に空でない（同期済みの可能性がある）場合は確認を求めます。`-y` を付けると確認をスキップします。
+- 実行後、レスポンスの内容（`updated_at`・`likes_count` など）でフロントマターを更新します。
+
 ## ドキュメント
 
 - `PLAN.md` : `articles/` の整理状況とシリーズ化の残課題をまとめたドキュメント。
