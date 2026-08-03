@@ -15,7 +15,7 @@ tags:
 - name: CPS変換
   versions: []
 title: CPS 変換から継続モナドへ
-updated_at: ''
+updated_at: '2026-08-03T22:39:56+09:00'
 url: https://qiita.com/7shi/items/27b6f3169961299a6195
 slide: false
 ---
@@ -676,6 +676,16 @@ main = go g
 
 `main` の `go` が JavaScript の `while (it = it.next().evalCont())` に相当します。値の有無は `undefined` の代わりに `Maybe` で表しました。
 
-型が循環する理由と、直和型で整理した実装は別記事にまとめました。
+# 関連記事
+
+Haskell で型が循環する理由と、直和型で整理した実装です。
 
 https://zenn.dev/7shi/articles/20260730-haskell-generator
+
+限定継続でジェネレーターを実装すればシンプルになることを、Scheme で説明します。
+
+https://qiita.com/7shi/items/6db3e19ddc1f8552d9a0
+
+Haskell で継続モナドを解説します。限定継続やリソース管理にも触れています。
+
+https://zenn.dev/7shi/articles/20260803-haskell-continuation-monad
