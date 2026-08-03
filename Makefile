@@ -1,4 +1,4 @@
-.PHONY: help all extract articles
+.PHONY: help all extract articles sync
 
 help:
 	@echo "Available targets:"
@@ -7,6 +7,7 @@ help:
 	@echo "  7shi-%.json  - Fetch 7shi's articles for the specific page (e.g. 7shi-1.json)"
 	@echo "  extract      - Extract items from json to md"
 	@echo "  articles     - Aggregate articles from the articles/ directory"
+	@echo "  sync         - Sync article bodies with the Zenn repository (ZENN.tsv)"
 
 all: data/7shi-1.json data/7shi-2.json data/7shi-3.json extract
 
@@ -18,3 +19,6 @@ extract:
 
 articles:
 	uv run scripts/aggregate_articles.py
+
+sync:
+	uv run scripts/sync_zenn.py

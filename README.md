@@ -93,6 +93,18 @@ QIITA_TOKEN=xxx uv run scripts/update_article.py series/haskell-intro/01-intro.m
 - 対象ファイルの `updated_at` が既に空でない（同期済みの可能性がある）場合は確認を求めます。`-y` を付けると確認をスキップします。
 - 実行後、レスポンスの内容（`updated_at`・`likes_count` など）でフロントマターを更新します。
 
+### 4. Zenn リポジトリとの同期
+
+Qiita 側と Zenn 側の両方に置いている記事の本文を揃えます。対応は `ZENN.tsv` に記述します。
+
+```bash
+make sync
+```
+
+- `ZENN.tsv` の各行についてフロントマターを除いた本文を比較し、異なれば更新日時（mtime）が新しい方の本文で古い方を上書きします。フロントマターは上書きされる側の形式のまま保持されます。
+- Qiita 側を書き換えた場合は `updated_at` を空にします（Qiita へ未反映であることの目印）。
+- 直接実行する場合は `uv run scripts/sync_zenn.py` です。`-n`（`--dry-run`）で更新内容の確認のみ、`--zenn-root` で Zenn リポジトリの位置を指定できます（既定は `~/repos/zenn`）。
+
 ## ドキュメント
 
 - `PLAN.md` : `articles/` の整理状況とシリーズ化の残課題をまとめたドキュメント。
@@ -111,3 +123,4 @@ QIITA_TOKEN=xxx uv run scripts/update_article.py series/haskell-intro/01-intro.m
 - `scripts/` : 各種スクリプトが配置されています。
 - `series/` : 複数記事にまたがるシリーズを `series/{slug}/` ディレクトリにまとめたものです。各ディレクトリの `README.md` が目録（正本）です。
 - [NOTATIONS.md](NOTATIONS.md) : Qiita 独自の記法（`:::note` などのアラート記法）についてのメモ。
+- `ZENN.tsv` : Zenn リポジトリにも複製している記事の対応表（`qiita`・`zenn` の2列。それぞれのリポジトリからの相対パス）。`make sync` が参照します。
