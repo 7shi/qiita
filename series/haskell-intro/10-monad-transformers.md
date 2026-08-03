@@ -29,10 +29,10 @@ Haskellではモナドと呼ばれる部品を組み合わせてプログラム�
 1. [Haskell リストモナド 超入門](http://qiita.com/7shi/items/deb19c4cba933590ffbf)
 1. [Haskell Maybeモナド 超入門](http://qiita.com/7shi/items/c7d7eec066af0fe0688d)
 1. [Haskell 状態系モナド 超入門](http://qiita.com/7shi/items/2e9bff5d88302de1a9e9)
-1. Haskell モナド変換子 超入門 ← この記事
+1. **Haskell モナド変換子 超入門** ← この記事
 1. [Haskell 例外処理 超入門](http://qiita.com/7shi/items/73e534c47bbebc71b37e)
 1. [Haskell 構文解析 超入門](http://qiita.com/7shi/items/b8c741e78a96ea2c10fe)
-1. 【予定】Haskell 継続モナド 超入門
+1. [Haskell 継続モナド 超入門](https://zenn.dev/7shi/articles/20260803-haskell-continuation-monad)
 1. 【予定】Haskell 型クラス 超入門
 1. 【予定】Haskell モナドとゆかいな仲間たち
 1. 【予定】Haskell Freeモナド 超入門

@@ -23,7 +23,7 @@ slide: false
 シリーズの記事です。
 
 1. [Haskell 超入門](http://qiita.com/7shi/items/145f1234f8ec2af923ef)
-1. Haskell 代数的データ型 超入門 ← この記事
+1. **Haskell 代数的データ型 超入門** ← この記事
 1. [Haskell アクション 超入門](http://qiita.com/7shi/items/85afd7bbd5d6c4115ad6)
 1. [Haskell ラムダ 超入門](http://qiita.com/7shi/items/1345bf32003faff435cb)
 1. [Haskell アクションとラムダ 超入門](http://qiita.com/7shi/items/4a8a2807bb5186576c61)
@@ -34,7 +34,7 @@ slide: false
 1. [Haskell モナド変換子 超入門](http://qiita.com/7shi/items/4408b76624067c17e933)
 1. [Haskell 例外処理 超入門](http://qiita.com/7shi/items/73e534c47bbebc71b37e)
 1. [Haskell 構文解析 超入門](http://qiita.com/7shi/items/b8c741e78a96ea2c10fe)
-1. 【予定】Haskell 継続モナド 超入門
+1. [Haskell 継続モナド 超入門](https://zenn.dev/7shi/articles/20260803-haskell-continuation-monad)
 1. 【予定】Haskell 型クラス 超入門
 1. 【予定】Haskell モナドとゆかいな仲間たち
 1. 【予定】Haskell Freeモナド 超入門
