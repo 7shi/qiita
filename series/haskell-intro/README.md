@@ -25,9 +25,27 @@
 12. [Haskell 構文解析 超入門](12-parsing.md) `b8c741e78a96ea2c10fe`
     - [【解答例】Haskell 構文解析 超入門](12a-parsing.md) `f65814b1e91d48ec8d12`
 
+## 公開方針（13回以降）
+
+Zenn は投稿すると自動的に英語版が生成されるため、13回以降の**新規記事は Zenn で公開**する。
+過去記事（1〜12回）まで Zenn に移行すると読者が混乱するため、そこまでは遡らない。
+
+ただし**執筆自体は従来どおりこの Qiita 側リポジトリで行う**。過去回（1〜12回）との
+用語・構成の一貫性を確認しながら書く必要があり、過去ログ（Qiita 側の記事本文や
+本シリーズの `*-PLAN.md`）との比較が執筆に不可欠なため。
+
+- 本文は `series/haskell-intro/` にファイルを作成して執筆する（フロントマターは
+  Qiita 形式のまま。`id`・`url` は空にする＝Qiita には投稿しない目印）。
+- Qiita には投稿しないため、補足・折りたたみなどの記法は最初から Zenn 記法
+  （`:::message`・`:::details`）を使う。Qiita 独自記法（`:::note`・`<details>`）は使わない。
+- 完成後、Zenn リポジトリ（`~/repos/zenn`）へ複製して公開する。
+  手順は [CLAUDE.md](../../CLAUDE.md) の「Zenn への移植」節を参照。
+- **移動ではなく複製。** この Qiita 側のファイルはそのまま残し、`id`・`url` も空のままにする
+  （Qiita へは投稿しない）。
+
 ## 予定
 
-13. Haskell 継続モナド 超入門
+13. [Haskell 継続モナド 超入門](13-continuation-monad.md)（Zenn で公開）
 14. Haskell 型クラス 超入門
 15. Haskell モナドとゆかいな仲間たち（Functor・Applicativeの話。型クラスの知識が前提のため14の後に回す）
 16. Haskell Freeモナド 超入門

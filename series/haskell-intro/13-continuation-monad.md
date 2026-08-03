@@ -22,6 +22,10 @@ slide: false
 
 Haskell ではモナドと呼ばれる部品を組み合わせてプログラムを作ります。`>>=`（bind）の中に隠れている**継続**を取り出し、それを値として扱えるようにした**継続モナド**を説明します。継続を値として取り出せると何が嬉しいのかを、実際に動くジェネレーターの実装を通して示します。
 
+:::message
+本記事の執筆には Claude Code (Opus 5) を利用しました。
+:::
+
 シリーズの記事です。
 
 1. [Haskell 超入門](http://qiita.com/7shi/items/145f1234f8ec2af923ef)
@@ -159,7 +163,7 @@ main = do
 
 `runIdentity` は中の値をそのまま返すだけですが、`runCont` は値をどう使うかという継続を渡さないと結果が得られません。値を受け取ってから使い方を決めるのではなく、使い方を先に渡しておく、という順序の違いです。
 
-:::note info
+:::message
 `runCont` の呼び出し自体は普通に `r` を返すので、値を継続の先でしか使えないという制約はありません。内部の実装が CPS の形をしているだけです。
 :::
 
@@ -300,8 +304,7 @@ Just 6
 Nothing
 ```
 
-<details><summary>解答例</summary>
-
+:::details 解答例
 ```hs
 import Control.Monad.Trans.Cont (evalCont, callCC)
 
@@ -315,7 +318,7 @@ sumUntilNegative xs = evalCont $ callCC $ \ret -> go ret 0 xs
 ```
 
 負の数に出会った時点で `ret Nothing` を呼べば、それ以降の再帰（`go`）には進まずそのまま `Nothing` が返ります。
-</details>
+:::
 
 # ジェネレーター
 
@@ -403,7 +406,7 @@ main = do
 
 `callCC` で取り出した継続は普通の関数なので、何度でも呼べます。`loop` は継続を評価しながら最後まで進みますが、それによって `g` が変化することはありません。何度使っても消費されないため、2 回目も同じ中断点から取り直せます。
 
-:::note info
+:::message
 JavaScript や Python のジェネレーターは消費すると元の状態が失われるため、これができません。👉[参考 (JavaScript)](https://qiita.com/7shi/items/6575cbb98c5a710a2945)
 
 `Promise` も `resolve` を 2 回呼べないという点で同様です。👉[参考 (JavaScript)](https://qiita.com/7shi/items/a2bb35f27cd4a56f7bac)
@@ -422,15 +425,14 @@ main = loop (fromList [10, 20, 30])
 30
 ```
 
-<details><summary>解答例</summary>
-
+:::details 解答例
 ```hs
 fromList :: [a] -> Gen a
 fromList xs = runGen $ \ccOut -> mapM_ (yield ccOut) xs
 ```
 
 `mapM_ (yield ccOut) xs` でリストの各要素に `yield` を適用するだけで、`yield` が中断と再開を担ってくれます。
-</details>
+:::
 
 # 限定継続
 
@@ -621,15 +623,14 @@ main = loop (fromList [10, 20, 30])
 30
 ```
 
-<details><summary>解答例</summary>
-
+:::details 解答例
 ```hs
 fromList :: [a] -> Gen a
 fromList xs = runGen $ mapM_ yield xs
 ```
 
 `yield` から `ccOut` の引数が消えたことで、`fromList` 側も `mapM_ (yield ccOut) xs` から `mapM_ yield xs` へと単純になります。
-</details>
+:::
 
 # リソース管理
 
@@ -701,7 +702,7 @@ main = copyFile "a.txt" "b.txt"
 
 見た目がフラットになっても、`withFile` がラムダを包んでいる構造は変わりません。`hSrc` 以降の行はすべて `withFile src ReadMode` に渡されたラムダの中身なので、`do` ブロックを抜けるときにハンドルは確実に解放されます。いわゆる RAII（Resource Acquisition Is Initialization）です。
 
-:::note info
+:::message
 Python の `with` を `@contextmanager` で書くと、`yield` の位置で `with` の本体（＝継続）が実行されます。ここまで作ってきたジェネレーターの `yield` と原理的には同じ仕組みで、ジェネレーターとリソース管理が密接に関係することが見て取れます。
 :::
 
@@ -719,7 +720,7 @@ main = evalContT $ do
     liftIO $ forM_ hs (\h -> hGetContents h >>= putStr)
 ```
 
-:::note info
+:::message
 `forM` と `forM_` の違いは、`forM` は結果をリストとして返すのに対し、`forM_` は結果を返さずにアクションだけを実行する点です。ここではハンドルのリストを取得するために `forM` を使っています。👉[Haskell アクションとラムダ 超入門](http://qiita.com/7shi/items/4a8a2807bb5186576c61)
 :::
 
@@ -743,7 +744,7 @@ close A
 
 解放は取得の逆順（LIFO）になり、ネストで書いた場合と同じ順序です。
 
-:::note info
+:::message
 この `withRes` は順序を見るためのもので、例外時の解放は考えていません。実際の `withFile` は `Control.Exception` の `bracket` を使っており、本体が例外で終わっても解放されます。
 :::
 
@@ -791,7 +792,7 @@ main = do
     putStr content
 ```
 
-:::note info
+:::message
 `hGetContents'` は base 4.15（GHC 9.0）以降で使えます。それより古い環境では、`evaluate` で式をその場で評価して読み切る必要があります。👉[Haskell 例外処理 超入門](https://qiita.com/7shi/items/73e534c47bbebc71b37e)
 
 ```hs
@@ -828,8 +829,7 @@ close B
 close A
 ```
 
-<details><summary>解答例</summary>
-
+:::details 解答例
 ```hs
 withRes name body = do
     putStrLn $ "open " ++ name
@@ -839,7 +839,7 @@ withRes name body = do
 ```
 
 `ContT` で3つ包んだだけですが、解放は `with` 系をネストして書いた場合と同じく取得の逆順（C → B → A）になります。
-</details>
+:::
 
 # まとめ
 

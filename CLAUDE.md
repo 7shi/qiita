@@ -51,15 +51,22 @@ Qiita 独自の記法（`:::note` による補足説明、`<details>` による�
 Qiita の記事を Zenn 側でも公開したい場合の手順。**移動ではなく複製**として扱う。
 Qiita 側のファイルはそのまま残置し、`id`・`url` などフロントマターも変更しない。
 
+**最初から Zenn 限定で公開するとわかっている記事**（例: haskell-intro 13回以降。
+@series/haskell-intro/README.md の「公開方針」を参照）は、Qiita に投稿する予定がないため
+**執筆時点から Zenn の記法（`:::message`・`:::details` など。Zenn 側の `NOTATIONS.md` を参照）を
+直接使う。** この場合、下記手順 4（記法変換）は不要になる。`:::note`・`<details>` による
+Qiita 独自記法（@NOTATIONS.md）は、Qiita で公開する記事にのみ使う。
+
 1. Zenn リポジトリ（`~/repos/zenn`）の流儀を確認する。
    - `README.md`・`CLAUDE.md`・`NOTATIONS.md`（Zenn 独自記法）
 2. slug を決めて記事を初期化する（Zenn 側 CLAUDE.md の手順どおり）。
    ```
    npx zenn new:article --slug YYYYMMDD-xxx
    ```
-3. Qiita 記事の本文（フロントマターを除く部分）をコピーし、フロントマターを Zenn 形式
+3. 記事の本文（フロントマターを除く部分）をコピーし、フロントマターを Zenn 形式
    （`title`/`emoji`/`type`/`topics`/`published`）に置き換える。
-4. Qiita 独自記法を Zenn 記法に変換する。
+4. **既に Qiita 独自記法で書かれている記事**（Qiita に投稿済みの記事を後から Zenn にも
+   載せる場合など）に限り、Qiita 独自記法を Zenn 記法に変換する。
    - `:::note info` → `:::message`
    - `:::note alert` / `:::note warn` → `:::message alert`
    - `<details><summary>タイトル</summary> ... </details>` → `:::details タイトル ... :::`
