@@ -63,10 +63,11 @@ Qiita 独自記法（@NOTATIONS.md）は、Qiita で公開する記事にのみ�
    ```
    npx zenn new:article --slug YYYYMMDD-xxx
    ```
-3. 記事の本文（フロントマターを除く部分）をコピーし、フロントマターを Zenn 形式
-   （`title`/`emoji`/`type`/`topics`/`published`）に置き換える。
+3. フロントマターだけを Zenn 形式（`title`/`emoji`/`type`/`topics`/`published`）で埋める。
+   本文はまだ空のままでよい（本文のコピペはしない。手順 7 の同期スクリプトに任せる）。
 4. **既に Qiita 独自記法で書かれている記事**（Qiita に投稿済みの記事を後から Zenn にも
-   載せる場合など）に限り、Qiita 独自記法を Zenn 記法に変換する。
+   載せる場合など）に限り、Qiita 側の本文で Qiita 独自記法を Zenn 記法に変換してから
+   手順 7 に進む。
    - `:::note info` → `:::message`
    - `:::note alert` / `:::note warn` → `:::message alert`
    - `<details><summary>タイトル</summary> ... </details>` → `:::details タイトル ... :::`
@@ -79,8 +80,10 @@ Qiita 独自記法（@NOTATIONS.md）は、Qiita で公開する記事にのみ�
    ```
 6. Qiita 上にしか存在しない記事へのリンク（シリーズ目次・参考リンクなど）はそのまま
    Qiita の URL で残す。書き換えない。
-7. 複製した記事は [ZENN.tsv](ZENN.tsv) に対応を追記する（`qiita`・`zenn` の2列。
-   それぞれのリポジトリからの相対パス）。以後は下記の同期スクリプトで本文を揃える。
+7. [ZENN.tsv](ZENN.tsv) に対応を追記する（`qiita`・`zenn` の2列。それぞれのリポジトリ
+   からの相対パス）。Qiita 側のファイルを `touch` して更新日時を新しくした上で
+   `make sync` を実行すると、Qiita 側の本文が Zenn 側へコピーされる（同期の仕組みは
+   下記「ZENN.tsv と同期スクリプト」を参照）。以後の本文更新もこのスクリプトで揃える。
 
 ### ZENN.tsv と同期スクリプト
 
