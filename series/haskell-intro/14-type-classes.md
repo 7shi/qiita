@@ -48,7 +48,7 @@ Haskell では**型クラス**と呼ばれる仕組みにより、型ごとに�
 1. 【予定】Haskell Eff モナド 超入門
 1. 【予定】Haskell アロー 超入門
 
-# 2 種類の多相
+# パラメトリック多相とアドホック多相
 
 同じ名前の関数がいろいろな型に使えることを**多相**（polymorphism）と呼びます。Haskell の多相には性質の異なる 2 種類があり、その違いが今回の記事の軸になります。
 
@@ -69,57 +69,56 @@ length :: [a] -> Int
 show :: Show a => a -> String
 ```
 
-`a` に型変数が使われているのは同じですが、`Show a =>` が付いています。`show` は値を文字列に変換する関数なので、`Int` の `123` と `Bool` の `True` ではやることが違います。数値を 10 進表記に直す処理と、`True`・`False` という名前を返す処理は別物です。つまり実装が型ごとに必要です。
+`a -> String` の部分は関数の型を表していますが、その前に `Show a =>` が付いています。これは `a` という型が `Show` という型クラスに属することを示しています。（型クラスの詳細は後述します）
 
-これを**アドホック多相**（ad hoc polymorphism）と呼びます。ad hoc はラテン語由来で「その場限りの」という意味で、型ごとに個別の実装をあてがうことを指します。「場当たり的」というネガティブな含みはなく、あくまで分類上の名前です。
+`show` は値を文字列に変換する関数なので、`Int` の `123` と `Bool` の `True` ではやることが違います。数値を 10 進表記に直す処理と、`True`・`False` という名前を返す処理は別物です。つまり実装が型ごとに必要です。
 
-|   |実装|例|
-|---|---|---|
-|パラメトリック多相|すべての型で同じ|`id :: a -> a`, `length :: [a] -> Int`|
-|アドホック多相|型ごとに違う|`show :: Show a => a -> String`|
+これを**アドホック多相**（ad hoc polymorphism）と呼びます。ad hoc はラテン語由来で「その場限りの」という意味で、型ごとに個別に実装することを指します。
 
-分かれ目は `=>` が付くかどうかです。この `Show a =>` の部分は[第7回](http://qiita.com/7shi/items/deb19c4cba933590ffbf)で**型クラス制約**として説明したもので、`Show` が型クラスです。
+:::message
+「場当たり的」というネガティブな含みはなく、あくまで分類上の名前です。
+:::
 
 シリーズでこれまで使ってきたものは、ほとんどがアドホック多相の仕組みの上に載っています。
 
-* `deriving Show`（[第2回](http://qiita.com/7shi/items/1ce76bde464b4a55c143)）
-* `Monad m =>`（[第7回](http://qiita.com/7shi/items/deb19c4cba933590ffbf)）
-* `return`（[第6回](http://qiita.com/7shi/items/d3d3492ddd90d47160f2)以降）
+* bind (`>>=`), `return`
+* `deriving Show` 👉[Haskell 代数的データ型 超入門](http://qiita.com/7shi/items/1ce76bde464b4a55c143)
+* `Monad m =>` 👉[Haskell リストモナド 超入門](http://qiita.com/7shi/items/deb19c4cba933590ffbf)
 
-これらがなぜ動いていたのかを、今回は型クラスを自分で定義するところから見ていきます。
+これらがどのように機能しているのか、型クラスを定義するところから見ていきます。
 
 # class と instance
 
-第2回では他言語の関数のオーバーロード（同じ名前で引数の型が違う関数を複数定義すること）を紹介し、「Haskell でも型クラスを自分で定義すればオーバーロードと似たようなことが可能です」と書いて、定義の説明は先送りしていました。まずそこから回収します。
+他言語にある関数のオーバーロード（同じ名前で引数の型が違う関数を複数定義すること）は、型クラスを自分で定義すれば同じようなことができます。👉[Haskell 代数的データ型 超入門](http://qiita.com/7shi/items/1ce76bde464b4a55c143)
 
-第2回に載せた Java のオーバーロードです（この後の Haskell に合わせて `String` を `boolean` に変えています）。
+Java のオーバーロードの例です。
 
-```java:Test.java
+```java:Java
 class Test {
     public static String foo(int i) {
-        if (i == 1) return "bar";
-        return "?";
+        if (i == 1) return "one";
+        return "other";
     }
     public static String foo(boolean b) {
-        if (b) return "baz";
-        return "?";
+        if (b) return "ok";
+        return "ng";
     }
 }
 ```
 
-Haskell では型クラスを使って書きます。
+Haskell では、関数の名前と型を `class` で定義して、`instance` で型ごとの実装を与えます。
 
 ```hs
 class Foo a where
     foo :: a -> String
 
 instance Foo Int where
-    foo 1 = "bar"
-    foo _ = "?"
+    foo 1 = "one"
+    foo _ = "other"
 
 instance Foo Bool where
-    foo True  = "baz"
-    foo False = "?"
+    foo True  = "ok"
+    foo False = "ng"
 
 main = do
     putStrLn $ foo (0 :: Int)
@@ -128,69 +127,51 @@ main = do
     putStrLn $ foo True
 ```
 ```text:実行結果
-?
-bar
-?
-baz
+other
+one
+ng
+ok
 ```
 
-`class` と `instance` の役割は分かれています。
-
-|構文|役割|内容|
-|---|---|---|
-|`class`|宣言|名前と型だけを決める。実装は書かない。|
-|`instance`|実装|特定の型に対する中身を書く。|
-
-`class Foo a where` の `a` は型変数で、「`Foo` という型クラスに属する型を `a` と呼ぶ」という意味です。その下に `foo :: a -> String` と書くことで、「`Foo` に属する型には `foo` という関数がある」ことを宣言します。この関数を型クラスの**メソッド**と呼びます。
+`class Foo a where` の `Foo` が型クラスの名前です。`a` は型変数で、「`Foo` という型クラスに属する型を `a` と呼ぶ」という意味です。その下に `foo :: a -> String` と書くことで、「`Foo` に属する型には `foo` という関数がある」ことを宣言します。この関数を型クラスの**メソッド**と呼びます。
 
 :::message
-オブジェクト指向のメソッドと名前は同じですが、オブジェクトに属しているわけではありません。型クラスに属する普通の関数です。
+標準の Haskell（拡張なし）では、`class` に書ける型変数は 1 つだけです。複数の型変数を使うには `MultiParamTypeClasses` 拡張が必要ですが、今回の範囲を超えるため詳細は省略します。
 :::
 
-`instance Foo Int where` は「`Int` を `Foo` のインスタンスにする」宣言で、その下にメソッドの実装を書きます。宣言（`class`）と実装（`instance`）が分離しているため、インスタンスは後から好きなだけ追加できます。継承のように型定義の時点でインターフェースを組み込む必要がないのがアドホック多相の特徴で、この後付けのしやすさはその裏返しです。
+`instance Foo Int where` は「`Int` を `Foo` のインスタンスにする」宣言で、その下にメソッドの実装を書きます。宣言（`class`）と実装（`instance`）が分離しているため、インスタンスは後から好きなだけ追加できます。これはアドホック多相ならではの使い勝手です。
 
-自分で定義した型もインスタンスにできます。第2回の `Color` を使います。
+:::message
+Java において、`class`（型クラスの宣言）はインターフェース、`instance`（型ごとの実装）はそれを実装するクラスに近い関係です。「クラスを個別に具体化したものがインスタンス」という点は共通していますが、具体化される対象が Haskell では型、Java ではオブジェクトという違いがあります。また、Java では型定義の時点でインターフェースを組み込む必要がありますが、型クラスは型定義とは切り離してインスタンスを後付けできます。
+:::
+
+自分で定義した型もインスタンスにできます。以前使った `Color` を使います。👉[Haskell 代数的データ型 超入門](http://qiita.com/7shi/items/1ce76bde464b4a55c143)
 
 ```hs
 data Color = Blue | Red | Green | White
 
-class Foo a where
-    foo :: a -> String
-
-instance Foo Int where
-    foo 1 = "bar"
-    foo _ = "?"
-
 instance Foo Color where
-    foo Blue = "青"
-    foo Red  = "赤"
-    foo _    = "?"
+    foo Blue = "blue"
+    foo Red  = "red"
+    foo _    = "other"
 
 main = do
-    putStrLn $ foo (1 :: Int)
     putStrLn $ foo Blue
     putStrLn $ foo Green
 ```
 ```text:実行結果
-bar
-青
-?
+blue
+other
 ```
 
 インスタンスを定義していない型に使うとエラーになります。
 
 ```hs:NG
-instance Foo Bool where
-    foo True  = "baz"
-    foo False = "?"
-
-main = putStrLn $ foo Blue    -- Color のインスタンスがない
+main = putStrLn $ foo (1.0 :: Double)  -- Double のインスタンスがない
 ```
 ```text:エラー内容
-    • No instance for ‘Foo Color’ arising from a use of ‘foo’
+    • No instance for ‘Foo Double’ arising from a use of ‘foo’
 ```
-
-第2回で `deriving Show` を付け忘れたときに出た `No instance for (Show Color)` と同じ形のエラーです。あのときの `Show` も型クラスで、`deriving` はそのインスタンスを用意する手段だったわけです（後述）。
 
 ## 型注釈が要る理由
 
@@ -205,7 +186,7 @@ main = putStrLn $ foo 1
       Probable fix: use a type annotation to specify what ‘a0’ should be.
 ```
 
-数値リテラルの `1` は `Int` とは限らず、`Integer` や `Double` にもなれます。どの型か決まらないと `foo` のどの実装を使えばよいか決まらないため、コンパイラが「曖昧」（ambiguous）だと言っています。
+数値リテラルの `1` は `Int` とは限らず、`Integer` や `Double` にもなれます。どの型か決まらないと `foo` のどの実装を使えばよいか決まらないため、曖昧（ambiguous）だとしてエラーになります。
 
 これは型クラスの核心に関わる現象なので、後で改めて扱います。ここでは「実装を選ぶには型が決まっている必要がある」とだけ覚えておいてください。
 
@@ -304,7 +285,7 @@ main = do
 
 # 型クラス制約
 
-第7回では `Monad m =>` を「使う側」から説明しました。ここでは定義する側から見直します。
+`Monad m =>` はこれまで「使う側」として登場していました。ここでは定義する側から見直します。👉[Haskell リストモナド 超入門](http://qiita.com/7shi/items/deb19c4cba933590ffbf)
 
 ```hs
 same :: Eq a => a -> a -> String
@@ -339,7 +320,7 @@ instance Show a => Show [a] where
 
 「`a` が `Show` のインスタンスなら、`[a]` も `Show` のインスタンスになる」という意味です。リストの表示は要素を `show` して `,` で繋ぎ `[]` で囲むだけですが、その要素の表示方法は要素の型に任せる必要があります。それが制約 `Show a =>` です。
 
-第2回以来ずっと `print [1,2,3]` が動いていたのはこの仕組みによります。自分で定義した型でも同じです。
+これまでずっと `print [1,2,3]` が動いていたのはこの仕組みによります。自分で定義した型でも同じです。
 
 ```hs
 data Color = Blue | Red | Green | White deriving Show
@@ -374,7 +355,7 @@ return   :: Monad m   => a -> m a
 
 `read` は `a` が戻り値にしか現れません。`minBound` と `mempty` に至っては引数がなく、型変数は戻り値の型そのものです。オブジェクト指向のインターフェースではこういうメソッドは書けません。
 
-第2回では `deriving` できる標準の型クラス 6 種類を表にして、`Read` と `Bounded` の使用例は省略していました。ここで回収します。
+`deriving` できる標準の型クラス 6 種類は以前に表で紹介しましたが、`Read` と `Bounded` の使用例は省略していました。ここで回収します。👉[Haskell 代数的データ型 超入門](http://qiita.com/7shi/items/1ce76bde464b4a55c143)
 
 ```hs
 data Color = Blue | Red | Green | White
@@ -446,7 +427,7 @@ main = do
 
 型クラスの `class` はオブジェクト指向のインターフェースと書式が似ているため、同じものだと思いたくなります。F# のインターフェースとの比較を別記事に書いています。
 
-* [Haskellの型クラスとF#のインターフェース](http://qiita.com/7shi/items/cd7f65a898dd5696c73d)
+* 👉[Haskellの型クラスとF#のインターフェース](http://qiita.com/7shi/items/cd7f65a898dd5696c73d)
 
 そこでの結論は「似ているのは定義だけで、実装や呼び出し方法はあまり似ていません」でした。本節で見た「値がなくても型さえ決まれば実装が選べる」という性質が、その違いの中身です。なぜそんなことが可能なのかは、最後の「辞書渡し」の節で答えます。
 
@@ -461,11 +442,11 @@ class Eq a => Ord a where
     （略）
 ```
 
-「`Ord` のインスタンスであるためには `Eq` のインスタンスでもあること」という要求です。大小比較ができるなら等値比較もできるはずだ、という関係が型で表現されています。第2回で `deriving (Eq, Ord, Enum, Read, Show, Bounded)` と並べて書いていたものには、こういう順序関係が隠れていました。
+「`Ord` のインスタンスであるためには `Eq` のインスタンスでもあること」という要求です。大小比較ができるなら等値比較もできるはずだ、という関係が型で表現されています。以前に `deriving (Eq, Ord, Enum, Read, Show, Bounded)` と並べて書いていたものには、こういう順序関係が隠れていました。👉[Haskell 代数的データ型 超入門](http://qiita.com/7shi/items/1ce76bde464b4a55c143)
 
 ## Semigroup と Monoid
 
-もう一組、実際に使われる例を見ます。[第9回](http://qiita.com/7shi/items/2e9bff5d88302de1a9e9)の Writer モナドで「`w` には `Monoid` 型クラス制約が掛かっていますが、今回の範囲を超えるため省略します」と書いた、その `Monoid` です。
+もう一組、実際に使われる例を見ます。ログなどを蓄積していく Writer モナドは、蓄積する値の型 `w` に `Monoid` という型クラス制約を要求します。複数の値を 1 つにまとめる操作と、何も蓄積していない初期値の両方が必要になるためです。👉[Haskell 状態系モナド 超入門](http://qiita.com/7shi/items/2e9bff5d88302de1a9e9)
 
 ```hs:定義（抜粋）
 class Semigroup a where
@@ -542,13 +523,13 @@ instance Monoid Count where
 
 ## Writer に載せる
 
-これで第9回の Writer が回収できます。`tell` の型は次の通りです。
+これで Writer モナドの制約が回収できます。`tell` の型は次の通りです。👉[Haskell 状態系モナド 超入門](http://qiita.com/7shi/items/2e9bff5d88302de1a9e9)
 
 ```hs:型
 tell :: Monoid w => w -> Writer w ()
 ```
 
-`w` が `Monoid` であることを要求しています。`tell` は状態を上書きするのではなく追記する操作でしたが、その「追記」の実体が `<>` です。そして何も書き込んでいない初期状態が `mempty` です。第9回で主にリストを使っていたのは、リストが `Monoid` のインスタンスで `<>` が `++` になるためでした。
+`w` が `Monoid` であることを要求しています。`tell` は状態を上書きするのではなく追記する操作でしたが、その「追記」の実体が `<>` です。そして何も書き込んでいない初期状態が `mempty` です。これまで Writer モナドで主にリストを使っていたのは、リストが `Monoid` のインスタンスで `<>` が `++` になるためでした。
 
 `Count` を載せれば、リスト以外でも Writer が使えます。
 
@@ -618,7 +599,7 @@ MaxInt 4
 
 ここまでに出てきた型クラスは `Int`・`Bool`・`Color` のような型に付いていました。`Monad` は少し様子が違います。
 
-第7回に載せた対比です。
+以前に載せた対比です。👉[Haskell リストモナド 超入門](http://qiita.com/7shi/items/deb19c4cba933590ffbf)
 
 ```hs
 a ::            IO Int
@@ -681,7 +662,7 @@ instance Monad Int
 
 # deriving の正体
 
-第2回からずっと使ってきた `deriving` は、インスタンス定義の自動生成でした。
+これまでずっと使ってきた `deriving` は、インスタンス定義の自動生成でした。👉[Haskell 代数的データ型 超入門](http://qiita.com/7shi/items/1ce76bde464b4a55c143)
 
 ```hs:derivingを使う
 data Color = Blue | Red | Green | White deriving Show
@@ -801,13 +782,13 @@ Vec 6.0 6.0
 `1` が `Vec 1 1` として解釈されています。`sum` が動くのも、初期値の `0` が `fromInteger` を通って `Vec 0 0` になるためです。
 :::
 
-# 仕組み: 辞書渡し
+# 辞書渡し
 
-最後に、アドホック多相が実行時に何をしているのかを見ます。飛ばしても以降に影響はありません。
+最後に、アドホック多相が実行時にどのように処理されているのかを見ます。
 
 型クラス制約 `Eq a =>` は、コンパイラがメソッドの実装をまとめたレコードを隠れた引数として渡すことで実現されています。このレコードを**辞書**（dictionary）と呼びます。
 
-`Eq` を例に、手で書き下してみます。
+`Eq` を例に、書き下してみます。
 
 ```hs
 -- class → メソッドをまとめたレコード型
