@@ -152,11 +152,10 @@ Java において、`class`（型クラスの宣言）はインターフェー�
 自分で定義した型もインスタンスにできます。以前使った `Color` を使います。👉[Haskell 代数的データ型 超入門](http://qiita.com/7shi/items/1ce76bde464b4a55c143)
 
 ```hs
-data Color = Blue | Red | Green | White
+data Color = Blue | Red | Green
 
 instance Foo Color where
-    foo Blue = "blue"
-    foo Red  = "red"
+    foo Blue = "Blue"
     foo _    = "?"
 
 main = do
@@ -164,7 +163,7 @@ main = do
     putStrLn $ foo Green
 ```
 ```text:実行結果
-blue
+Blue
 ?
 ```
 
@@ -218,13 +217,12 @@ class Eq a where
 :::
 
 ```hs
-data Color = Blue | Red | Green | White
+data Color = Blue | Red | Green
 
 instance Eq Color where
     Blue  == Blue  = True
     Red   == Red   = True
     Green == Green = True
-    White == White = True
     _     == _     = False
 
 main = do
@@ -242,10 +240,10 @@ False
 
 `/=` は一切書いていませんが、デフォルト実装の `not (x == y)` が働きます。
 
-このように「最低限これだけ実装すればよい」という組み合わせを**最小完全定義**（minimal complete definition）と呼びます。GHCi の `:info` で確認できます。
+このように「最低限これだけ実装すればよい」という組み合わせを**最小完全定義**（minimal complete definition）と呼びます。GHCi の `:i` で確認できます。
 
 ```text:GHCi
-ghci> :info Eq
+ghci> :i Eq
 type Eq :: * -> Constraint
 class Eq a where
   (==) :: a -> a -> Bool
@@ -293,6 +291,192 @@ instance Shape Rect where
 ```
 
 `area` にはデフォルト実装がないため、どちらのインスタンスでも実装が必要です。`name` は `Rect` では省略したのでデフォルト実装が使われます。
+:::
+
+# deriving
+
+`class` と `instance` が分かったところで、これまで使ってきた `deriving` を振り返ります。その正体はインスタンス定義の自動生成です。👉[Haskell 代数的データ型 超入門](http://qiita.com/7shi/items/1ce76bde464b4a55c143)
+
+```hs:derivingを使う
+data Color = Blue | Red | Green deriving (Show, Read)
+
+main = do
+    print Blue
+    print (read "Red" :: Color)
+```
+```text:実行結果
+Blue
+Red
+```
+
+`Show` は値を文字列にする型クラス、`Read` はその逆で文字列から値に戻す型クラスです。`read` は変換先の型が決まらないと実装を選べないため、`:: Color` と型注釈を付けています。
+
+`deriving` できるのが標準の 6 種類（`Eq`・`Ord`・`Enum`・`Bounded`・`Show`・`Read`）に限られているのは、型の構造から機械的に実装が決まるものだけだからです。
+
+|型クラス|機械的に決まる根拠|
+|---|---|
+|`Show` / `Read`|コンストラクタの名前をそのまま文字列にする|
+|`Eq`|同じコンストラクタで、中身も等しいか|
+|`Ord` / `Enum`|`data` に書いた順番|
+|`Bounded`|最初と最後のコンストラクタ|
+
+:::message
+機械的に実装が決まらないものは自動生成できません。
+:::
+
+## 練習
+
+【問2】`deriving Read` と同じように `read` が使えるように、`instance Read Color` を手で書いてください。
+
+```hs
+data Color = Blue | Red | Green deriving Show
+
+-- ここに instance Read Color を書く
+
+main = do
+    print (read "Blue"  :: Color)
+    print (read "Red"   :: Color)
+    print (read "Green" :: Color)
+```
+```text:実行結果
+Blue
+Red
+Green
+```
+
+`Read` のメソッドは `readsPrec` です。
+
+```hs:型
+readsPrec :: Int -> String -> [(a, String)]
+```
+
+第 1 引数は優先順位ですが、今回は使わないので `_` で受けて構いません。残りは「文字列を受け取り、（読み取った値, 残りの文字列）の候補をリストで返す」という形です。読めなければ空リストを返します。
+
+ここでは文字列全体がコンストラクタ名と完全に一致する場合だけを扱うことにして、残りの文字列は常に空とします。
+
+:::details 解答例
+```hs
+instance Read Color where
+    readsPrec _ "Blue"  = [(Blue,  "")]
+    readsPrec _ "Red"   = [(Red,   "")]
+    readsPrec _ "Green" = [(Green, "")]
+    readsPrec _ _       = []
+```
+
+`show` に比べると戻り値が複雑です。文字列から値への変換は、読み取れない場合や途中まで読んだ場合があるためです。（値, 残りの文字列）を返す形は、構文解析でパーサに持たせた形と同じです。👉[Haskell 構文解析 超入門](http://qiita.com/7shi/items/b8c741e78a96ea2c10fe)
+
+この実装は完全一致しか扱わないため、`deriving Read` のように前後の空白を読み飛ばしたり、リストの中に現れる `Color` を読んだりはできません。
+:::
+
+# Num
+
+`deriving` できない型クラスの例として `Num` を取り上げます。数値の演算をまとめた型クラスで、これまで当たり前に使ってきた `+` もそのメソッドです。
+
+```hs:型
+(+) :: Num a => a -> a -> a
+```
+
+`+` は特別な構文ではありません。`Int` でも `Double` でも `+` が使えるのは、どちらも `Num` のインスタンスだからです。これもアドホック多相で、整数の足し算と浮動小数点数の足し算は実装が別物です。
+
+`Num` の中身を見てみます。
+
+```text:GHCi
+ghci> :i Num
+type Num :: * -> Constraint
+class Num a where
+  (+) :: a -> a -> a
+  (-) :: a -> a -> a
+  (*) :: a -> a -> a
+  negate :: a -> a
+  abs :: a -> a
+  signum :: a -> a
+  fromInteger :: Integer -> a
+  {-# MINIMAL (+), (*), abs, signum, fromInteger, (negate | (-)) #-}
+（略）
+```
+
+続けてインスタンスの一覧も表示され、標準では `Int`・`Integer`・`Word`・`Float`・`Double` が挙がります。
+
+メソッドは 7 つですが、最小完全定義を見ると `negate | (-)` だけが `|` で結ばれています。引き算 `x - y` は `x + negate y`、符号反転 `negate x` は `0 - x` と、互いをデフォルト実装にできるためです。`Eq` の `==` と `/=` と同じ関係です。
+
+裏を返せば、それ以外のメソッドはすべて実装が必要です。省略してもコンパイルは通りますが、`No explicit implementation for` という警告が出ます。`negate` と `-` はどちらか一方を書けばよいため、両方を省いたときだけ `(either ‘negate’ or ‘-’)` という形で警告に現れます。
+
+割り算が入っていないことにも注意してください。
+
+```text:GHCi
+ghci> :t (/)
+(/) :: Fractional a => a -> a -> a
+```
+
+`/` は `Fractional` という別の型クラスのメソッドです。整数どうしの割り算は結果が整数にならないため、`Num` の段階では持てません。数値の型クラスはこのように細かく分かれており、型ごとにできることが型クラスで表されています。
+
+最後の `fromInteger` は整数リテラルの変換です。ソースに書いた `1` は `Num a => a` という型を持ち、どの数値型にもなれます。
+
+```text:GHCi
+ghci> :t 1
+1 :: Num a => a
+```
+
+自作の型でも `fromInteger` を実装すれば、数値リテラルをそのままその型として書けるようになります。numpy のブロードキャストのように数値が要素全体に配られる書き味になりますが、効くのは数値リテラルだけです。`x = 1 :: Int` のように変数を経由すると型が合わずエラーになります。
+
+これらの実装は、いずれも型の構造からは決まりません。`data` に書いたコンストラクタをいくら眺めても「足すとは何か」は出てこないため、`Num` は `deriving` できません。自作の型で `+` を使いたければ、意味の方を自分で与える必要があります。
+
+## 練習
+
+【問3】2 次元ベクトル `Vec` で `+`・`-`・`negate` が使えるように、`instance Num Vec` を書いてください。
+
+```hs
+data Vec = Vec Double Double deriving Show
+
+-- ここに instance Num Vec を書く
+
+main = do
+    print $ Vec 1 2 + Vec 3 4
+    print $ Vec 1 2 - Vec 3 4
+    print $ negate (Vec 1 2)
+    print $ Vec 1 2 + Vec 3 4 - Vec 1 1
+```
+```text:実行結果
+Vec 4.0 6.0
+Vec (-2.0) (-2.0)
+Vec (-1.0) (-2.0)
+Vec 3.0 5.0
+```
+
+`Num` のメソッドは `+`・`-`・`*`・`negate`・`abs`・`signum`・`fromInteger` です。使わないメソッドは `= undefined` で構いません。
+
+:::details 解答例
+```hs
+instance Num Vec where
+    Vec a b + Vec c d = Vec (a + c) (b + d)
+    Vec a b - Vec c d = Vec (a - c) (b - d)
+    negate (Vec a b)  = Vec (negate a) (negate b)
+    (*)         = undefined
+    abs         = undefined
+    signum      = undefined
+    fromInteger = undefined
+```
+
+`Num` のインスタンスを書いただけで、自作の型に `+` や `-` が使えるようになりました。演算子のオーバーロードがアドホック多相として実現されている例です。`undefined` を並べず省略した場合は、`‘*’, ‘abs’, ‘signum’, and ‘fromInteger’` が実装されていないという警告が出ます。
+
+`fromInteger` も実装すると、数値リテラルが `Vec` になります。
+
+```hs:fromIntegerを実装した場合
+    fromInteger n = Vec (fromInteger n) (fromInteger n)
+```
+```hs
+main = do
+    print (fromInteger 1 :: Vec)
+    print $ Vec 1 2 + 1
+    print $ sum [Vec 1 1, Vec 2 2, Vec 3 3]
+```
+```text:実行結果
+Vec 1.0 1.0
+Vec 2.0 3.0
+Vec 6.0 6.0
+```
+
+`fromInteger 1` が `Vec 1 1` を返すため、`Vec 1 2 + 1` の `1` も `Vec 1 1` として解釈されます。`sum` が動くのも、初期値の `0` が `Vec 0 0` になるためです。
 :::
 
 # 型クラス制約
@@ -356,16 +540,10 @@ instance Show a => Show [a] where
 
 「`a` が `Show` のインスタンスなら、`[a]` も `Show` のインスタンスになる」という意味です。リストの表示は各要素を `show` で文字列に変換して `,` で繋いで `[]` で囲むため、`a` は `Show` のインスタンスである必要があります。それを表しているのが制約 `Show a =>` です。
 
-`print [1,2,3]` が動いているのはこの仕組みによります。自分で定義した型でも同じです。
+`print [1,2,3]` が動いているのはこの仕組みによります。自分で定義した型でも同じです。`deriving Show` が生成するのは `Color` 自身のインスタンスだけですが、それをリストや `Maybe` に包んでも表示できます。
 
 ```hs
-data Color = Blue | Red | Green | White
-
-instance Show Color where
-    show Blue  = "Blue"
-    show Red   = "Red"
-    show Green = "Green"
-    show White = "White"
+data Color = Blue | Red | Green | White deriving Show
 
 main = do
     print [Blue, Red]
@@ -378,7 +556,7 @@ main = do
 Just [Blue,Red]
 ```
 
-`Show Color` を用意しただけで、`[Color]`・`[[Color]]`・`Maybe [Color]` がすべて表示できます。インスタンスが制約を辿って再帰的に組み立てられるためです。
+`[Color]`・`[[Color]]`・`Maybe [Color]` がすべて表示できるのは、インスタンスが制約を辿って再帰的に組み立てられるためです。
 
 # 型注釈で実装が選ばれる
 
@@ -465,6 +643,8 @@ class Eq a => Ord a where
 ```
 
 「`Ord` のインスタンスであるためには `Eq` のインスタンスでもあること」という要求です。大小比較ができるなら等値比較もできるはずだ、という関係が型で表現されています。
+
+この関係は `deriving` にも現れます。以前に `deriving (Eq, Ord, Enum, Read, Show, Bounded)` と並べて書いていたのは、`Ord` を導出するには `Eq` も一緒に導出しておく必要があるためです。👉[Haskell 代数的データ型 超入門](http://qiita.com/7shi/items/1ce76bde464b4a55c143)
 
 ## Semigroup と Monoid
 
@@ -603,7 +783,7 @@ main = print $ runWriter test
 
 ## 練習
 
-【問2】最大値を保持する型 `MaxInt` について、次のコードがそのまま動くように `Semigroup` と `Monoid` のインスタンスを定義してください。
+【問4】最大値を保持する型 `MaxInt` について、次のコードがそのまま動くように `Semigroup` と `Monoid` のインスタンスを定義してください。
 
 ```hs
 import Control.Monad.Writer
@@ -703,138 +883,6 @@ instance Monad Int
 `instance Monad` を自分で書く、つまりモナドを自作する話は本シリーズでは扱いません。既存のモナドを使いこなす方に絞っています。
 :::
 
-# deriving の正体
-
-これまでずっと使ってきた `deriving` は、インスタンス定義の自動生成でした。👉[Haskell 代数的データ型 超入門](http://qiita.com/7shi/items/1ce76bde464b4a55c143)
-
-```hs:derivingを使う
-data Color = Blue | Red | Green | White deriving Show
-
-main = do
-    print Blue
-    print [Blue, Red]
-    print (Just White)
-```
-```text:実行結果
-Blue
-[Blue,Red]
-Just White
-```
-
-これと同じことを `instance Show Color` を手で書いても実現できます。それが次の練習です。
-
-`deriving` できるのが標準の 6 種類（`Eq`・`Ord`・`Enum`・`Bounded`・`Show`・`Read`）に限られているのは、型の構造から機械的に実装が決まるものだけだからです。
-
-|型クラス|機械的に決まる根拠|
-|---|---|
-|`Show` / `Read`|コンストラクタの名前をそのまま文字列にする|
-|`Eq`|同じコンストラクタで、中身も等しいか|
-|`Ord` / `Enum`|`data` に書いた順番|
-|`Bounded`|最初と最後のコンストラクタ|
-
-逆に「足し算とは何か」のような意味づけが必要な型クラスは自動生成できません。`Num` が `deriving` できないのはこのためです。
-
-以前に `deriving (Eq, Ord, Enum, Read, Show, Bounded)` と並べて書いていたものには、スーパークラスの関係も隠れています。`Ord` は `Eq` のサブクラスなので、`Ord` を導出するには `Eq` も一緒に導出しておく必要があります。👉[Haskell 代数的データ型 超入門](http://qiita.com/7shi/items/1ce76bde464b4a55c143)
-
-## 練習
-
-【問3】次のコードが `deriving Show` と同じ出力になるように、`instance Show Color` を手で書いてください。
-
-```hs
-data Color = Blue | Red | Green | White
-
--- ここに instance Show Color を書く
-
-main = do
-    print Blue
-    print [Blue, Red]
-    print (Just White)
-```
-```text:実行結果
-Blue
-[Blue,Red]
-Just White
-```
-
-:::details 解答例
-```hs
-instance Show Color where
-    show Blue  = "Blue"
-    show Red   = "Red"
-    show Green = "Green"
-    show White = "White"
-```
-
-`show` を定義するだけで `print` も `[Color]` も `Maybe Color` も動きます。`print` は `putStrLn . show` に相当し、リストや `Maybe` の表示は `instance Show a => Show [a]` のような制約付きインスタンスが要素の `show` を呼び出すためです。
-
-:::message
-引数を持つコンストラクタの場合、`show` だけを定義すると `Just (Circle 1.0)` のような括弧が付きません。`deriving` は `showsPrec` という優先順位を考慮するメソッドの方を生成しています。ここでは深追いしません。
-:::
-:::
-
-【問4】2 次元ベクトル `Vec` で `+`・`-`・`negate` が使えるように、`instance Num Vec` を書いてください。
-
-```hs
-data Vec = Vec Double Double deriving Show
-
--- ここに instance Num Vec を書く
-
-main = do
-    print $ Vec 1 2 + Vec 3 4
-    print $ Vec 1 2 - Vec 3 4
-    print $ negate (Vec 1 2)
-    print $ Vec 1 2 + Vec 3 4 - Vec 1 1
-```
-```text:実行結果
-Vec 4.0 6.0
-Vec (-2.0) (-2.0)
-Vec (-1.0) (-2.0)
-Vec 3.0 5.0
-```
-
-`Num` のメソッドは `+`・`-`・`*`・`negate`・`abs`・`signum`・`fromInteger` です。使わないメソッドは `undefined` で構いません。
-
-:::details 解答例
-```hs
-instance Num Vec where
-    Vec a b + Vec c d = Vec (a + c) (b + d)
-    Vec a b - Vec c d = Vec (a - c) (b - d)
-    negate (Vec a b)  = Vec (negate a) (negate b)
-    (*)         = undefined
-    abs         = undefined
-    signum      = undefined
-    fromInteger = undefined
-```
-
-`+` や `-` は特別な構文ではなく `Num` のメソッドなので、インスタンスを書けば自作の型でも使えます。演算子のオーバーロードがアドホック多相として実現されている例です。
-
-`undefined` を並べる代わりに省略してもコンパイルは通りますが、警告が出ます。
-
-```text:警告内容
-    • No explicit implementation for
-        ‘*’, ‘abs’, ‘signum’, and ‘fromInteger’
-```
-
-`negate` が挙がっていないのは、`-` と互いのデフォルト実装になっているためです。両方とも省略すると `(either ‘negate’ or ‘-’)` として警告に現れます。
-
-`fromInteger` を実装すると、数値リテラルをそのまま自作の型として書けるようになります。
-
-```hs:fromIntegerを実装した場合
-    fromInteger n = Vec (fromInteger n) (fromInteger n)
-```
-```hs
-main = do
-    print $ Vec 1 2 + 1
-    print $ sum [Vec 1 1, Vec 2 2, Vec 3 3]
-```
-```text:実行結果
-Vec 2.0 3.0
-Vec 6.0 6.0
-```
-
-`1` が `Vec 1 1` として解釈されています。`sum` が動くのも、初期値の `0` が `fromInteger` を通って `Vec 0 0` になるためです。
-:::
-
 # 辞書渡し
 
 最後に、アドホック多相が実行時にどのように処理されているのかを見ます。
@@ -919,7 +967,7 @@ ambiguous エラーになる理由。型が決まらないということは、�
 |パラメトリック多相|すべての型で同じ|なし|`id`, `length`|
 |アドホック多相|型ごとに違う|`=>` が付く|`show`, `==`, `return`|
 
-`class` で宣言し、`instance` で型ごとに実装します。デフォルト実装を書いておけば `instance` 側を省略でき、その最低限が最小完全定義です。スーパークラスで階層を作れます。`deriving` はインスタンス定義の自動生成で、構造から機械的に決まるものに限られます。
+`class` で宣言し、`instance` で型ごとに実装します。デフォルト実装を書いておけば `instance` 側を省略でき、その最低限が最小完全定義です。`deriving` はインスタンス定義の自動生成で、構造から機械的に決まるものに限られます。スーパークラスで階層を作れます。
 
 そして実装を選ぶのは値ではなく型です。だから `read s :: Int` のように戻り値の型だけで実装が決まり、型が決まらなければ ambiguous エラーになります。仕組みとしては、制約が実行時の隠れた引数（辞書）になっていると考えれば説明が付きます。
 

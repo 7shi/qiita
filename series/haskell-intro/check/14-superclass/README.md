@@ -43,7 +43,7 @@ NoSemigroup.hs:3:10: error: [GHC-39999]
 ## GHCi での確認
 
 ```
-ghci> :info Monoid
+ghci> :i Monoid
 type Monoid :: * -> Constraint
 class Semigroup a => Monoid a where
   mempty :: a
@@ -51,7 +51,7 @@ class Semigroup a => Monoid a where
   mconcat :: [a] -> a
   {-# MINIMAL mempty | mconcat #-}
 （略）
-ghci> :info Ord
+ghci> :i Ord
 type Ord :: * -> Constraint
 class Eq a => Ord a where
   compare :: a -> a -> Ordering

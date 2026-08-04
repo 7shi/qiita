@@ -34,7 +34,7 @@ EqNoMethod.hs:3:10: warning: [GHC-06201] [-Wmissing-methods]
 ## 最小完全定義（GHCi）
 
 ```
-ghci> :info Eq
+ghci> :i Eq
 type Eq :: * -> Constraint
 class Eq a where
   (==) :: a -> a -> Bool

@@ -10,5 +10,6 @@ instance Num Vec where
     signum = undefined
 
 main = do
+    print (fromInteger 1 :: Vec)
     print $ Vec 1 2 + 1
     print $ sum [Vec 1 1, Vec 2 2, Vec 3 3]
