@@ -12,8 +12,8 @@ GHC 9.6.6。実行は `runghc {ファイル名}`。
 `Constraint.hs`:
 
 ```
-同じ
-違う
+same
+different
 1 == 1
 'a' /= 'b'
 ```

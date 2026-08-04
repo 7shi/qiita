@@ -10,7 +10,7 @@ dEqBool = EqDict (==)
 
 -- 型クラス制約 (Eq a =>) → 隠れた引数
 same :: EqDict a -> a -> a -> String
-same d x y = if eqM d x y then "同じ" else "違う"
+same d x y = if eqM d x y then "same" else "different"
 
 main = do
     putStrLn $ same dEqInt  1 1

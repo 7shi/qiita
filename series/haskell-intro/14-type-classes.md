@@ -944,16 +944,20 @@ dEqBool = EqDict (==)
 
 -- 型クラス制約 (Eq a =>) → 隠れた引数
 same :: EqDict a -> a -> a -> String
-same d x y = if eqM d x y then "同じ" else "違う"
+same d x y = if eqM d x y then "same" else "different"
 
 main = do
     putStrLn $ same dEqInt  1 1
     putStrLn $ same dEqBool True False
 ```
 ```text:実行結果
-同じ
-違う
+same
+different
 ```
+
+:::message
+`EqDict` は `==` だけに絞っていますが、実際の辞書はメソッドごとにフィールドを持つため `/=` の分もあります。`instance` で省略したメソッドの分は、デフォルト実装が埋めます。両方とも省略できてしまうと埋める材料がなくなるので、最小完全定義が必要になります。
+:::
 
 対応関係をまとめます。
 

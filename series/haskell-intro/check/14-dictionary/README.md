@@ -9,14 +9,15 @@ GHC 9.6.6。実行は `runghc {ファイル名}`。
 |---|---|
 | `Dict.hs` | `Eq` を辞書で書き下す。`class`→レコード型、`instance`→レコードの値、`=>`→引数 |
 | `DictMempty.hs` | `mempty` にあたる `emptyM` は辞書を渡すだけで値が出る（引数に型変数が不要な理由）|
+| `DictDefault.hs` | デフォルト実装が辞書のフィールドを埋める様子（記事には載せていない）|
 
 ## 実行結果
 
 `Dict.hs`:
 
 ```
-同じ
-違う
+same
+different
 ```
 
 `DictMempty.hs`:
@@ -31,3 +32,29 @@ GHC 9.6.6。実行は `runghc {ファイル名}`。
 
 なお実際の GHC は最適化で辞書渡しを消すことが多い（型が具体的に分かる箇所は
 特殊化して直接呼び出しにする）。あくまで意味論としての説明。
+
+## デフォルト実装と辞書（`DictDefault.hs`）
+
+記事の `Dict.hs` は `EqDict` を `==` の 1 フィールドに絞っているが、実際の辞書は
+メソッドごとにフィールドを持つ（`Eq` なら `==` と `/=`）。`instance` で省略した分は
+デフォルト実装が埋める。辞書で書くと自己参照の形になる。
+
+```hs
+data EqDict a = EqDict { eqM :: a -> a -> Bool, neM :: a -> a -> Bool }
+
+-- instance Eq Color で == だけ書いた場合に相当する
+mkEqDict :: (a -> a -> Bool) -> EqDict a
+mkEqDict eq = d where d = EqDict eq (\x y -> not (eqM d x y))
+```
+
+```
+$ runghc DictDefault.hs
+True
+False
+```
+
+両方省略すると埋める材料がなくなり、`eqM` と `neM` が互いを呼び合って停止しない。
+最小完全定義が必要な理由が辞書の側から見える。
+
+記事本文にはこの内容を `:::message` で 1 段落だけ入れ、コードは載せていない
+（辞書渡しの節の要点「`=>` の左側が `->` の引数になる」がぼやけるため）。
