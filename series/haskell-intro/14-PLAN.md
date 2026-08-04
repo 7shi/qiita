@@ -53,12 +53,15 @@
 
 ### 対象外とするもの
 
-- **自作モナドはシリーズを通して対象外**（決定事項 2）。
-  `instance Monad` を書かせる回は設けない。したがって 14 回のゴールは
+- **自作モナドは 14 回では扱わない**（決定事項 2）。14 回のゴールは
   「モナドを定義できる」ではなく「ad hoc 多相が分かる」に置く。
   - この決定により、当初案にあった `Identity`・`Maybe`・`Cont` の
     インスタンス実装の節は**丸ごと不採用**。
-  - 13 回の `newtype Cont` に `instance Monad` を書いて回収する案も**不採用**。
+  - 13 回の `newtype Cont` に `instance Monad` を書いて回収する案も**14 回では不採用**。
+  - ⚠ 推敲時に方針変更。**自作モナドは 15 回のゴールになった。**
+    「シリーズを通して対象外」ではなくなったので、
+    14 回にあった「本シリーズでは扱いません」という注記は削除した。
+    詳細は「[15 回への引き継ぎ](#15-回への引き継ぎ)」を参照。
 - `Functor`・`Applicative`・`return` と `pure` の関係は **15 回へ全部送る**（決定事項 6）。
   14 回では `pure` という名前を出さない。シリーズ全体の `return` 表記のままで通す。
 - `MonadFail`・`deriving` の言語拡張も扱わない（決定事項 8・9）。
@@ -76,7 +79,7 @@
 | `09-state-monads.md:851` | 「`w` には `Monoid` 型クラス制約が掛かっていますが、今回の範囲を超えるため省略します」 | **回収。構成案 6 の題材** |
 | `10-monad-transformers.md:965` | 「Applicative を直訳すれば『適用可能』です。（略）今回の範囲を超えるため詳細は省略します」 | **15 回へ送る** |
 | `12-parsing.md:1584` | 「`<|>` は `Alternative` 型クラスのメソッドです」（引用ツイート） | **15 回へ送る** |
-| `13-continuation-monad.md:131` | `newtype Cont r a` を定義しながら `instance Monad` は書いていない | **回収しない**（自作モナドは対象外）|
+| `13-continuation-monad.md:131` | `newtype Cont r a` を定義しながら `instance Monad` は書いていない | **14 回では回収しない**（→ 15 回のゴールへ）|
 
 ## 構成案
 
@@ -213,6 +216,8 @@
   → **`*` だった。**記事もこれに合わせた。`check/14-ghci/README.md` 参照。
 - ⚠ `instance Monad` は書かない（決定事項 2）。ここは
   「型クラスが付く先には 2 種類ある」ことを示すだけで閉じる。
+- ⚠ 推敲時に**題材を `Monad` から自作の `Container` へ差し替えた**。
+  詳細は「[執筆時の変更点](#執筆時の変更点構成案からの差分)」を参照。
 
 ### 8. deriving の正体
 
@@ -294,8 +299,11 @@
 **覆す場合は理由を確認してから。**
 
 1. **ゴールは「ad hoc 多相という考え方」。** 「モナドを定義できる」ではない。
-2. **自作モナドはシリーズを通して対象外。** `instance Monad` を書かせる回は設けない。
-   13 回の `Cont` の `instance` 回収も行わない。
+2. **自作モナドは 14 回では扱わない。** 14 回で `instance Monad` は書かない。
+   13 回の `Cont` の `instance` 回収も 14 回では行わない。
+   - ⚠ **推敲時に方針変更（当初は「シリーズを通して対象外」だった）。**
+     `instance Monad` を書いてモナドを自作するところまでが **15 回のゴール**になった。
+     13 回の `Cont` の回収先も 15 回。
 3. **パラメトリック多相との対比を明確に扱う。** 冒頭で対比して入り、まとめで回収する。
    型変数自体は既習なので、`=>` の有無が分かれ目という形にする。
 4. **`class`/`instance` の入口はオーバーロード。** 02 回の宿題（`:393`）の直接の回収。
@@ -407,8 +415,35 @@
 - 構成案 2 の入口で `foo (0 :: Int)` と型注釈が必要になるため、
   **その場で ambiguous エラーを見せて構成案 5 へ予告**する形にした。
   構成案 5 で同じエラーを `read` で再度扱い、回収する。
-- 構成案 7 に `instance Monad Int` の種エラー（`Expected kind ‘* -> *’`）を追加した。
+- 構成案 7 に種エラー（`Expected kind ‘* -> *’`）を追加した。
   種が実際にチェックされていることが具体的に見える。
+- **構成案 7 の主役を `Monad` から自作の `Container` へ差し替えた**（推敲時）。
+  - 初稿は 07 回の `a :: IO Int` / `c :: Monad m => m Int` の対比から入り、
+    種エラーも `instance Monad Int` で見せていた。`Monad` は 15 回の主題なので、
+    **14 回では名前と種を示すだけに留める**方針に変えた（決定事項 6 の徹底）。
+  - 差し替えた題材（`check/14-ghci/Container.hs`）。
+
+    ```hs
+    class Container f where
+        empty :: f a
+        wrap  :: a -> f a
+
+    instance Container Maybe where
+        empty = Nothing
+        wrap  = Just
+
+    instance Container [] where
+        empty  = []
+        wrap x = [x]
+    ```
+
+  - 利点: `class`/`instance` は既習なので種の説明に集中できる。`Maybe`・`[]` は既出。
+    `empty` が**戻り値の型だけで決まるメソッド**（構成案 5、`mempty`・`minBound`）の
+    復習も兼ねる。
+  - `Monad` は節の末尾に `:k Monad` と表の 1 行だけ残し、
+    「モナドが型引数を 1 つ取っていたのはこの種だから、中身は次回」と 15 回への引きにした。
+  - 種エラーは `instance Container Int` に差し替え（`check/14-ghci/ContainerInt.hs`）。
+    `MonadInt.hs` は記事非掲載の確認用として残してある。
 - `showsPrec` の注記（引数を持つコンストラクタでは `show` の手書きだけでは括弧が付かない）は
   `Show` 手書きの練習に付けていたが、練習を `Read` へ差し替えたため本文から落とした。
   内容は `check/14-deriving/README.md` に記録してある。
@@ -417,7 +452,7 @@
 - `tell` の型は 09 回に倣って `tell :: Monoid w => w -> Writer w ()` と簡略表記した
   （mtl の実際の型は `MonadWriter w m => w -> m ()`）。
 
-## 記事の実際の構成（984 行）
+## 記事の実際の構成（1019 行）
 
 推敲時の地図。`#` が節、`##` が小見出し。
 
@@ -430,21 +465,21 @@
 | 257 | `## 練習`【問1】型クラス自作 | 11 | `14-exercises/Q1Shape.hs` |
 | 296 | `# deriving` | 8（前倒し）| `14-deriving/` |
 | 327 | `## 練習`【問2】`Read` 手書き | 11 | `14-exercises/Q2ReadColor.hs` |
-| 375 | `# Num` | 8 から分離 | `14-num/` |
-| 428 | `## 練習`【問3】`Num` 自作 | 11 | `14-exercises/Q3Vec*.hs` |
-| 484 | `# 型クラス制約` | 4 | `14-constraint/` |
-| 534 | `## instance 側の制約` | 4 | 〃 |
-| 563 | `# 型注釈で実装が選ばれる` | 5（山場）| `14-return-type/` |
-| 597 | `## ambiguous type variable` | 5 | 〃 |
-| 618 | `## 数値リテラルだけ注釈が要らない理由` | 5 | 〃 |
-| 636 | `# スーパークラス` | 6 | `14-superclass/` |
-| 651 | `## Semigroup と Monoid` | 6 | 〃 |
-| 745 | `## Writer に載せる` | 6（09 回の回収）| 〃 |
-| 786 | `## 練習`【問4】`Monoid` 自作 | 11 | `14-exercises/Q4MaxInt.hs` |
-| 823 | `# 型引数を取る型クラス` | 7 | `14-ghci/` |
-| 888 | `# 辞書渡し` | 9 | `14-dictionary/` |
-| 963 | `# まとめ` | 10 | — |
-| 980 | `# 関連記事` | — | — |
+| 371 | `# Num` | 8 から分離 | `14-num/` |
+| 424 | `## 練習`【問3】`Num` 自作 | 11 | `14-exercises/Q3Vec*.hs` |
+| 482 | `# 型クラス制約` | 4 | `14-constraint/` |
+| 532 | `## instance 側の制約` | 4 | 〃 |
+| 561 | `# 型注釈で実装が選ばれる` | 5（山場）| `14-return-type/` |
+| 595 | `## ambiguous type variable` | 5 | 〃 |
+| 616 | `## 数値リテラルだけ注釈が要らない理由` | 5 | 〃 |
+| 634 | `# スーパークラス` | 6 | `14-superclass/` |
+| 649 | `## Semigroup と Monoid` | 6 | 〃 |
+| 743 | `## Writer に載せる` | 6（09 回の回収）| 〃 |
+| 782 | `## 練習`【問4】`Monoid` 自作 | 11 | `14-exercises/Q4MaxInt.hs` |
+| 819 | `# 型引数を取る型クラス` | 7 | `14-ghci/` |
+| 919 | `# 辞書渡し` | 9 | `14-dictionary/` |
+| 994 | `# まとめ` | 10 | — |
+| 1011 | `# 関連記事` | — | — |
 
 ## 検証コード（`check/14-*/`）
 
@@ -458,7 +493,7 @@ GHC 9.6.6 / mtl 2.3.1。掲載コードは全て `runghc` で実行確認した�
 | `14-constraint/` | 複数制約、`instance Show a => Show [a]` の再帰的な組み立て |
 | `14-return-type/` | `read`・`minBound`・`mempty`、ambiguous エラー、型のデフォルト規則 |
 | `14-superclass/` | `Semigroup`/`Monoid`、Writer への適用、スーパークラス欠如エラー |
-| `14-ghci/` | `:k` の表示（`*`）、種が合わない `instance Monad Int` のエラー |
+| `14-ghci/` | `:k` の表示（`*`）、自作 `Container`、種が合わないインスタンスのエラー |
 | `14-deriving/` | `deriving Show`、`showsPrec` との差 |
 | `14-num/` | `:i Num`（最小完全定義の `negate \| (-)`）、`:t (/)`、`:t 1` |
 | `14-dictionary/` | 辞書渡しの手書き、`emptyM` が値なしで取れること |
@@ -525,10 +560,40 @@ plus = (+)                                     -- Integer -> Integer -> Integer
 
 15 回「Haskell モナドとゆかいな仲間たち」（Functor・Applicative）に送るもの。
 
+**⚠ 15 回のゴールは「`instance Monad` を書いてモナドを自作できること」に決まった**
+（14 回の推敲時に方針変更。当初は「自作モナドはシリーズを通して対象外」だった）。
+14 回の末尾もその予告で締めてある。したがって 15 回は
+`Functor` → `Applicative` → `Monad` の階層を見た上で、実際にインスタンスを書く回になる。
+14 回で `class`・`instance`・スーパークラス・種を済ませてあるのが前提材料。
+
+- **13 回の `Cont` の回収**（`13-continuation-monad.md:131`）。`newtype Cont r a` を
+  定義しながら `instance Monad` は書いていないので、**自作モナドの題材として本命**。
+  13 回で `>>=` 相当の処理は手書きしているため、繋げやすい。
 - **`return` と `pure` の関係**（決定事項 6）。シリーズ全体が `return` 表記なので、
   15 回で一度きちんと断る必要がある。
 - `Functor` → `Applicative` → `Monad` の階層。14 回でスーパークラスの概念は
   済ませてあるので、階層の形自体は説明済みのものとして使える。
+- **`Monad` そのものの型クラスとしての説明**（推敲時に 14 回から退避）。
+  14 回は「種が `* -> *` の型クラスの一例」として名前と `:k Monad` を出すだけに留めた。
+  15 回で使える材料は次の通り。
+  - 07 回の対比（`07-list-monad.md:236`）。14 回の初稿ではこれを引き直していた。
+
+    ```hs
+    a ::            IO Int
+    b ::            [] Int
+    c :: Monad m => m  Int
+    ```
+
+  - `class Monad m where (>>=) :: m a -> (a -> m b) -> m b` / `return :: a -> m a` の定義。
+    シリーズでは `>>=` と `return` を使い倒しているが、
+    **それが `class` のメソッドとして宣言されている姿は一度も見せていない。**
+  - `instance Monad Int` の種エラー（`check/14-ghci/MonadInt.hs` に残してある）。
+    「`instance Monad` を書くなら種が `* -> *` の型でなければならない」という形で、
+    自作モナドの導入にそのまま使える。
+  - 14 回の自作 `Container`（`empty`・`wrap`）は `wrap` が `return`、
+    `empty` が `mzero`（`Alternative`・`MonadPlus`）に対応する形なので、
+    **15 回でそのまま踏み台にできる**。`Container` に `>>=` を足せば `Monad` になる、
+    という筋で 14 回から地続きに繋げられる。
 - `10-monad-transformers.md:965` の「Applicative の詳細は範囲を超える」の回収。
 - `<$>` と `<*>` の違い（10 回で使い方は説明済み、意味づけは未了）。
 - `12-parsing.md:1584` の `Alternative`（`<|>`）。12 回で `Maybe` とパーサの

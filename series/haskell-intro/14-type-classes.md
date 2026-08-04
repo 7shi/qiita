@@ -740,9 +740,11 @@ instance Monoid Count where
 Haskell が型クラスにしているのは半群とモノイドの 2 段階だけです。リストは連結の逆演算がないため群にはなれず、モノイドで止まります。
 :::
 
-## Writer に載せる
+## Writer
 
-これで Writer モナドの制約が回収できます。`tell` の型は次の通りです。👉[Haskell 状態系モナド 超入門](http://qiita.com/7shi/items/2e9bff5d88302de1a9e9)
+Writer モナドは計算の結果とは別に値を書き出していくモナドで、書き出しには `tell` を使い、`runWriter` で「結果と書き出された値」の組を取り出します。👉[Haskell 状態系モナド 超入門](http://qiita.com/7shi/items/2e9bff5d88302de1a9e9)
+
+`tell` の型は次の通りです。
 
 ```hs:型
 tell :: Monoid w => w -> Writer w ()
@@ -776,10 +778,6 @@ main = print $ runWriter test
 ```
 
 ログを溜め込む代わりに合計だけを取る Writer になりました。Writer 側は何も変えていません。`Monoid` のインスタンスを差し替えるだけで振る舞いが変わるのがアドホック多相です。
-
-:::message
-型クラスの継承の応用例として、ベクトル空間を型クラスの階層で表現した記事があります。👉[Haskellで空間を実装してみた](http://qiita.com/7shi/items/0bd828489aa176252fe8)
-:::
 
 ## 練習
 
@@ -820,17 +818,41 @@ instance Monoid MaxInt where
 
 # 型引数を取る型クラス
 
-ここまでに出てきた型クラスは `Int`・`Bool`・`Color` のような型に付いていました。`Monad` は少し様子が違います。
+ここまでに出てきた型クラスは `Int`・`Bool`・`Color` のような型に付いていました。型クラスはもう 1 種類あります。
 
-以前に載せた対比です。👉[Haskell リストモナド 超入門](http://qiita.com/7shi/items/deb19c4cba933590ffbf)
+`Maybe` や `[]` は、単独では型になりません。`Maybe Int` や `[] Int`（`[Int]` の別表記）のように型を 1 つ受け取って初めて型になります。こういうものにも型クラスは付けられます。
 
 ```hs
-a ::            IO Int
-b ::            [] Int
-c :: Monad m => m  Int
+class Container f where
+    empty :: f a
+    wrap  :: a -> f a
+
+instance Container Maybe where
+    empty = Nothing
+    wrap  = Just
+
+instance Container [] where
+    empty  = []
+    wrap x = [x]
+
+main = do
+    print (empty  :: Maybe Int)
+    print (wrap 1 :: Maybe Int)
+    print (empty  :: [Int])
+    print (wrap 1 :: [Int])
+```
+```text:実行結果
+Nothing
+Just 1
+[]
+[1]
 ```
 
-`m` に入るのは `IO` や `[]` で、これらは単独では型になりません。`IO Int` や `[] Int`（`[Int]` の別表記）のように型を 1 つ受け取って初めて型になります。つまり `Monad` は型を取って型を返すものに付く型クラスです。
+`class Container f where` の `f` に入るのは `Maybe` や `[]` です。メソッドの型に `f a` と書かれている通り、`f` は単独では使わず、型 `a` を受け取った形で現れます。
+
+:::message
+`empty` は引数に `f` も `a` も現れないため、これまでの `mempty`・`minBound` と同じく型注釈がないと実装が決まりません。上記で `empty :: Maybe Int` と書いているのはそのためです。
+:::
 
 この「型の型」を**種**（kind）と呼びます。GHCi の `:k` で確認できます。
 
@@ -856,32 +878,50 @@ Either :: * -> * -> *
 ```text:GHCi
 ghci> :k Show
 Show :: * -> Constraint
-ghci> :k Monad
-Monad :: (* -> *) -> Constraint
+ghci> :k Container
+Container :: (* -> *) -> Constraint
 ```
 
-`Show` は `*` を、`Monad` は `* -> *` を受け取ります。`Constraint` は型クラス制約を表します。ここに型クラスが 2 種類あることがはっきり見えます。
+まず矢印 `->` の右側を見ます。ここが `*` ではなく `Constraint` になっています。`Constraint` は**型クラス制約**を表します。上で見た `Maybe :: * -> *` が型を受け取って型を返すのに対し、`Show :: * -> Constraint` は型を受け取って制約を返します。`Show Int` は型ではなく、`show :: Show a => a -> String` の `Show a` の位置に書けるもの、と解釈できます。
+
+```text:GHCi
+ghci> :k Maybe Int
+Maybe Int :: *
+ghci> :k Show Int
+Show Int :: Constraint
+```
+
+`Maybe` に `Int` を与えると型ができますが、`Show` に `Int` を与えても型にはならず、制約ができます。値を持てるのは `*` だけなので、`Show Int` 型の値というものは存在しません。
+
+次に矢印の左側を見ます。`Show` は `*` を、`Container` は `* -> *` を受け取ります。型クラスが 2 種類あることが分かります。
 
 |種|型クラスの例|インスタンスの例|
 |---|---|---|
 |`*`|`Show`, `Eq`, `Ord`, `Monoid`|`Int`, `Bool`, `Color`|
-|`* -> *`|`Monad`|`IO`, `[]`, `Maybe`|
+|`* -> *`|`Container`, `Monad`|`Maybe`, `[]`, `IO`|
 
 種が合わないインスタンスは書けません。
 
 ```hs:NG
-instance Monad Int
+instance Container Int where
+    empty  = 0
+    wrap _ = 0
 ```
 ```text:エラー内容
     • Expected kind ‘* -> *’, but ‘Int’ has kind ‘*’
-    • In the first argument of ‘Monad’, namely ‘Int’
+    • In the first argument of ‘Container’, namely ‘Int’
 ```
 
-`Int` は `*` なので、`Monad` が要求する `* -> *` に合いません。型に型が付くのと同じように、種が合わないものは弾かれます。
+`Int` は `*` なので、`Container` が要求する `* -> *` に合いません。型に型が付くのと同じように、種が合わないものは弾かれます。
 
-:::message
-`instance Monad` を自分で書く、つまりモナドを自作する話は本シリーズでは扱いません。既存のモナドを使いこなす方に絞っています。
-:::
+表に入れた `Monad` も、種が `* -> *` の型クラスです。
+
+```text:GHCi
+ghci> :k Monad
+Monad :: (* -> *) -> Constraint
+```
+
+`IO`・`[]`・`Maybe` といったモナドがどれも型引数を 1 つ取っていたのは、`Monad` がこの種の型クラスだからです。`Monad` とその周辺の型クラスは次回に扱います。
 
 # 辞書渡し
 
@@ -973,10 +1013,14 @@ ambiguous エラーになる理由。型が決まらないということは、�
 
 シリーズでずっと使ってきた `return :: Monad m => a -> m a` も同じ形です。`IO`・`[]`・`Maybe`・`Cont` のどれにもなれたのは、`m` が決まった時点でその `Monad` インスタンスの実装が選ばれていたからです。
 
-次回はその `Monad` の周辺を見ます。`Functor`・`Applicative` という、これまで名前だけ出して先送りにしてきた型クラスたちです。今回スーパークラスを済ませたので、それらが階層をなしていることも説明できるようになりました。
+次回はその `Monad` を型クラスとして開きます。`Functor`・`Applicative` という、これまで名前だけ出して先送りにしてきた型クラスたちとの階層を見た上で、`instance Monad` を自分で書いてモナドを作るところまで進みます。今回の `class`・`instance`・スーパークラス・種が、そのまま道具になります。
 
 # 関連記事
 
-型クラスはオブジェクト指向のインターフェースと似ており、特に F# では書式まで似ています。しかし細かく見ると違いがあります。
+型クラスはオブジェクト指向のインターフェースと似ていて、特に F# では書式まで似ています。しかし細かく見ると違いがあります。
 
 http://qiita.com/7shi/items/cd7f65a898dd5696c73d
+
+スーパークラスの応用例です。ベクトル空間・ノルム空間・計量ベクトル空間という数学的な空間の階層を、そのまま型クラスの継承で表現しています。
+
+http://qiita.com/7shi/items/0bd828489aa176252fe8
