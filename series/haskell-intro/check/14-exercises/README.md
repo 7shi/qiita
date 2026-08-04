@@ -55,7 +55,16 @@ Vec 6.0 6.0
 
 ## 補足
 
-`Q4Vec.hs` で `undefined` を並べずに省略した場合、`runghc -Wall` で次の警告が出る。
+`Q4Vec.hs` で `undefined` を並べずに省略した場合、次の警告が出る（`-Wmissing-methods` は
+デフォルトで有効なので `-Wall` は不要）。
+
+```
+warning: [GHC-06201] [-Wmissing-methods]
+    • No explicit implementation for
+        ‘*’, ‘abs’, ‘signum’, and ‘fromInteger’
+```
+
+さらに `-` と `negate` も省略すると、次のように `(either ‘negate’ or ‘-’)` が加わる。
 
 ```
 warning: [GHC-06201] [-Wmissing-methods]

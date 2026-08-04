@@ -114,11 +114,11 @@ class Foo a where
 
 instance Foo Int where
     foo 1 = "one"
-    foo _ = "other"
+    foo _ = "?"
 
 instance Foo Bool where
     foo True  = "ok"
-    foo False = "ng"
+    foo False = "?"
 
 main = do
     putStrLn $ foo (0 :: Int)
@@ -127,9 +127,9 @@ main = do
     putStrLn $ foo True
 ```
 ```text:実行結果
-other
+?
 one
-ng
+?
 ok
 ```
 
@@ -153,7 +153,7 @@ data Color = Blue | Red | Green | White
 instance Foo Color where
     foo Blue = "blue"
     foo Red  = "red"
-    foo _    = "other"
+    foo _    = "?"
 
 main = do
     putStrLn $ foo Blue
@@ -161,7 +161,7 @@ main = do
 ```
 ```text:実行結果
 blue
-other
+?
 ```
 
 インスタンスを定義していない型に使うとエラーになります。
@@ -175,7 +175,7 @@ main = putStrLn $ foo (1.0 :: Double)  -- Double のインスタンスがない
 
 ## 型注釈が要る理由
 
-上の例で `foo (0 :: Int)` と型注釈を付けたのが気になったかもしれません。外すとエラーになります。
+上の例で `foo (0 :: Int)` と型注釈を付けましたが、外すとエラーになります。
 
 ```hs:NG
 main = putStrLn $ foo 1
@@ -184,9 +184,13 @@ main = putStrLn $ foo 1
     • Ambiguous type variable ‘a0’ arising from a use of ‘foo’
       prevents the constraint ‘(Foo a0)’ from being solved.
       Probable fix: use a type annotation to specify what ‘a0’ should be.
+      Potentially matching instance:
+        instance Foo Int
 ```
 
-数値リテラルの `1` は `Int` とは限らず、`Integer` や `Double` にもなれます。どの型か決まらないと `foo` のどの実装を使えばよいか決まらないため、曖昧（ambiguous）だとしてエラーになります。
+数値リテラルの `1` は `Int` とは限らず、`Integer` や `Double` にもなれます。この時点では型が決まらず、決まらない以上 `foo` のどの実装を使えばよいかも決められないため、曖昧（ambiguous）だとしてエラーになります。
+
+ここで注目したいのは、エラーメッセージ自身が「候補になり得るインスタンス」として `Foo Int` ただ一つを挙げていることです。候補が1つしかないのに、GHC は「では `Int` だろう」とは推論しません。型クラスのインスタンスは後で追加できるため、今見えているインスタンスの数を型推論の根拠にしないのです。あくまで型が先に決まり、決まった型に対して実装を引く、という順序になります。
 
 これは型クラスの核心に関わる現象なので、後で改めて扱います。ここでは「実装を選ぶには型が決まっている必要がある」とだけ覚えておいてください。
 
@@ -204,6 +208,10 @@ class Eq a where
 ```
 
 `==` と `/=` が互いのデフォルト実装になっているため、どちらか一方を実装すればもう一方が付いてきます。
+
+:::message
+どちらも実装しなくてもコンパイルは通りますが、`No explicit implementation for either ‘==’ or ‘/=’` という警告が出ます。実行すると無限に呼び合ってしまいます。
+:::
 
 ```hs
 data Color = Blue | Red | Green | White
@@ -244,21 +252,29 @@ class Eq a where
 
 `MINIMAL (==) | (/=)` が最小完全定義で、`|` は「どちらか」を表します。両方とも書かなければデフォルト実装同士が無限に呼び合ってしまうため、少なくとも一方は必要です。
 
-:::message
-どちらも書かなくてもコンパイルは通りますが、`-Wall` を付けると警告が出ます。実行すると無限ループになります。
-:::
-
 ## 練習
 
-【問1】メソッドを 2 つ持ち、片方にデフォルト実装がある型クラスを定義してください。複数の型をインスタンスにして、デフォルト実装が使われる型と上書きする型の両方を用意してください。
+【問1】次の `data` と `main` がそのまま動くように、型クラス `Shape` とそのインスタンスを定義してください。
 
-ヒント: 図形の面積を求める `area` と、名前を返す `name` など。
-
-:::details 解答例
 ```hs
 data Circle = Circle Double
 data Rect   = Rect Double Double
 
+-- ここに class Shape と instance を書く
+
+main = do
+    putStrLn $ name (Circle 1) ++ ": " ++ show (area (Circle 1))
+    putStrLn $ name (Rect 2 3) ++ ": " ++ show (area (Rect 2 3))
+```
+```text:実行結果
+円: 3.141592653589793
+図形: 6.0
+```
+
+`Shape` は面積を求める `area` と名前を返す `name` の 2 つのメソッドを持ちます。`name` にはデフォルト実装として `"図形"` を与えておき、`Circle` 側だけ `"円"` で上書きしてください。
+
+:::details 解答例
+```hs
 class Shape a where
     area :: a -> Double
     name :: a -> String
@@ -270,14 +286,6 @@ instance Shape Circle where
 
 instance Shape Rect where
     area (Rect w h) = w * h  -- name はデフォルト実装のまま
-
-main = do
-    putStrLn $ name (Circle 1) ++ ": " ++ show (area (Circle 1))
-    putStrLn $ name (Rect 2 3) ++ ": " ++ show (area (Rect 2 3))
-```
-```text:実行結果
-円: 3.141592653589793
-図形: 6.0
 ```
 
 `area` にはデフォルト実装がないため、どちらのインスタンスでも実装が必要です。`name` は `Rect` では省略したのでデフォルト実装が使われます。
@@ -564,21 +572,14 @@ main = print $ runWriter test
 
 ## 練習
 
-【問2】`Semigroup` と `Monoid` のインスタンスを自作して、Writer モナドで使ってください。
+【問2】最大値を保持する型 `MaxInt` について、次のコードがそのまま動くように `Semigroup` と `Monoid` のインスタンスを定義してください。
 
-ヒント: 最大値を保持する型など。
-
-:::details 解答例
 ```hs
 import Control.Monad.Writer
 
 newtype MaxInt = MaxInt Int deriving Show
 
-instance Semigroup MaxInt where
-    MaxInt a <> MaxInt b = MaxInt (max a b)
-
-instance Monoid MaxInt where
-    mempty = MaxInt minBound
+-- ここに instance Semigroup と instance Monoid を書く
 
 test :: [Int] -> Writer MaxInt ()
 test = mapM_ (tell . MaxInt)
@@ -590,6 +591,17 @@ main = do
 ```text:実行結果
 MaxInt 4
 ((),MaxInt 9)
+```
+
+`<>` は 2 つの値の大きい方を返します。`mempty` はその単位元です。
+
+:::details 解答例
+```hs
+instance Semigroup MaxInt where
+    MaxInt a <> MaxInt b = MaxInt (max a b)
+
+instance Monoid MaxInt where
+    mempty = MaxInt minBound
 ```
 
 単位元は「`max` を取っても相手が変わらない値」なので、`Int` の最小値 `minBound` になります。ここでも `minBound` が戻り値の型だけで決まるメソッドです。
@@ -693,17 +705,12 @@ Just White
 
 ## 練習
 
-【問3】列挙型に `instance Show` を手で書いて、`deriving Show` と同じ出力になることを確かめてください。
+【問3】次のコードが `deriving Show` と同じ出力になるように、`instance Show Color` を手で書いてください。
 
-:::details 解答例
 ```hs
 data Color = Blue | Red | Green | White
 
-instance Show Color where
-    show Blue  = "Blue"
-    show Red   = "Red"
-    show Green = "Green"
-    show White = "White"
+-- ここに instance Show Color を書く
 
 main = do
     print Blue
@@ -716,6 +723,15 @@ Blue
 Just White
 ```
 
+:::details 解答例
+```hs
+instance Show Color where
+    show Blue  = "Blue"
+    show Red   = "Red"
+    show Green = "Green"
+    show White = "White"
+```
+
 `show` を定義するだけで `print` も `[Color]` も `Maybe Color` も動きます。`print` は `putStrLn . show` に相当し、リストや `Maybe` の表示は `instance Show a => Show [a]` のような制約付きインスタンスが要素の `show` を呼び出すためです。
 
 :::message
@@ -723,22 +739,12 @@ Just White
 :::
 :::
 
-【問4】自作の型に `instance Num` を書いて、`+` や `-` が使えるようにしてください。使わないメソッドは `undefined` で構いません。
+【問4】2 次元ベクトル `Vec` で `+`・`-`・`negate` が使えるように、`instance Num Vec` を書いてください。
 
-ヒント: 2 次元ベクトルなど。`Num` のメソッドは `+`・`-`・`*`・`negate`・`abs`・`signum`・`fromInteger` です。
-
-:::details 解答例
 ```hs
 data Vec = Vec Double Double deriving Show
 
-instance Num Vec where
-    Vec a b + Vec c d = Vec (a + c) (b + d)
-    Vec a b - Vec c d = Vec (a - c) (b - d)
-    negate (Vec a b)  = Vec (negate a) (negate b)
-    (*)         = undefined
-    abs         = undefined
-    signum      = undefined
-    fromInteger = undefined
+-- ここに instance Num Vec を書く
 
 main = do
     print $ Vec 1 2 + Vec 3 4
@@ -753,16 +759,30 @@ Vec (-1.0) (-2.0)
 Vec 3.0 5.0
 ```
 
+`Num` のメソッドは `+`・`-`・`*`・`negate`・`abs`・`signum`・`fromInteger` です。使わないメソッドは `undefined` で構いません。
+
+:::details 解答例
+```hs
+instance Num Vec where
+    Vec a b + Vec c d = Vec (a + c) (b + d)
+    Vec a b - Vec c d = Vec (a - c) (b - d)
+    negate (Vec a b)  = Vec (negate a) (negate b)
+    (*)         = undefined
+    abs         = undefined
+    signum      = undefined
+    fromInteger = undefined
+```
+
 `+` や `-` は特別な構文ではなく `Num` のメソッドなので、インスタンスを書けば自作の型でも使えます。演算子のオーバーロードがアドホック多相として実現されている例です。
 
-`undefined` を並べる代わりに省略してもコンパイルは通りますが、`-Wall` を付けると警告が出ます。
+`undefined` を並べる代わりに省略してもコンパイルは通りますが、警告が出ます。
 
 ```text:警告内容
     • No explicit implementation for
-        ‘*’, ‘abs’, ‘signum’, ‘fromInteger’, and (either ‘negate’ or ‘-’)
+        ‘*’, ‘abs’, ‘signum’, and ‘fromInteger’
 ```
 
-`either ‘negate’ or ‘-’` とあるように、この 2 つは互いのデフォルト実装になっています。
+`negate` が挙がっていないのは、`-` と互いのデフォルト実装になっているためです。両方とも省略すると `(either ‘negate’ or ‘-’)` として警告に現れます。
 
 `fromInteger` を実装すると、数値リテラルをそのまま自作の型として書けるようになります。
 
