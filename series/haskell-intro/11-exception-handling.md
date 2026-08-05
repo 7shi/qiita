@@ -13,7 +13,7 @@ tags:
 - name: Haskell
   versions: []
 title: Haskell 例外処理 超入門
-updated_at: '2026-08-03T16:19:55+09:00'
+updated_at: '2026-08-05T09:09:06+09:00'
 url: https://qiita.com/7shi/items/73e534c47bbebc71b37e
 slide: false
 ---
@@ -35,7 +35,7 @@ Haskellでは失敗を処理するのにモナドと例外の2つの方法があ
 1. **Haskell 例外処理 超入門** ← この記事
 1. [Haskell 構文解析 超入門](http://qiita.com/7shi/items/b8c741e78a96ea2c10fe)
 1. [Haskell 継続モナド 超入門](https://zenn.dev/7shi/articles/20260803-haskell-continuation-monad)
-1. 【予定】Haskell 型クラス 超入門
+1. [Haskell 型クラス 超入門](https://zenn.dev/7shi/articles/20260805-haskell-type-classes)
 1. 【予定】Haskell モナドとゆかいな仲間たち
 1. 【予定】Haskell Freeモナド 超入門
 1. 【予定】Haskell Operationalモナド 超入門
