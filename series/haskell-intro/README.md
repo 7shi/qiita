@@ -26,6 +26,7 @@
     - [【解答例】Haskell 構文解析 超入門](12a-parsing.md) `f65814b1e91d48ec8d12`
 13. [Haskell 継続モナド 超入門](13-continuation-monad.md)（Zenn で公開）
 14. [Haskell 型クラス 超入門](14-type-classes.md)（Zenn で公開）
+15. [Haskell モナドとゆかいな仲間たち](15-monads-and-friends.md)（Zenn で公開）
 
 各回の導入文（前書き）は [PREFACES.md](PREFACES.md) にまとめてある。新しい回を書くときの文体合わせに使う。
 
@@ -48,7 +49,6 @@ Zenn は投稿すると自動的に英語版が生成されるため、13回以�
 
 ## 予定
 
-15. Haskell モナドとゆかいな仲間たち（Functor・Applicativeの話。型クラスの知識が前提のため14の後に回す。`instance Monad` を書いてモナドを自作するところまでがゴール）
 16. Haskell Freeモナド 超入門
 17. Haskell Operationalモナド 超入門
 18. Haskell Effモナド 超入門

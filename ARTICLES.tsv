@@ -248,6 +248,7 @@ b8c741e78a96ea2c10fe	2015-07-31	series/haskell-intro	12-parsing	Haskell 構文�
 f65814b1e91d48ec8d12	2015-07-31	series/haskell-intro	12a-parsing	【解答例】Haskell 構文解析 超入門
 	2026-07-31	series/haskell-intro	13-continuation-monad	Haskell 継続モナド 超入門
 	2026-08-04	series/haskell-intro	14-type-classes	Haskell 型クラス 超入門
+	2026-08-05	series/haskell-intro	15-monads-and-friends	Haskell モナドとゆかいな仲間たち
 026839b2bc193dbfb0cb	2014-08-31	series/haskell-intro	8086-disassembler	Haskellによる8086逆アセンブラ開発入門
 6d228b6fc4734f48a33e	2014-08-31	series/haskell-intro	8086-disassembler-answer	【解答例】Haskellによる8086逆アセンブラ開発入門
 c62858d22a565095f791	2014-09-19	series/haskell-intro	algebraic-calculation	【解答例】Haskellによる代数計算入門

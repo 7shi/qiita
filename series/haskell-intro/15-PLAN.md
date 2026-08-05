@@ -2,8 +2,12 @@
 
 記事番号は 15、ファイル名は `15-monads-and-friends.md`（予定）。
 
-**状態: 未着手。この文書は執筆前の構成案。**
-検討事項は 2026-08-05 の議論で全て決着した。以降は `決定事項` に従って執筆する。
+**状態: 初稿執筆済み（2026-08-05）。本文は [15-monads-and-friends.md](15-monads-and-friends.md)。
+検証コードは `check/15-*/` に配置済み。`README.md` の目次・`PREFACES.md`・`ARTICLES.tsv` も更新済み。
+推敲・Zenn への複製は未実施。**
+
+以下、構成案・決定事項は執筆前に決めた内容をそのまま残してある。
+実際に書かれたものとの差分は「[執筆時の変更点](#執筆時の変更点構成案からの差分)」にまとめた。
 
 ## 公開方針
 
@@ -431,27 +435,151 @@ data Rose a = Leaf a | Node [Rose a]
 
 ## TODO
 
-- [ ] 構成案の各節で使うコードを書いて GHC 9.6.6 で動作確認する → `check/15-*/`
-- [ ] `instance Monad` だけを書いたときのエラーメッセージを採取する
-      （`No instance for (Applicative Foo) arising from the superclasses of an instance declaration` 系）
-- [ ] `return` を実装して `pure` を書かなかった場合に何が起きるか確認する
-      （`MINIMAL pure` の警告 / 実行時の挙動）
-- [ ] `:i Functor` / `:i Applicative` / `:i Monad` / `:i Alternative` / `:i MonadFail` /
-      `:i Foldable` / `:i ZipList` の GHC 9.6.6 での表示を採取する（種は `*` 表示。14 回で確認済み）
-- [ ] `Identity` を自作するとき標準の `Data.Functor.Identity` と衝突しないか確認する
-      （import しない／別名にする／`Prelude` に入っていないか）
-- [ ] `ZipList` で `>>=` を書こうとしたときに何が起きるか、具体例を作る
-- [ ] `Tree` の `instance Foldable`（`foldMap` 版）で `sum`・`length`・`elem`・`toList`・
-      `mapM_` が動くことを確認する
-- [ ] 練習 4 問（`Pair` の Functor / Applicative、`State` の穴埋め、`Rose`）を
-      実装して動作確認し、問3 で与える bind のべた書きの形を確定する
-- [ ] 03・07・08・09・10・12 回の該当箇所を読み直し、回収の言い回しを揃える
-      （特に 09 回問4・問6・問8 の「再実装した関数は使わないで」の引き方）
-- [ ] `articles/haskell/` の実験メモに `Functor`・`Applicative` の重複がないか棚卸しする
-- [ ] 本文の初稿を書く
-- [ ] 推敲（14-PLAN の「推敲時の観点」と同じ項目 + 半角スペースのルール）
-- [ ] `README.md` の目次・`PREFACES.md`・`ARTICLES.tsv` を更新する
+- [x] 構成案の各節で使うコードを書いて GHC 9.6.6 で動作確認する → `check/15-*/`
+- [x] `instance Monad` だけを書いたときのエラーメッセージを採取する
+      → `check/15-boilerplate/MonadOnly.hs`
+- [x] `return` を実装して `pure` を書かなかった場合に何が起きるか確認する
+      → `check/15-boilerplate/ReturnOnly.hs`。`-Wmissing-methods` に加えて
+      `-Wnoncanonical-monad-instances` が出る（これが記事の直接の根拠になった）
+- [x] `:i Functor` / `:i Applicative` / `:i Monad` / `:i Alternative` / `:i MonadFail` /
+      `:i Foldable` / `:i ZipList` の GHC 9.6.6 での表示を採取する
+      → 各 `check/15-*/README.md` に記録
+- [x] `Identity` を自作するとき標準の `Data.Functor.Identity` と衝突しないか確認する
+      → `Prelude` に入っていないため import しなければ衝突しない
+- [x] `ZipList` で `>>=` を書こうとしたときに何が起きるか、具体例を作る
+      → `check/15-vs-monad/ZipBind.hs`
+- [x] `Tree` の `instance Foldable`（`foldMap` 版）の動作確認 → `check/15-tree/TreeFoldable.hs`
+- [x] 練習 4 問を実装して動作確認 → `check/15-exercises/`
+- [x] 03・07・08・09・10・12 回の該当箇所を読み直し、回収の言い回しを揃える
+- [x] `articles/haskell/` の実験メモに `Functor`・`Applicative` の重複がないか棚卸しする
+      → `maybe-monad-infix.md`・`state-monad-infix.md` は Applicative スタイルを
+      **使っている**だけで説明はしていない。重複なし
+- [x] 本文の初稿を書く
+- [x] 初稿の自己チェック（掲載コードと `check/15-*/` の一致、実行結果の採り直し）
+- [x] `README.md` の目次・`PREFACES.md`・`ARTICLES.tsv` を更新する
+- [ ] **推敲**（下記「[推敲時の観点](#推敲時の観点)」）
+- [ ] 推敲結果を「執筆時の変更点」「記事の実際の構成」へ反映する
 - [ ] Zenn へ複製し `ZENN.tsv` に追記する
+
+## 執筆時の変更点（構成案からの差分）
+
+- **構成案 1 の見出しを「モナドは階層の一番上」から「手で書いた bind の行き先」に変えた。**
+  一行の主張（09 回の回収）を節タイトル自体に置いた方が、階層の話に入る前の動機が立つため。
+  階層の見取り図は同じ節の中の小見出し「Monad のスーパークラス」に置いた。
+- **09 回の回収を、記事の 1 行目からの導入にした。** 解答例の `bind`・`return'` と
+  `fib` を実際に引用し、続く問4 の「再実装した関数は使わないでください」という指示を
+  そのまま引いてから `instance Monad` に繋げている。問3（State の自作）の解答例末尾で
+  「この制限はもう必要ありません」と再度回収する二段構えにした。
+- **構成案 2 に「liftM の正体」という小見出しを立てた。** 10 回の `<$>` 再実装をそのまま
+  引き、それが `liftM` であること・`>>=` があれば機械的に書けることまでを述べて、
+  構成案 5 の定型（`fmap = liftM`）への伏線にした。
+  記事中では `<$>` を再定義できないため、検証コードでは `<$$>` という別名にしている。
+- **構成案 3 の `pure` の説明で、`-Wnoncanonical-monad-instances` の警告を採用した。**
+  当初は「`MINIMAL` が `(>>=)` だけ」という説明だけの予定だったが、
+  `return` を実装したときに GHC が「`return` は将来 `Monad` から取り除かれる」と
+  明示してくれるので、これを構成案 5 の `:::message` に置いた。
+- **構成案 4 の `ZipList` は、base の `ZipList` を見せた後、自作の `Zip` で
+  「リストと同じ `>>=` を書くと `ap` と食い違う」ことを実演する形にした。**
+  `pure = Zip . repeat` のせいで `ap` の結果が無限リストになるため `take 4` で
+  打ち切っている。この発散自体も「整合する `>>=` が存在しない」ことの現れとして扱った。
+- 構成案 5 の見出しは「階層を書かされる（AMP）」から「階層は書かされる」にした。
+  AMP は節末の `:::message` に落とし、見出しには出していない。
+- **構成案 7（モナド則）を独立した節にし、構成案 8（ゆかいな仲間たち）の前に置いた。**
+  `ZipList` と `Zip` の話の落とし所として法則が必要になるため。
+- **構成案 8 の `Foldable` に `maximum` を足した。** `foldMap` の 2 行で繋がる
+  標準関数の幅を見せるため。
+- **関連記事として F# の「コンピュテーション式でモナドを作ってみる」を末尾に置いた**
+  （`articles/fsharp/monads-with-computation-expressions.md`）。
+  `Bind`・`Return` を書くと `let!` が使えるようになる構図が今回の主題と同型のため。
+  09 回も同じ記事を関連記事に挙げているが、そちらは「状態系モナドの他言語版」という
+  文脈なので重複しない。
+- **まとめに 16 回への引きを書かなかった。** まとめ節に次回予告を書かない方針
+  （14 回の推敲時にユーザーから指示）に従った。構成案 9 の
+  「16 回の Free モナドは `Functor` を要求する」という引きは本文に入れていない。
+
+## 記事の実際の構成
+
+推敲時の地図。`#` が節、`##` が小見出し。
+
+| 見出し | 構成案 | 検証コード |
+|---|---|---|
+| `# 手で書いた bind の行き先` | 1 | — |
+| `## Monad のスーパークラス` | 1 | — |
+| `# Functor` | 2 | `15-functor/Fmap.hs` |
+| `## liftM の正体` | 2 | `15-functor/FmapViaBind.hs` |
+| `## Functor 則` | 2 | — |
+| `## 練習`【問1】`Pair` の `Functor` | — | `15-exercises/Q1Pair.hs` |
+| `# Applicative` | 3 | `15-applicative/App.hs` |
+| `## Applicative スタイルの正体` | 3（07 回の回収）| `15-applicative/Style.hs` |
+| `## return と pure` | 3（14 回の回収）| `15-applicative/PureReturn.hs` |
+| `## 練習`【問2】`Pair` の `Applicative` | — | `15-exercises/Q2Pair.hs` |
+| `# Applicative と Monad の違い` | 4（山場）| `15-vs-monad/AppVsMonad.hs` |
+| `## ap` | 4 | — |
+| `## ZipList` | 4 | `15-vs-monad/ZipList.hs`・`ZipBind.hs` |
+| `# 階層は書かされる` | 5 | `15-boilerplate/` |
+| `# モナドを自作する` | 6 | — |
+| `## Identity` | 6-1 | `15-identity/MyIdentity.hs` |
+| `## 練習`【問3】`State` の自作 | 6-2 | `15-exercises/Q3State.hs` |
+| `## Tree` | 6-3（ゴール）| `15-tree/Tree.hs` |
+| `## 練習`【問4】`Rose` | 6-4 | `15-exercises/Q4Rose.hs` |
+| `# モナド則` | 7 | — |
+| `# ゆかいな仲間たち` | 8 | — |
+| `## Alternative` | 8（08・12 回の回収）| `15-friends/Alt.hs` |
+| `## Foldable` | 8（14 回の `Monoid` の再回収）| `15-tree/TreeFoldable.hs` |
+| `## MonadFail` | 8 | `15-friends/Fail.hs`・`FailIO.hs` |
+| `# まとめ` | 9 | — |
+| `# 関連記事` | — | — |
+
+## 検証コード（`check/15-*/`）
+
+各ディレクトリに `README.md` があり、確認内容と実行結果（エラー・警告を含む）を記録済み。
+GHC 9.6.6。掲載コードは全て `runghc` で実行確認した。
+
+| ディレクトリ | 主な確認内容 |
+|---|---|
+| `15-functor/` | `map` と `fmap`、10 回の再実装と `liftM` の一致 |
+| `15-applicative/` | `<$>`/`<*>`、`<*`/`*>`、Applicative スタイルの制約、`pure` と `return` |
+| `15-vs-monad/` | `>>=` の依存性と `<*>` の非依存性、`ZipList`、`<*>` と `ap` の食い違い |
+| `15-boilerplate/` | スーパークラス不足エラー、`liftM`/`ap` の定型、`return` 実装時の警告 |
+| `15-identity/` | `Identity` を 3 つとも手書き |
+| `15-tree/` | `Tree` の `Monad`（接ぎ木）と `Foldable`（`foldMap` 2 行）|
+| `15-friends/` | `Alternative`、`MonadFail`（`Maybe`・リスト・`IO`）|
+| `15-exercises/` | 練習 4 問の解答例 |
+
+## 推敲時の観点
+
+14-PLAN の同名の節と共通する項目に、15 回固有のものを足したもの。
+
+**共通（14 回から引き継ぎ）**
+
+- 半角スペースのルール（CLAUDE.md）。数詞は「2 つ」「3 段」と空ける。
+  過去記事のタイトルをリンクテキストにしている箇所は実際のタイトルなので書き換えない。
+- 予告 → 回収の対応が取れているか。
+- 掲載コードと `check/15-*/` のファイルが一致しているか。実行結果・エラー・警告も
+  実際の出力と一致しているか。
+- 過去記事を「第N回」のような回数で参照していないか（README.md「スタイル」）。
+- 他記事へのリンクが行末の `👉[記事タイトル](URL)` 形式に揃っているか。
+- **まとめ節に次回予告が入っていないか。** 14 回の推敲時にユーザーから
+  「予告はしない方針」と指示があった。
+
+**15 回固有**
+
+- **一行の主張（手で書いた bind → `instance Monad`）が最初から最後まで通っているか。**
+  導入（`# 手で書いた bind の行き先`）→ `Identity` の `calc` →【問3】の解答例末尾 →
+  まとめ、の 4 箇所で回収している。どれかが浮いていないか。
+- **`Functor`・`Applicative` の説明で「モナド」という語を使いすぎていないか。**
+  階層を分ける回なので、`Applicative` の文脈では `f` の話として書く。
+  初稿では 2 箇所直した（`<*>` の導入・`ap` の説明）。
+- **定型（`fmap = liftM` / `(<*>) = ap`）が `Tree` より前に出ていないか**（決定事項 6）。
+  `Identity`（6-1）と【問3】State（6-2）は 3 つとも手書きのまま保つ。
+- **16 回の伏線（`Tree` = `Free Two`、`Rose` = `Free []`）を漏らしていないか**（決定事項 9）。
+- 圏論・関手に踏み込んでいないか（決定事項 10）。`Functor` の名前の由来の一言のみ。
+- 言語拡張が出ていないか（決定事項 13）。
+- **法則の帰属が正しいか。** `(<*>) = ap` は `Applicative` 則ではなく
+  `Monad` インスタンスが下の段と辻褄を合わせる約束。初稿で 1 度直した。
+- `pure` と `return` の使い分け。**本文で「実装するのは `pure`」と述べた後に、
+  掲載コードで `return` を実装していないか。**（`Identity`・`Tree`・練習の解答例）
+- `Zip` の `ap` が無限リストになる件を `take` で打ち切る説明が付いているか。
 
 ## 16 回以降への引き継ぎ（この回で扱わないもの）
 
