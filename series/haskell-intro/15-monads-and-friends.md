@@ -147,6 +147,10 @@ class Applicative m => Monad m       where (>>=) :: m a -> (a -> m b) -> m b
 
 それが `Functor`・`Applicative` という型クラスのメソッドであることは、これまで説明を先送りにしてきました。モナドを自作しようとすると、この 2 つを否応なく実装することになります。
 
+:::message
+タイトルの「ゆかいな仲間たち」は、`Functor` と `Applicative` を指しています。
+:::
+
 階層を下から順に見ていきます。
 
 # Functor
@@ -454,7 +458,7 @@ class Applicative m => Monad m where
 :::
 
 :::message
-`Maybe` と `[]` を同じ形で扱うために自作した型クラス `Container` は、`wrap :: a -> f a` がこの `pure`、`empty :: f a` が後述する `Alternative` の `empty` と同じ形をしています。あれは今回の階層の縮小版でした。👉[Haskell 型クラス 超入門](https://zenn.dev/7shi/articles/20260805-haskell-type-classes)
+`Maybe` と `[]` を同じ形で扱うために自作した型クラス `Container` は、`wrap :: a -> f a` がこの `pure` と同じ形をしています。あれは今回の階層の縮小版でした。👉[Haskell 型クラス 超入門](https://zenn.dev/7shi/articles/20260805-haskell-type-classes)
 :::
 
 ## Applicative 則
@@ -906,173 +910,6 @@ https://qiita.com/7shi/items/547b6137d7a3c482fe68
 
 `Applicative` 則に `fmap f x == pure f <*> x` が付いていたのと同じように、`Monad` にも下の段と辻褄を合わせる約束があります。その 1 つが「`<*>` は `ap` と一致すること」です。`Zip` の `>>=` が失格だった根拠がこれです。
 
-# ゆかいな仲間たち
-
-`Monad` の周りには、同じように `Functor`・`Applicative` を土台にした型クラスが並んでいます。よく目にするものを 3 つ取り上げます。
-
-## Alternative
-
-`<|>` は `Maybe` やパーサで使ってきました。「左が失敗したら右を試す」演算子です。👉[Haskell Maybeモナド 超入門](http://qiita.com/7shi/items/c7d7eec066af0fe0688d)
-
-```text:GHCi
-ghci> :i Alternative
-type Alternative :: (* -> *) -> Constraint
-class Applicative f => Alternative f where
-  empty :: f a
-  (<|>) :: f a -> f a -> f a
-  some :: f a -> f [a]
-  many :: f a -> f [a]
-  {-# MINIMAL empty, (<|>) #-}
-（略）
-```
-
-`Applicative` をスーパークラスに持ち、`empty` と `<|>` の 2 つが最小完全定義です。
-
-```hs
-import Control.Applicative
-
-main = do
-    print $ Just 1  <|> Just 2
-    print $ Nothing <|> Just 2
-    print $ (Nothing :: Maybe Int) <|> Nothing
-    print (empty :: Maybe Int)
-    print $ [1, 2] <|> [3]
-    print (empty :: [Int])
-```
-```text:実行結果
-Just 1
-Just 2
-Nothing
-Nothing
-[1,2,3]
-[]
-```
-
-この 2 つの並びには見覚えがあるはずです。`Monoid` の `mempty` と `<>` です。
-
-|`Monoid`|`Alternative`|
-|---|---|
-|`mempty :: a`|`empty :: f a`|
-|`<>`（結合）|`<\|>`（選択）|
-
-`Monoid` が `Int` や `String` のような型に対する「結合と単位元」だったのに対し、`Alternative` は `Maybe a` やパーサのような `f a` に対する「結合と単位元」です。以前 `Alternative` の説明で「正確には `Monoid` の知識が必要ですが、今回の範囲を超えるため詳細は省略します」と断ったのは、この対応のことでした。
-
-`empty` が引数を持たず型注釈だけで実装が選ばれるところも `mempty` と同じです。`pure` のところで触れた `Container` の `empty` と同名なのは偶然ではありません。
-
-:::message
-古いコードでは同じ役割を `MonadPlus` の `mzero`・`mplus` が担っています。`MonadPlus` は `Monad` を要求するぶん制限が強く、現在は `Alternative` を使うのが標準です。パーサの記事で引用したツイートが述べていた通りです。👉[Haskell 構文解析 超入門](http://qiita.com/7shi/items/b8c741e78a96ea2c10fe)
-:::
-
-## Foldable
-
-`sum`・`length`・`elem`・`mapM_` は、リスト専用の関数だと思っていたかもしれません。実際の型を見ると違います。
-
-```hs:型
-sum     :: (Foldable t, Num a) => t a -> a
-length  :: Foldable t => t a -> Int
-foldMap :: (Foldable t, Monoid m) => (a -> m) -> t a -> m
-```
-
-`Foldable` は「中身を順に取り出して畳み込める」型クラスです。最小完全定義は `foldMap` か `foldr` のどちらかで、`foldMap` の方は各要素を `Monoid` に変換して `<>` で繋ぐ、という形をしています。
-
-自作の `Tree` に書いてみます。
-
-```hs
-import Data.Foldable (toList)
-
-data Tree a = Leaf a | Node (Tree a) (Tree a) deriving Show
-
-instance Foldable Tree where
-    foldMap f (Leaf x)   = f x
-    foldMap f (Node l r) = foldMap f l <> foldMap f r
-
-t :: Tree Int
-t = Node (Node (Leaf 1) (Leaf 2)) (Leaf 3)
-
-main = do
-    print $ sum t
-    print $ length t
-    print $ elem 2 t
-    print $ maximum t
-    print $ toList t
-    mapM_ print t
-```
-```text:実行結果
-6
-3
-True
-3
-[1,2,3]
-1
-2
-3
-```
-
-書いたのは 2 行だけです。それだけで `sum`・`length`・`elem`・`maximum`・`toList`・`mapM_` が自作の木で動きます。左右を `<>` で繋ぐところで `Monoid` が効いており、どの `Monoid` になるかは `sum` なら和、`toList` ならリストの連結、と呼び出し側が決めます。
-
-自作した型が標準関数の群に一気に繋がるところが、`instance` を書くことの一番分かりやすい見返りです。
-
-:::message
-`Foldable` の親戚に `Traversable` があります。`mapM` の正体で、`Foldable` が中身を取り出すだけなのに対し、構造を保ったまま各要素に計算を掛けて全体を組み直します。
-
-```hs:型
-traverse :: (Traversable t, Applicative f) => (a -> f b) -> t a -> f (t b)
-mapM     :: (Traversable t, Monad m)       => (a -> m b) -> t a -> m (t b)
-```
-
-`traverse` の制約が `Applicative` で足りている点が要点です。要素ごとの計算が互いに依存しないため、`Monad` の力は要りません。
-:::
-
-## MonadFail
-
-`do` の中では `<-` の左辺にパターンを書けます。そのパターンが失敗したときに呼ばれるのが `fail` です。
-
-```text:GHCi
-ghci> :i MonadFail
-type MonadFail :: (* -> *) -> Constraint
-class Monad m => MonadFail m where
-  fail :: String -> m a
-  {-# MINIMAL fail #-}
-（略）
-```
-
-`Maybe` では `Nothing`、リストでは `[]` になります。
-
-```hs
-maybeHead :: [a] -> Maybe a
-maybeHead xs = do
-    (x:_) <- Just xs   -- 失敗すると fail が呼ばれる
-    return x
-
-listPairs :: [(Int, Int)] -> [Int]
-listPairs ps = do
-    (1, y) <- ps       -- 1 で始まる組だけ通る
-    return y
-
-main = do
-    print $ maybeHead [1, 2, 3]
-    print $ maybeHead ([] :: [Int])
-    print $ listPairs [(1, 10), (2, 20), (1, 30)]
-```
-```text:実行結果
-Just 1
-Nothing
-[10,30]
-```
-
-リストモナドで「パターンに合わない要素は落ちる」という書き方をしていたのは、`fail` が `[]` を返しているからです。`IO` では例外になります。
-
-```hs:NG
-main = do
-    (x:_) <- return ([] :: [Int])
-    print x
-```
-```text:実行結果（エラー）
-FailIO.hs: user error (Pattern match failure in 'do' block at FailIO.hs:2:5-9)
-```
-
-かつて `fail` は `Monad` のメソッドでしたが、失敗の概念を持たないモナドにまで `fail` を強いることになるため、`MonadFail` として分離されました。自作のモナドでパターンマッチが失敗し得る `do` を書きたい場合だけ、追加でこのインスタンスを書きます。
-
 # まとめ
 
 `Monad` は 3 段の階層の一番上にあります。
@@ -1085,9 +922,9 @@ FailIO.hs: user error (Pattern match failure in 'do' block at FailIO.hs:2:5-9)
 
 下から順に強くなり、上の段は下の段を包含します。`>>=` があれば `fmap` は `liftM`、`<*>` は `ap` で埋まりますが、逆はできません。`ZipList` はその境界にいる実例でした。
 
-`instance Monad` を書くのに必要なのは、実質 `pure` と `>>=` の 2 つだけです。そして書いた瞬間から `do`・`<-`・`return` に加え、`mapM_` や `forM` のような `Monad` を要求する既存の関数がすべて使えるようになります。`instance Foldable` を 2 行足せば `sum` や `length` まで繋がります。
+`instance Monad` を書くのに必要なのは、実質 `pure` と `>>=` の 2 つだけです。そして書いた瞬間から `do`・`<-`・`return` に加え、`mapM_` や `forM` のような `Monad` を要求する既存の関数がすべて使えるようになります。
 
-シリーズを通して手で書いてきた bind は、こうして `do` の中へ収まりました。`Alternative`・`Foldable`・`MonadFail` といった仲間たちも、同じ「`instance` を書いて既存の道具に繋ぐ」という仕組みの上に載っています。
+シリーズを通して手で書いてきた bind は、こうして `do` の中へ収まりました。自作した型を `instance` で登録して既存の道具に繋ぐ、というのが型クラスの働きです。
 
 # 関連記事
 

@@ -4,7 +4,7 @@
 
 **状態: 初稿執筆済み（2026-08-05）。本文は [15-monads-and-friends.md](15-monads-and-friends.md)。
 検証コードは `check/15-*/` に配置済み。`README.md` の目次・`PREFACES.md`・`ARTICLES.tsv` も更新済み。
-推敲・Zenn への複製は未実施。**
+推敲は進行中（2026-08-06 に構成案 8 の節を削除。決定事項 15）。Zenn への複製は未実施。**
 
 以下、構成案・決定事項は執筆前に決めた内容をそのまま残してある。
 実際に書かれたものとの差分は「[執筆時の変更点](#執筆時の変更点構成案からの差分)」にまとめた。
@@ -284,6 +284,10 @@ data Rose a = Leaf a | Node [Rose a]
 
 ### 8. ゆかいな仲間たち（周辺の型クラス）
 
+**⚠ この節は初稿に書いたが、記事が長すぎるため本文から削除した（2026-08-06・決定事項 15）。
+削除した内容の概要は「[本文から削除した節（周辺の型クラス）](#本文から削除した節周辺の型クラス)」を参照。
+以下は当初の構成案をそのまま残したもの。**
+
 タイトルの「仲間たち」を回収する節。**それぞれ短く。**
 
 - **`Alternative`**（08・12 回の回収）
@@ -380,6 +384,15 @@ data Rose a = Leaf a | Node [Rose a]
 13. **言語拡張は出さない。** `DeriveFunctor` は 16 回（Free モナド）で動機が立ってから
     （14 回決定事項 9）。
 14. **公開は Zenn、執筆は Qiita 側リポジトリ。** 練習の解答は `:::details` で本文に統合。
+15. **構成案 8（`Alternative`・`Foldable`・`MonadFail`）は本文から削除する**（2026-08-06 決定）。
+    記事が長すぎるため。この回の主題は `Functor`・`Applicative` を経て `instance Monad` を
+    書けるようになることであり、周辺の型クラスの紹介はその外側にある。
+    タイトルの「ゆかいな仲間たち」も `Functor`・`Applicative` を指すものとして本文で
+    明示してあるので、削除しても題と本文の対応は崩れない。
+    削除に伴い、`Alternative` の `empty`（構成案 3 の `Container` の言及）と
+    まとめの `Foldable` への言及も落とした。
+    **削除した内容は「[本文から削除した節（周辺の型クラス）](#本文から削除した節周辺の型クラス)」に
+    退避してある。検証コード（`check/15-friends/`・`check/15-tree/TreeFoldable.hs`）は残置。**
 
 ## 前提知識
 
@@ -504,6 +517,15 @@ data Rose a = Leaf a | Node [Rose a]
   `Bind`・`Return` を書くと `let!` が使えるようになる構図が今回の主題と同型のため。
   09 回も同じ記事を関連記事に挙げているが、そちらは「状態系モナドの他言語版」という
   文脈なので重複しない。
+- **校正時に構成案 8 の節を丸ごと削除した**（2026-08-06・決定事項 15）。
+  初稿では `# ゆかいな仲間たち` として `Alternative`・`Foldable`・`MonadFail` を扱っていたが、
+  記事が長すぎるため落とした。内容は「[本文から削除した節（周辺の型クラス）](#本文から削除した節周辺の型クラス)」へ退避。
+  同時に、まとめの `Foldable` への言及と、`return と pure` 節の `:::message` にあった
+  `Container` の `empty` ↔ `Alternative` の `empty` の対応も落とした（`wrap` ↔ `pure` は残した）。
+  なお削除の直前に、この節の見出しはタイトルとの衝突を避けて
+  `# ゆかいな仲間たち` → `# 周辺の型クラス` に改名していた。タイトルの「ゆかいな仲間たち」は
+  `Functor` と `Applicative` を指すことを本文の `:::message` で明示してあるため
+  （`# do を使うための型クラス` 節の末尾）、節が消えても題と本文の対応は保たれている。
 - **まとめに 16 回への引きを書かなかった。** まとめ節に次回予告を書かない方針
   （14 回の推敲時にユーザーから指示）に従った。構成案 9 の
   「16 回の Free モナドは `Functor` を要求する」という引きは本文に入れていない。
@@ -537,12 +559,79 @@ data Rose a = Leaf a | Node [Rose a]
 | `## Tree` | 6-3（ゴール）| `15-tree/Tree.hs` |
 | `## 練習`【問4】`Rose` | 6-4 | `15-exercises/Q4Rose.hs` |
 | `# モナド則` | 7 | — |
-| `# ゆかいな仲間たち` | 8 | — |
-| `## Alternative` | 8（08・12 回の回収）| `15-friends/Alt.hs` |
-| `## Foldable` | 8（14 回の `Monoid` の再回収）| `15-tree/TreeFoldable.hs` |
-| `## MonadFail` | 8 | `15-friends/Fail.hs`・`FailIO.hs` |
 | `# まとめ` | 9 | — |
 | `# 関連記事` | — | — |
+
+構成案 8 に当たる節（`Alternative`・`Foldable`・`MonadFail`）は削除済み（決定事項 15）。
+
+## 本文から削除した節（周辺の型クラス）
+
+初稿には `# ゆかいな仲間たち`（校正時に `# 周辺の型クラス` へ改名）として存在したが、
+記事が長すぎるため 2026-08-06 に削除した節の概要。**書き直すときの材料としてここに残す。**
+検証コードは `check/15-friends/`・`check/15-tree/TreeFoldable.hs` に残置してある。
+
+導入は「`Monad` の周りには、同じように `Functor`・`Applicative` を土台にした型クラスが
+並んでいます。よく目にするものを 3 つ取り上げます」。
+
+### Alternative（08 回 `:564`・12 回 `:1584` の回収）
+
+- `:i Alternative` を見せる。`class Applicative f => Alternative f` で
+  `MINIMAL` は `empty`・`(<|>)`（`some`・`many` も持つ）。
+- `Maybe` とリストで `<|>`・`empty` を動かす（`Just 1 <|> Just 2` → `Just 1`、
+  `Nothing <|> Just 2` → `Just 2`、`[1,2] <|> [3]` → `[1,2,3]`、`empty :: [Int]` → `[]`）。
+- **山場は `Monoid` との対応表。**
+
+  | `Monoid` | `Alternative` |
+  |---|---|
+  | `mempty :: a` | `empty :: f a` |
+  | `<>`（結合） | `<\|>`（選択） |
+
+  `Monoid` が `Int`・`String` のような型に対する「結合と単位元」なのに対し、
+  `Alternative` は `Maybe a` やパーサのような `f a` に対する「結合と単位元」。
+  08 回の「正確には `Monoid` の知識が必要ですが、今回の範囲を超えるため詳細は省略します」
+  はこの対応のことだった、と回収する。
+- `empty` が引数を持たず型注釈だけで実装が選ばれる点も `mempty` と同じ。
+  14 回の自作 `Container` の `empty` と同名なのは偶然ではない。
+- `:::message` で `MonadPlus`（`mzero`・`mplus`）に一言。`Monad` を要求するぶん制限が強く、
+  現在は `Alternative` が標準。12 回の引用ツイートの回収。
+
+### Foldable（14 回の `Monoid` の再回収）
+
+- `sum`・`length`・`elem`・`mapM_` はリスト専用ではない、という切り出し。
+  `sum :: (Foldable t, Num a) => t a -> a` などの型を見せる。
+- `MINIMAL` は `foldMap` か `foldr`。`foldMap` は各要素を `Monoid` に変換して `<>` で繋ぐ。
+- **本文の `Tree` に 2 行書くだけで標準関数の群に繋がるのが見せ場。**
+
+  ```hs
+  instance Foldable Tree where
+      foldMap f (Leaf x)   = f x
+      foldMap f (Node l r) = foldMap f l <> foldMap f r
+  ```
+
+  これで `sum`・`length`・`elem`・`maximum`・`toList`・`mapM_ print` が動く。
+  どの `Monoid` になるかは呼び出し側（`sum` なら和、`toList` ならリストの連結）が決める。
+- `:::message` で `Traversable` に触れる。`mapM` の正体で、構造を保ったまま各要素に
+  計算を掛けて全体を組み直す。`traverse` の制約が `Applicative` で足りている点が要点
+  （要素ごとの計算が互いに依存しないため）。
+
+### MonadFail
+
+- `do` の `<-` の左辺のパターンが失敗したときに呼ばれるのが `fail`。
+  `:i MonadFail`（`class Monad m => MonadFail m`、`MINIMAL fail`）を見せる。
+- `Maybe` では `Nothing`、リストでは `[]`、`IO` では例外。
+  `maybeHead xs = do { (x:_) <- Just xs; return x }`、
+  `listPairs ps = do { (1, y) <- ps; return y }` の 2 例。
+  リストモナドの「パターンに合わない要素は落ちる」書き方の種明かしになる。
+- かつては `Monad` のメソッドだったが、失敗の概念を持たないモナドにまで `fail` を
+  強いることになるため分離された、という経緯を 1〜2 行。
+
+### 削除で未回収になったもの
+
+- **08 回 `:564` の `Alternative` × `Monoid`**（構成案の中でも回収先の本命だった）。
+- **12 回 `:1584` の引用ツイート**（`MonadPlus` は古い、`Alternative` を使え）。
+- **09 回 `:851`・`:981` の Writer の `Monoid` 制約**（`foldMap` の `<>` で触れる予定だった）。
+- `MonadFail`（14 回決定事項 8 で 15 回へ送られたもの）。
+- これらの回収先は 16 回以降で改めて決める。
 
 ## 検証コード（`check/15-*/`）
 
@@ -559,6 +648,9 @@ GHC 9.6.6。掲載コードは全て `runghc` で実行確認した。
 | `15-tree/` | `Tree` の `Monad`（接ぎ木）と `Foldable`（`foldMap` 2 行）|
 | `15-friends/` | `Alternative`、`MonadFail`（`Maybe`・リスト・`IO`）|
 | `15-exercises/` | 練習 4 問の解答例 |
+
+`15-friends/` と `15-tree/TreeFoldable.hs` に対応する本文は削除済み（決定事項 15）。
+書き直すときの材料になるので**消さずに残す**。
 
 ## 推敲時の観点
 
@@ -608,6 +700,10 @@ GHC 9.6.6。掲載コードは全て `runghc` で実行確認した。
 - **`Traversable` の `instance`**（決定事項 7 で 15 回では名前のみ）。
   `traverse f (Node l r) = Node <$> traverse f l <*> traverse f r` は
   `Applicative` だけで書ける実例として強いが、15 回では紙幅を割かない。
+- **`Alternative`・`Foldable`・`MonadFail`**（決定事項 15 で 15 回の本文から削除）。
+  概要は「[本文から削除した節（周辺の型クラス）](#本文から削除した節周辺の型クラス)」に退避してある。
+  08 回 `:564`・12 回 `:1584`・09 回 `:851` の回収が宙に浮いたままなので、
+  どこかで拾い直すか、独立した回にするかを決める。
 - **Filinski『Representing Monads』**（13-PLAN「今回は入れなかった話」の 2、決定事項 12）。
   第一級の継続と状態があれば任意のモナドをシミュレートできる、という話。置き場所は未定。
 - **codensity モナド**（13-PLAN「今回は入れなかった話」の 3）。
