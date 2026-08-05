@@ -3,6 +3,7 @@ import csv
 import json
 import os
 import sys
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -31,15 +32,15 @@ def load_zenn_paths():
         return {row['qiita'] for row in csv.DictReader(f, delimiter='\t') if row.get('qiita')}
 
 
-def list_pending():
-    """ARTICLES.tsv を走査し、updated_at が空の記事（Qiita へ未反映）を列挙する"""
+def collect_pending():
+    """ARTICLES.tsv を走査し、updated_at が空の記事（Qiita へ未反映）を (path, posted) のリストで返す"""
     if not ARTICLES_TSV.exists():
         print(f'{ARTICLES_TSV} が見つかりません。make articles で生成してください', file=sys.stderr)
         sys.exit(1)
 
     zenn_paths = load_zenn_paths()
 
-    count = 0
+    entries = []
     with open(ARTICLES_TSV, encoding='utf-8', newline='') as f:
         for row in csv.DictReader(f, delimiter='\t'):
             rel = f'{row["directory"]}/{row["slug"]}.md'
@@ -57,11 +58,18 @@ def list_pending():
                 continue
             if fm.get('updated_at'):
                 continue
-            count += 1
-            mark = '' if fm.get('id') else '\t(未投稿)'
-            print(f'{path.relative_to(REPO_ROOT)}{mark}')
+            entries.append((path, bool(fm.get('id'))))
 
-    if count == 0:
+    return entries
+
+
+def list_pending():
+    entries = collect_pending()
+    for path, posted in entries:
+        mark = '' if posted else '\t(未投稿)'
+        print(f'{path.relative_to(REPO_ROOT)}{mark}')
+
+    if not entries:
         print('Qiita へ未反映の記事はありません', file=sys.stderr)
 
 
@@ -133,7 +141,52 @@ def main():
     )
     parser.add_argument('paths', nargs='*', help='記事ファイルのパス（複数可。省略時は未反映の記事を列挙）')
     parser.add_argument('-y', dest='assume_yes', action='store_true', help='確認なしで実行する')
+    parser.add_argument('--all', action='store_true', help='未反映の記事すべてを対象にする')
+    parser.add_argument('-w', '--wait', type=float, default=5.0, help='送信間隔（秒、既定5秒）')
     args = parser.parse_args()
+
+    if args.all:
+        if args.paths:
+            print('--all と個別パス指定は同時に使えません', file=sys.stderr)
+            sys.exit(1)
+
+        entries = collect_pending()
+        posted = [path for path, is_posted in entries if is_posted]
+        unposted = [path for path, is_posted in entries if not is_posted]
+
+        if not entries:
+            print('Qiita へ未反映の記事はありません', file=sys.stderr)
+            return
+
+        for path in posted:
+            print(path.relative_to(REPO_ROOT))
+        if unposted:
+            print('以下は未投稿のためスキップします:', file=sys.stderr)
+            for path in unposted:
+                print(f'  {path.relative_to(REPO_ROOT)}', file=sys.stderr)
+
+        if not posted:
+            return
+
+        if not args.assume_yes:
+            try:
+                answer = input(f'{len(posted)} 件を Qiita へ送信します。よろしいですか？ [y/N] ')
+            except EOFError:
+                answer = ''
+            if answer.strip().lower() != 'y':
+                print('中止しました', file=sys.stderr)
+                return
+
+        token = os.environ.get('QIITA_TOKEN')
+        if not token:
+            print('環境変数 QIITA_TOKEN が設定されていません', file=sys.stderr)
+            sys.exit(1)
+
+        for i, path in enumerate(posted):
+            update_one(path, token, args.assume_yes)
+            if i < len(posted) - 1:
+                time.sleep(args.wait)
+        return
 
     if not args.paths:
         list_pending()
