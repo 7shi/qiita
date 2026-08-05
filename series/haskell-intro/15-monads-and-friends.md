@@ -151,14 +151,14 @@ class Applicative m => Monad m       where (>>=) :: m a -> (a -> m b) -> m b
 
 # Functor
 
-:::message
-`Functor` は数学の**関手**（functor）に由来する名前です。今回の範囲を超えるため、詳細は省略します。
-:::
-
 ```hs:定義（抜粋）
 class Functor f where
     fmap :: (a -> b) -> f a -> f b
 ```
+
+:::message
+`Functor` は数学の**関手**（functor）に由来する名前です。今回の範囲を超えるため、詳細は省略します。
+:::
 
 メソッドは `fmap` ひとつです。使う側から見た型には型クラス制約が付きます。
 
@@ -168,9 +168,46 @@ fmap :: Functor f => (a -> b) -> f a -> f b
 
 `f a` の中身に関数 `a -> b` を適用して `f b` にします。
 
-ここで渡す `a -> b` は、`f` のことを何も知らない普通の関数です。`(* 2)` は `Maybe` も `IO` も知りませんし、知る必要もありません。`fmap` はその関数を `f a` の中身まで届けて、結果を再び同じ `f` で包み直します。中身に作用させるだけなので、`f` の構造そのものは変わりません。
+ここで渡す `a -> b` は、`f` のことを何も知らない普通の関数です。`(* 2)` は `Maybe` も `IO` も知りませんし、知る必要もありません。`fmap` はその関数を `f` の中まで運び込んで、中身に作用させます。コンテナは `f` のままで、中身の型だけが `a` から `b` に変わります。
 
-このように、普通の関数を `f` を扱える関数に変えることを**持ち上げ**（lift）と表現します。モナド変換子で `lift` や `liftM` を扱ったときと同じ言い回しです。
+## 持ち上げ
+
+中に値が 1 つ入っているだけの `Identity` で `fmap` を試します。👉[Haskell モナド変換子 超入門](http://qiita.com/7shi/items/4408b76624067c17e933)
+
+```text:GHCi
+ghci> import Data.Functor.Identity
+ghci> double = (* 2) :: Int -> Int
+ghci> double 3
+6
+ghci> fmap double (Identity 3)
+Identity 6
+```
+
+`double` は `Identity` を知りませんが、`fmap` によって `Identity` の中で働いています。コンテナはそのままで、中身が `3` から `6` に変わりました。
+
+関数だけを渡すと、このことが型にも表れます。
+
+```text:GHCi
+ghci> :t double
+double :: Int -> Int
+ghci> :t fmap double
+fmap double :: Functor f => f Int -> f Int
+```
+
+`Int -> Int` だったものが `f Int -> f Int` になりました。数値を扱うだけだった関数が、`Functor` を扱う関数に変わっています。関数の方が `Functor` の世界へ引き上げられたわけです。これを**持ち上げ**（lift）と表現します。
+
+`Identity` のインスタンスを自分で定義してみれば、持ち上げの様子がそのまま書き下せることが分かります。
+
+```hs
+instance Functor Identity where
+    fmap f (Identity x) = Identity (f x)
+```
+
+左辺では関数 `f` が `Identity` の外にありますが、右辺では `Identity` の中に入っています。`fmap` は関数 `f` を持ち上げて、コンテナの中で作用させているわけです。
+
+## アドホック多相
+
+他のコンテナでも `fmap` を使ってみます。
 
 ```hs
 main = do
@@ -193,8 +230,8 @@ Just 6
 リストの場合は中身が複数あるため、結果的に全要素へ適用されます。
 
 ```hs:型
-map  ::              (a -> b) -> [a] -> [b]
 fmap :: Functor f => (a -> b) -> f a -> f b
+map  ::              (a -> b) -> [a] -> [b]
 ```
 
 `f` を `[]` に固定すると `map` の型と一致します。つまり `map` は `fmap` をリストに特殊化したものです。ただし「多数の要素へ一斉に適用する」のはリストという構造から出てくる性質であって、`fmap` 自体の意味ではないことに注意してください。
@@ -203,21 +240,9 @@ fmap :: Functor f => (a -> b) -> f a -> f b
 
 ## liftM の正体
 
-`<$>` は bind による再実装で説明したことがあります。👉[Haskell モナド変換子 超入門](http://qiita.com/7shi/items/4408b76624067c17e933)
+「持ち上げ」は、モナド変換子で `lift` や `liftM` を扱ったときと同じ言い回しです。👉[Haskell モナド変換子 超入門](http://qiita.com/7shi/items/4408b76624067c17e933)
 
-```hs
-f <$> m = do
-    a <- m        -- モナドから値を取り出す
-    return $ f a  -- 値を関数に適用してモナドに入れて返す
-```
-
-これは `Monad` の道具（`>>=` と `return`）を使って `Functor` の機能を書いたものです。`f` は相変わらずモナドを知らない普通の関数で、`>>=` と `return` がそれをモナドの中まで運んでいます。持ち上げをモナドの道具で実現した形です。
-
-:::message
-ただしこの再実装は `>>=` と `return` を使っているため、推論される型は `Monad m => (a -> b) -> m a -> m b` です。本物の `<$>` の制約は `Functor` なので、再実装の方が要求が強くなっています。`Monad` のインスタンスを持たない `Functor`（後で出てくる `ZipList` など）には、この再実装は使えません。
-:::
-
-標準ライブラリではこれが `liftM` という名前で用意されています。名前のとおり、モナド（M）への持ち上げ（lift）です。
+その `liftM` は標準ライブラリにある関数で、名前のとおりモナド（M）への持ち上げ（lift）です。
 
 ```hs:型
 liftM :: Monad m => (a -> b) -> m a -> m b
@@ -229,7 +254,7 @@ liftM :: Monad m => (a -> b) -> m a -> m b
 import Control.Monad (liftM)
 
 main = do
-    print $ (* 2) <$>   [1, 2, 3]
+    print $ fmap  (* 2) [1, 2, 3]
     print $ liftM (* 2) [1, 2, 3]
 ```
 ```text:実行結果
@@ -237,9 +262,11 @@ main = do
 [2,4,6]
 ```
 
-「`<$>` は `liftM` の演算子版で、同じ働き」と以前に述べた理由がこれです。
-
 なお `liftM` は型クラスのメソッドではなく、`>>=` と `return` だけで書かれた普通の関数です。型ごとに実装するものではなく、1 つの実装が `Monad` のインスタンスすべてに通用します。
+
+:::message
+制約が `Monad` である分、`liftM` は `fmap` より要求が強くなっています。`Monad` のインスタンスを持たない `Functor`（後で出てくる `ZipList` など）には `liftM` を使えません。
+:::
 
 ## Functor 則
 
@@ -258,19 +285,7 @@ fmap (f . g) == fmap f . fmap g
 
 コンパイラはこれを検査してくれません。`Semigroup` の結合法則と同じく、インスタンスを書く側が守るべき約束です。
 
-## インスタンスの実装
-
-型ごとの実装は `instance` で書きます。`Maybe` の定義を見てみます。
-
-```hs:定義
-instance Functor Maybe where
-    fmap f (Just x) = Just (f x)
-    fmap _ Nothing  = Nothing
-```
-
-`class` で宣言されたメソッド `fmap` の中身を、`Maybe` に対して書いたものです。コンストラクタでパターンマッチして、`Just` なら中身に `f` を適用して `Just` で包み直し、`Nothing` はそのまま返します。先ほどの実行結果はこの定義から来ています。
-
-包み直す側のコンストラクタが元と同じ `Just` である点が、構造を変えないということです。たとえば次のように書いても型は通ります。
+たとえば `Maybe` の `fmap` を次のように書いても、型は通ります。
 
 ```hs:NG
 instance Functor Maybe where
@@ -278,7 +293,13 @@ instance Functor Maybe where
     fmap _ Nothing  = Nothing
 ```
 
-しかしこれでは `fmap id (Just 1)` が `Nothing` になり、`fmap id == id` を破ります。先ほど述べたようにコンパイラは検査しないため、こういうインスタンスも書けてしまいますが、これは Functor ではありません。
+しかしこれでは `fmap id (Just 1)` が `Nothing` になり、`fmap id == id` を破ります。コンパイラが検査しない以上こういうインスタンスも書けてしまいますが、これは Functor ではありません。
+
+:::message
+GHC が検査しないのは、関数が等しいかどうかの判定が一般には不可能で、証明を書く仕組みも言語に用意されていないためです。
+
+検査させる試みはあります。Liquid Haskell は、法則を証明として書いて SMT ソルバで検査します。`quickcheck-classes` のように、法則を性質テストとして回すライブラリもあります。
+:::
 
 ## 練習
 
@@ -641,9 +662,7 @@ warning: [-Wnoncanonical-monad-instances]
 
 ## Identity
 
-最小のモナドから始めます。`Identity` は中に値が入っているだけのモナドとして紹介済みです。👉[Haskell モナド変換子 超入門](http://qiita.com/7shi/items/4408b76624067c17e933)
-
-既に知っている型に、初めて自分で `instance` を書くことになります。定型は使わず、3 つとも手で書きます。
+最小のモナドから始めます。`Functor` のインスタンスは持ち上げの説明で先に書きましたが、ここでは定型を使わず 3 つとも手で書きます。
 
 ```hs
 newtype Identity a = Identity { runIdentity :: a }
