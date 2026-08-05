@@ -26,3 +26,6 @@ sync:
 
 status:
 	uv run scripts/update_article.py
+
+update:
+	uv run scripts/update_article.py --all

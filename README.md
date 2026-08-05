@@ -108,6 +108,15 @@ QIITA_TOKEN=xxx uv run scripts/update_article.py series/haskell-intro/01-intro.m
 - 対象ファイルの `updated_at` が既に空でない（同期済みの可能性がある）場合は確認を求めます。`-y` を付けると確認をスキップします。
 - 実行後、レスポンスの内容（`updated_at`・`likes_count` など）でフロントマターを更新します。
 
+未反映の記事すべてを一括で更新する場合は `--all` を付けます。
+
+```bash
+QIITA_TOKEN=xxx make update
+```
+
+- `uv run scripts/update_article.py --all` を実行します。個別パス指定とは同時に使えません。
+- `-w`/`--wait` で API 送信間隔（秒、既定5秒）を指定できます。
+
 ### 4. Zenn リポジトリとの同期
 
 Qiita 側と Zenn 側の両方に置いている記事の本文を揃えます。対応は `ZENN.tsv` に記述します。
