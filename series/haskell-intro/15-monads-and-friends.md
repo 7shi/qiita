@@ -330,7 +330,7 @@ instance Functor Pair where
 
 # Applicative
 
-`fmap` で足りない場面から入ります。引数が 2 つある関数を `fmap` すると、途中で止まってしまいます。
+`fmap` は 1 引数の関数を `f` の世界へ持ち上げました。引数が 2 つある関数を同じように持ち上げようとすると、途中で止まってしまいます。
 
 ```text:GHCi
 ghci> :t (+) <$> Just 1
@@ -340,10 +340,11 @@ ghci> :t (+) <$> Just 1
 `Maybe` の中身 `1` を `(+)` に部分適用した結果、`Maybe` の中に関数 `a -> a` が入った状態になります。ここから先へ進むには「`f` に入った関数を、`f` に入った値に適用する」道具が要ります。それが `<*>` です。
 
 ```hs:型
+fmap  :: Functor f     =>   (a -> b) -> f a -> f b
 (<*>) :: Applicative f => f (a -> b) -> f a -> f b
 ```
 
-`fmap` との違いは、関数が `f` に入っているかどうかだけです。
+違いは、関数が `f` に入っているかどうかだけです。`fmap` は外にある関数を持ち上げますが、`<*>` は既に `f` に入っている関数をそのまま使います。
 
 ```hs
 main = do
@@ -367,7 +368,7 @@ Just 2
 
 ## Applicative スタイルの正体
 
-リストモナドの説明で、Applicative スタイルには型クラス制約が要らないと述べたことがあります。👉[Haskell リストモナド 超入門](http://qiita.com/7shi/items/deb19c4cba933590ffbf)
+リストモナドの説明で、Applicative スタイルでは型クラス制約を意識する必要がない、と述べたことがあります。👉[Haskell リストモナド 超入門](http://qiita.com/7shi/items/deb19c4cba933590ffbf)
 
 これは「関数に渡されるのはモナドではなく素の値なので、関数側に `Monad m =>` を書かなくてよい」という意味でした。関数側には要りませんが、`<$>`・`<*>` を使う側には制約が付きます。それが `Functor f =>`・`Applicative f =>` です。
 
@@ -399,10 +400,10 @@ Just 2
 Just 3
 ```
 
-`inc`・`add` は素の関数のままで、モナドのことを何も知りません。制約を負うのは `<$>`・`<*>` を使う `viaFmap`・`viaAp` の側です。`Monad f =>` ではなく `Functor f =>`・`Applicative f =>` で足りている点にも注目してください。必要な機能だけを要求できるのが、階層が分かれていることの実用上の利点です。
+`inc`・`add` は素の関数のままで、`f` のことを何も知りません。制約を負うのは `<$>`・`<*>` を使う `viaFmap`・`viaAp` の側です。`Monad f =>` ではなく `Functor f =>`・`Applicative f =>` で足りている点にも注目してください。必要な機能だけを要求できるのが、階層が分かれていることの実用上の利点です。
 
 :::message
-Applicative を直訳すれば「適用可能」で、「複数の引数が適用可能」という意味合いです。以前は詳細を省略していましたが、その中身が `<*>` を持つ型クラスというわけです。
+Applicative を直訳すれば「適用可能」で、「複数の引数が適用可能」という意味合いです。以前は詳細を省略していましたが、その中身が `<*>` を持つ型クラスというわけです。👉[Haskell モナド変換子 超入門](http://qiita.com/7shi/items/4408b76624067c17e933)
 
 この書き方については次の記事が参考になります。
 
@@ -411,7 +412,7 @@ Applicative を直訳すれば「適用可能」で、「複数の引数が適�
 
 ## return と pure
 
-`Applicative` のもう一つのメソッド `pure` は、値をモナドに入れる関数です。
+`Applicative` のもう一つのメソッド `pure` は、値を `f` に入れる関数です。
 
 ```hs:型
 pure   :: Applicative f => a -> f a
@@ -439,6 +440,7 @@ Just 1
 ```text:GHCi
 class Applicative m => Monad m where
   (>>=) :: m a -> (a -> m b) -> m b
+  (>>) :: m a -> m b -> m b
   return :: a -> m a
   {-# MINIMAL (>>=) #-}
 ```
@@ -452,8 +454,29 @@ class Applicative m => Monad m where
 :::
 
 :::message
-型クラスを自作した際の `Container` は、`wrap :: a -> f a` がこの `pure`、`empty :: f a` が後述する `Alternative` の `empty` と同じ形をしています。あれは今回の階層の縮小版でした。
+`Maybe` と `[]` を同じ形で扱うために自作した型クラス `Container` は、`wrap :: a -> f a` がこの `pure`、`empty :: f a` が後述する `Alternative` の `empty` と同じ形をしています。あれは今回の階層の縮小版でした。👉[Haskell 型クラス 超入門](https://zenn.dev/7shi/articles/20260805-haskell-type-classes)
 :::
+
+## Applicative 則
+
+`Functor` 則と同じように、`Applicative` のインスタンスが守るべき規則もあります。こちらは 4 つです。
+
+```hs
+pure id <*> v              == v                  -- 恒等
+pure f <*> pure x          == pure (f x)         -- 準同型
+u <*> pure y               == pure ($ y) <*> u   -- 交換
+pure (.) <*> u <*> v <*> w == u <*> (v <*> w)    -- 合成
+```
+
+恒等は「何もしない関数を適用しても変わらない」、準同型は「両方が `pure` なら、外で適用してから包んでも同じ」、交換は「値の側だけが `pure` なら左右を入れ替えても同じ」（`($ y)` は関数を受け取って `y` に適用する関数）、合成は「`<*>` を繋ぐ順序を変えても同じ」という意味です。要するに `<*>` は関数適用を `f` の中へ持ち込むだけで、順序や構造を勝手にいじってはいけない、ということです。
+
+下の段との辻褄も要求されます。
+
+```hs
+fmap f x == pure f <*> x
+```
+
+`fmap` と `<*>` がばらばらの動きをしてはいけない、ということです。`Functor` 則と同じく、コンパイラはどれも検査してくれません。
 
 ## 練習
 
@@ -881,7 +904,7 @@ m >>= return     == m              -- 右単位元
 
 https://qiita.com/7shi/items/547b6137d7a3c482fe68
 
-`Functor` や `Applicative` にも同じように規則があります。加えて、`Monad` のインスタンスには下の段と辻褄を合わせる約束もあり、その 1 つが「`<*>` は `ap` と一致すること」です。`Zip` の `>>=` が失格だった根拠がこれです。
+`Applicative` 則に `fmap f x == pure f <*> x` が付いていたのと同じように、`Monad` にも下の段と辻褄を合わせる約束があります。その 1 つが「`<*>` は `ap` と一致すること」です。`Zip` の `>>=` が失格だった根拠がこれです。
 
 # ゆかいな仲間たち
 
@@ -934,7 +957,7 @@ Nothing
 
 `Monoid` が `Int` や `String` のような型に対する「結合と単位元」だったのに対し、`Alternative` は `Maybe a` やパーサのような `f a` に対する「結合と単位元」です。以前 `Alternative` の説明で「正確には `Monoid` の知識が必要ですが、今回の範囲を超えるため詳細は省略します」と断ったのは、この対応のことでした。
 
-`empty` が引数を持たず型注釈だけで実装が選ばれるところも `mempty` と同じです。型クラスを自作した際の `Container` の `empty` と同名なのは偶然ではありません。
+`empty` が引数を持たず型注釈だけで実装が選ばれるところも `mempty` と同じです。`pure` のところで触れた `Container` の `empty` と同名なのは偶然ではありません。
 
 :::message
 古いコードでは同じ役割を `MonadPlus` の `mzero`・`mplus` が担っています。`MonadPlus` は `Monad` を要求するぶん制限が強く、現在は `Alternative` を使うのが標準です。パーサの記事で引用したツイートが述べていた通りです。👉[Haskell 構文解析 超入門](http://qiita.com/7shi/items/b8c741e78a96ea2c10fe)

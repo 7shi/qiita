@@ -466,6 +466,12 @@ data Rose a = Leaf a | Node [Rose a]
 - **構成案 1 の見出しを「モナドは階層の一番上」から「手で書いた bind の行き先」に変えた。**
   一行の主張（09 回の回収）を節タイトル自体に置いた方が、階層の話に入る前の動機が立つため。
   階層の見取り図は同じ節の中の小見出し「Monad のスーパークラス」に置いた。
+  （その後の校正で「do を使うための型クラス」に再変更。`do` を使うために何が要るのか、
+  という読者側の目的を先に立てる形にした。）
+- **構成案 2 に「持ち上げ」「アドホック多相」の小見出しを立てた。** `fmap` を
+  「関数を `f` の世界へ持ち上げる」という一本の軸で通し、`Identity` で持ち上げを見せてから
+  他のコンテナへ広げる順にした。この軸は Applicative の導入
+  （「2 引数の関数を持ち上げようとすると途中で止まる」）へそのまま繋がる。
 - **09 回の回収を、記事の 1 行目からの導入にした。** 解答例の `bind`・`return'` と
   `fib` を実際に引用し、続く問4 の「再実装した関数は使わないでください」という指示を
   そのまま引いてから `instance Monad` に繋げている。問3（State の自作）の解答例末尾で
@@ -474,6 +480,11 @@ data Rose a = Leaf a | Node [Rose a]
   引き、それが `liftM` であること・`>>=` があれば機械的に書けることまでを述べて、
   構成案 5 の定型（`fmap = liftM`）への伏線にした。
   記事中では `<$>` を再定義できないため、検証コードでは `<$$>` という別名にしている。
+- **Applicative 則は省略せず 4 つとも書き下した。** 当初は「名前と『コンパイラは検査して
+  くれない』ことだけ」の予定だったが、`Functor` 則を小見出しで立てた以上、`Applicative`
+  だけ省くと階層の説明として非対称になるため。説明はさらっと 1 段落に留め、
+  `fmap f x == pure f <*> x`（下の段との辻褄）まで示して、モナド則の節の
+  「`<*>` は `ap` と一致すること」へ繋げた。
 - **構成案 3 の `pure` の説明で、`-Wnoncanonical-monad-instances` の警告を採用した。**
   当初は「`MINIMAL` が `(>>=)` だけ」という説明だけの予定だったが、
   `return` を実装したときに GHC が「`return` は将来 `Monad` から取り除かれる」と
@@ -503,15 +514,18 @@ data Rose a = Leaf a | Node [Rose a]
 
 | 見出し | 構成案 | 検証コード |
 |---|---|---|
-| `# 手で書いた bind の行き先` | 1 | — |
+| `# do を使うための型クラス` | 1 | — |
 | `## Monad のスーパークラス` | 1 | — |
-| `# Functor` | 2 | `15-functor/Fmap.hs` |
+| `# Functor` | 2 | — |
+| `## 持ち上げ` | 2 | `15-functor/IdentityFunctor.hs` |
+| `## アドホック多相` | 2 | `15-functor/Fmap.hs` |
 | `## liftM の正体` | 2 | `15-functor/FmapViaBind.hs` |
-| `## Functor 則` | 2 | — |
+| `## Functor 則` | 2 | `15-functor/InstanceNG.hs` |
 | `## 練習`【問1】`Pair` の `Functor` | — | `15-exercises/Q1Pair.hs` |
 | `# Applicative` | 3 | `15-applicative/App.hs` |
 | `## Applicative スタイルの正体` | 3（07 回の回収）| `15-applicative/Style.hs` |
 | `## return と pure` | 3（14 回の回収）| `15-applicative/PureReturn.hs` |
+| `## Applicative 則` | 3 | `15-applicative/Laws.hs` |
 | `## 練習`【問2】`Pair` の `Applicative` | — | `15-exercises/Q2Pair.hs` |
 | `# Applicative と Monad の違い` | 4（山場）| `15-vs-monad/AppVsMonad.hs` |
 | `## ap` | 4 | — |

@@ -7,6 +7,7 @@ GHC 9.6.6。実行は `runghc {ファイル名}`。
 | `App.hs` | `<$>` と `<*>` の組み合わせ、`<*`・`*>` |
 | `Style.hs` | Applicative スタイルの型クラス制約（07回の回収）。`Monad` ではなく `Functor`/`Applicative` で足りる |
 | `PureReturn.hs` | `pure` と `return` が同じ結果になること |
+| `Laws.hs` | Applicative 則（恒等・準同型・交換・合成）と `fmap f x == pure f <*> x` が `Maybe` で成り立つこと |
 
 ## 実行結果
 
@@ -40,6 +41,18 @@ Just 1
 [1]
 [1]
 ```
+
+`Laws.hs`:
+
+```
+True
+True
+True
+True
+True
+```
+
+`==` と `<*>` はどちらも優先順位 4 なので、両辺を括弧で囲まないと構文エラーになる。
 
 ## GHCi での確認
 
