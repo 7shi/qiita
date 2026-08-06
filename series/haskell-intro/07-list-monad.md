@@ -14,7 +14,7 @@ tags:
   versions:
   - '2015'
 title: Haskell リストモナド 超入門
-updated_at: ''
+updated_at: '2026-08-07T03:30:53+09:00'
 url: https://qiita.com/7shi/items/deb19c4cba933590ffbf
 slide: false
 ---

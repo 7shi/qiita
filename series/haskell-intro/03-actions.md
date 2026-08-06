@@ -13,7 +13,7 @@ tags:
 - name: Haskell
   versions: []
 title: Haskell アクション 超入門
-updated_at: ''
+updated_at: '2026-08-07T03:30:29+09:00'
 url: https://qiita.com/7shi/items/85afd7bbd5d6c4115ad6
 slide: false
 ---

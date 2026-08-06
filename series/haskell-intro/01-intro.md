@@ -3,7 +3,7 @@ coediting: false
 comments_count: 3
 created_at: '2014-08-20T15:02:12+09:00'
 id: 145f1234f8ec2af923ef
-likes_count: 1287
+likes_count: 1288
 private: false
 reactions_count: 0
 stocks_count: 1235
@@ -11,7 +11,7 @@ tags:
 - name: Haskell
   versions: []
 title: Haskell 超入門
-updated_at: ''
+updated_at: '2026-08-07T03:30:17+09:00'
 url: https://qiita.com/7shi/items/145f1234f8ec2af923ef
 slide: false
 ---

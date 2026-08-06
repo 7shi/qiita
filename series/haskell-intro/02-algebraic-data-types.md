@@ -13,7 +13,7 @@ tags:
 - name: Haskell
   versions: []
 title: Haskell 代数的データ型 超入門
-updated_at: ''
+updated_at: '2026-08-07T03:30:23+09:00'
 url: https://qiita.com/7shi/items/1ce76bde464b4a55c143
 slide: false
 ---

@@ -13,7 +13,7 @@ tags:
 - name: Haskell
   versions: []
 title: Haskell ラムダ 超入門
-updated_at: ''
+updated_at: '2026-08-07T03:30:36+09:00'
 url: https://qiita.com/7shi/items/1345bf32003faff435cb
 slide: false
 ---

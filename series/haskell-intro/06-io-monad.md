@@ -11,7 +11,7 @@ tags:
 - name: Haskell
   versions: []
 title: Haskell IOモナド 超入門
-updated_at: ''
+updated_at: '2026-08-07T03:30:47+09:00'
 url: https://qiita.com/7shi/items/d3d3492ddd90d47160f2
 slide: false
 ---
