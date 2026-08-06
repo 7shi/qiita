@@ -16,7 +16,7 @@ tags:
   versions:
   - '6'
 title: Haskell Maybeモナド 超入門
-updated_at: '2026-08-07T03:30:59+09:00'
+updated_at: '2026-08-07T03:41:17+09:00'
 url: https://qiita.com/7shi/items/c7d7eec066af0fe0688d
 slide: false
 ---
@@ -39,7 +39,7 @@ Haskellではモナドと呼ばれる部品を組み合わせてプログラム�
 1. [Haskell 構文解析 超入門](http://qiita.com/7shi/items/b8c741e78a96ea2c10fe)
 1. [Haskell 継続モナド 超入門](https://zenn.dev/7shi/articles/20260803-haskell-continuation-monad)
 1. [Haskell 型クラス 超入門](https://zenn.dev/7shi/articles/20260805-haskell-type-classes)
-1. 【予定】Haskell モナドとゆかいな仲間たち
+1. [Haskell モナドとゆかいな仲間たち](https://zenn.dev/7shi/articles/20260807-haskell-monads-and-friends)
 1. 【予定】Haskell Freeモナド 超入門
 1. 【予定】Haskell Operationalモナド 超入門
 1. 【予定】Haskell Effモナド 超入門
