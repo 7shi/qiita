@@ -429,7 +429,7 @@ Main.hs:10:1-32: Non-exhaustive patterns in function satisfy
 
 ## Stateモナド
 
-解析対象の文字列を状態と見なせばStateモナドが使えます。👉[](09#Stateモナド)
+解析対象の文字列を状態と見なせばStateモナドが使えます。👉[状態系モナド](https://qiita.com/7shi/items/2e9bff5d88302de1a9e9#state%E3%83%A2%E3%83%8A%E3%83%89)
 
 ### 練習
 
@@ -495,7 +495,7 @@ Main.hs:17:5-34: Non-exhaustive patterns in function satisfy
 
 ## Maybeモナド
 
-Maybeモナドを使えば例外を使わずに失敗が扱えます。👉[](08#Maybeモナド)
+Maybeモナドを使えば例外を使わずに失敗が扱えます。👉[Maybeモナド](https://qiita.com/7shi/items/c7d7eec066af0fe0688d#maybe%E3%83%A2%E3%83%8A%E3%83%89)
 
 ### 練習
 
@@ -505,7 +505,7 @@ Maybeモナドを使えば例外を使わずに失敗が扱えます。👉[](08
 
 ## Eitherモナド
 
-Maybeモナドにより例外処理をなくしても、失敗はすべて`Nothing`のため理由がよく分かりません。👉[](11#Eitherモナド)
+Maybeモナドにより例外処理をなくしても、失敗はすべて`Nothing`のため理由がよく分かりません。👉[例外処理](https://qiita.com/7shi/items/73e534c47bbebc71b37e#either%E3%83%A2%E3%83%8A%E3%83%89)
 
 Eitherモナドを使って、失敗した理由を`Left`で返します。Either用の`<|>`を独自に定義します。
 
@@ -660,7 +660,7 @@ main = do
 
 ### 選択
 
-`<|>`を使えば「アルファベットまたは数字」のような選択的なパーサを構築できます。👉[](08#Alternative)
+`<|>`を使えば「アルファベットまたは数字」のような選択的なパーサを構築できます。👉[Maybeモナド](https://qiita.com/7shi/items/c7d7eec066af0fe0688d#alternative)
 
 ```hs
 import Control.Applicative ((<$>), (<*>))

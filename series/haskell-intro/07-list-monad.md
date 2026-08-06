@@ -61,7 +61,7 @@ bind（`>>=`）と`return`で操作できる対象をモナドと呼びます。
 
 ## IOモナド
 
-IOモナドはモナドの一種で、次のような性質を持っています。👉[](06#IOモナド)
+IOモナドはモナドの一種で、次のような性質を持っています。👉[IOモナド](https://qiita.com/7shi/items/d3d3492ddd90d47160f2#io%E3%83%A2%E3%83%8A%E3%83%89)
 
 ![iomonad.png](https://qiita-image-store.s3.amazonaws.com/0/32057/20ef9c29-6282-e929-1d91-20d770d668b8.png)
 
@@ -216,7 +216,7 @@ main = do
 
 ## 型クラス制約
 
-`IO Int`の`IO`の部分を型変数化する場合、型変数に対してそれがモナドであることを指定する必要があります。これを**型クラス制約**と呼びます。👉[](14#型クラス制約)
+`IO Int`の`IO`の部分を型変数化する場合、型変数に対してそれがモナドであることを指定する必要があります。これを**型クラス制約**と呼びます。👉[型クラス](https://zenn.dev/7shi/articles/20260805-haskell-type-classes#%E5%9E%8B%E3%82%AF%E3%83%A9%E3%82%B9%E5%88%B6%E7%B4%84)
 
 ```hs
 inc :: Monad m => Int -> m Int
@@ -241,7 +241,7 @@ c :: Monad m => m  Int
 
 ## Applicativeスタイル
 
-Applicativeスタイルでは関数に渡されるのはモナドではないため、型クラス制約は意識する必要がありません。👉[](03#Applicativeスタイル)
+Applicativeスタイルでは関数に渡されるのはモナドではないため、型クラス制約は意識する必要がありません。👉[アクション](https://qiita.com/7shi/items/85afd7bbd5d6c4115ad6#applicative%E3%82%B9%E3%82%BF%E3%82%A4%E3%83%AB)
 
 ```hs
 import Control.Applicative

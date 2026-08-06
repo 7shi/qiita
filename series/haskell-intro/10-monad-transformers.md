@@ -673,7 +673,7 @@ Nothing
 
 ![StateT-Maybe-2.png](https://qiita-image-store.s3.amazonaws.com/0/32057/36f0c6f5-2cdf-2297-9836-6023fb2eebf4.png)
 
-※ ここで取り上げたサンプルに少し手を加えたものを続編でも説明します。👉[](11#モナド変換子で合成)
+※ ここで取り上げたサンプルに少し手を加えたものを続編でも説明します。👉[例外処理](https://qiita.com/7shi/items/73e534c47bbebc71b37e#%E3%83%A2%E3%83%8A%E3%83%89%E5%A4%89%E6%8F%9B%E5%AD%90%E3%81%A7%E5%90%88%E6%88%90)
 
 ## 練習
 
@@ -944,7 +944,7 @@ main = print $ liftM2 (+) [1] [1]
 
 ## Applicativeスタイル
 
-関数の持ち上げは前編で取り上げたApplicativeスタイルと同じです。👉[](03#Applicativeスタイル)
+関数の持ち上げは前編で取り上げたApplicativeスタイルと同じです。👉[アクション](https://qiita.com/7shi/items/85afd7bbd5d6c4115ad6#applicative%E3%82%B9%E3%82%BF%E3%82%A4%E3%83%AB)
 
 ※ そこでは「値の取り出し」という観点で統一するため、敢えて「持ち上げ」とは言わずに別の説明をしています。結果は同じなので、解釈で何かが変わるわけではありません。
 
