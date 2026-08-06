@@ -5,7 +5,8 @@
 **状態: 初稿執筆済み（2026-08-05）。本文は [15-monads-and-friends.md](15-monads-and-friends.md)。
 検証コードは `check/15-*/` に配置済み。`README.md` の目次・`PREFACES.md`・`ARTICLES.tsv` も更新済み。
 推敲は進行中（2026-08-06 に構成案 8 の節を削除。決定事項 15。
-同日、`# Monad` 節を立てて 3 段の構成を対称にし、モナド則を自作の前へ移した。決定事項 16）。
+同日、`# Monad` 節を立てて 3 段の構成を対称にし、モナド則を自作の前へ移した。決定事項 16。
+同日、`## ZipList` を全面的に書き直した。決定事項 17）。
 Zenn への複製は未実施。**
 
 以下、構成案・決定事項は執筆前に決めた内容をそのまま残してある。
@@ -176,6 +177,9 @@ class Applicative m => Monad m       where (>>=) :: m a -> (a -> m b) -> m b
   これが `class Applicative m => Monad m` という向きの根拠。
   10 回の `<*>` 再実装（bind で書いていた）が `ap` そのものなので、そこを指し直す。
 - **`ZipList` を出す**（決定事項 3）。`Applicative` だが `Monad` にできない実例。
+  - ⚠ **この 2 項目は決定事項 17 で覆した。** 「`<*>` と整合する `>>=` が存在しない」
+    という見せ方は取らず、**整合する `>>=`（対角線）は書けるが結合法則を破る**という
+    形にした。`ZipList` も自作して `instance Monad` まで書く。以下は当初案。
   - ⚠ **見せ方に注意。** 「モナド則を満たせない」ではなく
     **「`<*>` と整合する `>>=` が存在しない」**（書いても `ap` と食い違う）という形にする。
     `Monad` の法則に `(<*>) = ap` が含まれるので結論は同じだが、こちらの方が読者に伝わる。
@@ -363,6 +367,7 @@ data Rose a = Leaf a | Node [Rose a]
    `MyMaybe`・`Prob`（確率分布）・`State` 本文入りは不採用。
 3. **`ZipList` を「`Applicative` だが `Monad` にできない」実例として構成案 4 に入れる**
    （2026-08-05 決定）。見せ方は「`<*>` と整合する `>>=` が存在しない」。
+   → **見せ方は決定事項 17 で覆した。** 実例として入れること自体は変わらない。
 4. **`return` と `pure` の関係をここで断る**（14 回決定事項 6）。
    14 回までの `return` 表記は書き換えない。
 5. **`Cont` は本文の題材にも練習にもしない**（2026-08-05 決定）。
@@ -404,6 +409,23 @@ data Rose a = Leaf a | Node [Rose a]
       これで `Zip` に関する前方参照がなくなった。
     - 構成案 5（`# 階層は書かされる`）を `# モナドを自作する` の小見出しに降格し、
       続く `Identity` の実装に `## Identity` の見出しを立てた。
+17. **`## ZipList` の見せ方を「整合する `>>=` は書けるが結合法則を破る」に変える**
+    （2026-08-06 決定。決定事項 3 の見せ方を覆す）。
+    初稿は「リストと同じ `>>=` を書くと `ap` と `<*>` が食い違う」という実演だったが、
+    **`<*>` と別物を接ぎ木しただけなので食い違って当たり前**であり、
+    「整合する `>>=` が存在しない」ことの説明になっていなかった（ユーザー指摘）。
+    - 代わりに**対角線を取る `>>=`** を出す。これは `ap == <*>` を満たし、左右の単位元則も
+      満たすが、**結合法則を破る**。破れる実例まで本文で追う。
+    - 対角線が天下りにならないよう、**行は右単位元則・列は左単位元則から決まる**という
+      導出を表で示した。破れるのは残る 1 つ（結合法則）だけ、という構図になる。
+    - `Zip` という別名の自作型はやめ、**`ZipList` を名前のまま再実装**して
+      `instance Monad ZipList` を書く形にした（base の型に後付けするのではなく、
+      定義を一望できるようにするため）。`Show` は base に合わせて `deriving`。
+    - 節を `### Applicative としての ZipList`・`### ZipList はモナドにはなれない` に分けた。
+    - **結論（base に `instance Monad` が無い理由）は節の最後に置く。**
+      先に「書けない」と断言してから実演する順だと、書けてしまう `>>=` と矛盾するため。
+    - `zipWith`・`repeat`・関数として渡す `($)` はシリーズ初出なので、
+      定義の前に GHCi で紹介する段を置いた。
 
 ## 前提知識
 
@@ -471,7 +493,8 @@ data Rose a = Leaf a | Node [Rose a]
 - [x] `Identity` を自作するとき標準の `Data.Functor.Identity` と衝突しないか確認する
       → `Prelude` に入っていないため import しなければ衝突しない
 - [x] `ZipList` で `>>=` を書こうとしたときに何が起きるか、具体例を作る
-      → `check/15-vs-monad/ZipBind.hs`
+      → 当初は `ZipBind.hs`（リストと同じ `>>=`）。決定事項 17 で `ZipDiag.hs`（対角線・
+      `ap == <*>` が一致）と `ZipAssoc.hs`（結合法則が破れる）に置き換え、`ZipBind.hs` は削除
 - [x] `Tree` の `instance Foldable`（`foldMap` 版）の動作確認 → `check/15-tree/TreeFoldable.hs`
 - [x] 練習 4 問を実装して動作確認 → `check/15-exercises/`
 - [x] 03・07・08・09・10・12 回の該当箇所を読み直し、回収の言い回しを揃える
@@ -517,6 +540,7 @@ data Rose a = Leaf a | Node [Rose a]
   「リストと同じ `>>=` を書くと `ap` と食い違う」ことを実演する形にした。**
   `pure = Zip . repeat` のせいで `ap` の結果が無限リストになるため `take 4` で
   打ち切っている。この発散自体も「整合する `>>=` が存在しない」ことの現れとして扱った。
+  → **この節は 2026-08-06 に全面的に書き直した（決定事項 17）。** 上記は初稿の記録。
 - 構成案 5 の見出しは「階層を書かされる（AMP）」から「階層は書かされる」にした。
   AMP は節末の `:::message` に落とし、見出しには出していない。
 - **構成案 7（モナド則）を独立した節にし、構成案 8（ゆかいな仲間たち）の前に置いた。**
@@ -564,6 +588,14 @@ data Rose a = Leaf a | Node [Rose a]
   **`Applicative` で `Monad` の機能が書けるなら階層を分ける必要がない**以上、
   この節自体が不要と判断して削除した。「`Applicative` になれても `Monad` になれるとは
   限らない」ことは `ZipList` が実例で示している。`join` は 16 回で扱う余地がある。
+- **`## ZipList` を全面的に書き直した**（2026-08-06・決定事項 17）。
+  対角線の `>>=` を導出 → `ap == <*>` の一致を確認 → 結合法則が破れる実例、という順にし、
+  base に `instance Monad` が無い理由を節末の結論に回した。詳細は決定事項 17。
+  検証コードは `ZipBind.hs` を削除し、`ZipList.hs`（自作定義）・`ZipListBase.hs`（base との一致）・
+  `ZipListLaws.hs`（アプリカティブ則。`pure` を有限にすると恒等則が破れることも確認）・
+  `ZipDiag.hs`（`ap == <*>`）・`ZipAssoc.hs`（結合法則が破れる／単位元則は成り立つ）に置き換えた。
+- **法則の呼び名を「ファンクター則」「アプリカティブ則」に統一した**（2026-08-06）。
+  「モナド則」が既に片仮名なので、`Functor` 則・`Applicative` 則という混ぜ書きを揃えた。
 - **まとめに 16 回への引きを書かなかった。** まとめ節に次回予告を書かない方針
   （14 回の推敲時にユーザーから指示）に従った。構成案 9 の
   「16 回の Free モナドは `Functor` を要求する」という引きは本文に入れていない。
@@ -580,18 +612,20 @@ data Rose a = Leaf a | Node [Rose a]
 | `## 持ち上げ` | 2 | `15-functor/IdentityFunctor.hs` |
 | `## アドホック多相` | 2 | `15-functor/Fmap.hs` |
 | `## liftM` | 2 | `15-functor/FmapViaBind.hs` |
-| `## Functor 則` | 2 | `15-functor/InstanceNG.hs` |
+| `## ファンクター則` | 2 | `15-functor/InstanceNG.hs` |
 | `## 練習`【問1】`Pair` の `Functor` | — | `15-exercises/Q1Pair.hs` |
 | `# Applicative` | 3 | `15-applicative/App.hs` |
 | `## Applicative スタイルの正体` | 3（07 回の回収）| `15-applicative/Style.hs` |
 | `## return と pure` | 3（14 回の回収）| `15-applicative/PureReturn.hs` |
-| `## Applicative 則` | 3 | `15-applicative/Laws.hs` |
+| `## アプリカティブ則` | 3 | `15-applicative/Laws.hs` |
 | `## 練習`【問2】`Pair` の `Applicative` | — | `15-exercises/Q2Pair.hs` |
 | `# Monad` | 4（山場）| `15-vs-monad/AppVsMonad.hs` |
 | `## ap` | 4 | — |
 | `## モナド則` | 7 | — |
 | `### >=> で書き直す` | 7 | — |
-| `## ZipList` | 4 | `15-vs-monad/ZipList.hs`・`ZipBind.hs` |
+| `## ZipList` | 4 | — |
+| `### Applicative としての ZipList` | 4 | `15-vs-monad/ZipList.hs`・`ZipListBase.hs`・`ZipListLaws.hs` |
+| `### ZipList はモナドにはなれない` | 4 | `15-vs-monad/ZipDiag.hs`・`ZipAssoc.hs` |
 | `# モナドを自作する` | 6 | — |
 | `## 階層は書かされる` | 5 | `15-boilerplate/` |
 | `## Identity` | 6-1 | `15-identity/MyIdentity.hs` |
@@ -682,7 +716,7 @@ GHC 9.6.6。掲載コードは全て `runghc` で実行確認した。
 |---|---|
 | `15-functor/` | `map` と `fmap`、10 回の再実装と `liftM` の一致 |
 | `15-applicative/` | `<$>`/`<*>`、`<*`/`*>`、Applicative スタイルの制約、`pure` と `return` |
-| `15-vs-monad/` | `>>=` の依存性と `<*>` の非依存性、`ZipList`、`<*>` と `ap` の食い違い |
+| `15-vs-monad/` | `>>=` の依存性と `<*>` の非依存性、`ZipList` の再実装とアプリカティブ則、対角線の `>>=` が結合法則を破ること |
 | `15-boilerplate/` | スーパークラス不足エラー、`liftM`/`ap` の定型、`return` 実装時の警告 |
 | `15-identity/` | `Identity` を 3 つとも手書き |
 | `15-tree/` | `Tree` の `Monad`（接ぎ木）と `Foldable`（`foldMap` 2 行）|
@@ -725,7 +759,9 @@ GHC 9.6.6。掲載コードは全て `runghc` で実行確認した。
   `Monad` インスタンスが下の段と辻褄を合わせる約束。初稿で 1 度直した。
 - `pure` と `return` の使い分け。**本文で「実装するのは `pure`」と述べた後に、
   掲載コードで `return` を実装していないか。**（`Identity`・`Tree`・練習の解答例）
-- `Zip` の `ap` が無限リストになる件を `take` で打ち切る説明が付いているか。
+- **`ZipList` の節が「整合する `>>=` は書けるが結合法則を破る」順で書けているか**
+  （決定事項 17）。結論（base に `instance Monad` が無い）を先に断言していないか。
+- `pure` が無限リスト（`repeat`）であることに触れた箇所で、`take` の説明が付いているか。
 
 ## 16 回以降への引き継ぎ（この回で扱わないもの）
 

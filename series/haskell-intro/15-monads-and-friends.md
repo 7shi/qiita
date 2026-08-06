@@ -22,7 +22,7 @@ url: ''
 slide: false
 ---
 
-Haskell ではモナドと呼ばれる部品を組み合わせてプログラムを作ります。自作した型を `do` で使うには `Monad` 型クラスのインスタンスを実装する必要があり、そのためにスーパークラスの `Functor`・`Applicative` も求められます。この階層を順にたどってモナドを自作します。
+Haskell ではモナドと呼ばれる部品を組み合わせてプログラムを作ります。自作した型を `do` で使うには `Monad` 型クラスのインスタンスを実装する必要がありますが、そのためにはスーパークラスの `Functor`・`Applicative` の実装も求められます。この階層をたどってモナドを自作します。
 
 :::message
 本記事の執筆には Claude Code (Opus 5) を利用しました。
@@ -277,9 +277,9 @@ main = do
 
 `liftM` は型クラスのメソッドではないため、型ごとに実装するものではなく、1 つの実装が `Monad` のインスタンスすべてに適用できます。
 
-## Functor 則
+## ファンクター則
 
-`Functor` のインスタンスが守るべき規則が 2 つあります。
+`Functor` のインスタンスが守るべき規則が 2 つあります。これを**ファンクター則**（functor law）と呼びます。
 
 ```hs
 fmap id      == id               -- 単位元
@@ -304,7 +304,7 @@ instance Functor Maybe where
     fmap _ Nothing  = Nothing
 ```
 
-しかしこれでは `fmap id (Just 1)` が `Nothing` になり、`fmap id == id` を破ります。コンパイラが検査しない以上こういうインスタンスも書けてしまいますが、これは Functor ではありません。
+しかしこれでは `fmap id (Just 1)` が `Nothing` になり、`fmap id == id` を破ります。コンパイラが検査しない以上こういうインスタンスも書けてしまいますが、これは `Functor` ではありません。
 
 :::message
 GHC が検査しないのは、関数が等しいかどうかの判定が一般には不可能で、証明を書く仕組みも言語に用意されていないためです。
@@ -468,9 +468,9 @@ class Applicative m => Monad m where
 `Maybe` と `[]` を同じ形で扱うために自作した型クラス `Container` は、`wrap :: a -> f a` がこの `pure` と同じ形をしています。あれは今回の階層の縮小版でした。👉[Haskell 型クラス 超入門](https://zenn.dev/7shi/articles/20260805-haskell-type-classes)
 :::
 
-## Applicative 則
+## アプリカティブ則
 
-`Functor` 則と同じように、`Applicative` のインスタンスが守るべき規則もあります。こちらは 4 つです。
+ファンクター則と同じように、`Applicative` のインスタンスが守るべき**アプリカティブ則**もあります。こちらは 4 つです。
 
 ```hs
 pure id <*> v              == v                  -- 恒等
@@ -487,7 +487,7 @@ pure (.) <*> u <*> v <*> w == u <*> (v <*> w)    -- 合成
 fmap f x == pure f <*> x
 ```
 
-`fmap` と `<*>` がばらばらの動きをしてはいけない、ということです。`Functor` 則と同じく、コンパイラはどれも検査してくれません。
+`fmap` と `<*>` がばらばらの動きをしてはいけない、ということです。ファンクター則と同じく、コンパイラは検査してくれません。
 
 ## 練習
 
@@ -584,7 +584,7 @@ m >>= return     == m                        -- 右単位元
 (m >>= f) >>= g  == m >>= (\x -> f x >>= g)  -- 結合法則
 ```
 
-`Functor` 則や `Semigroup` の結合法則と同じく、コンパイラは検査してくれません。規則を満たさないインスタンスも書けてしまいます。
+ファンクター則などと同じく、コンパイラは検査してくれません。規則を満たさないインスタンスも書けてしまいますが、それはモナドではありません。
 
 ### >=> で書き直す
 
@@ -648,60 +648,202 @@ f >=> return    == f                -- 右単位元
 
 ## ZipList
 
-`Applicative` 則に `fmap f x == pure f <*> x` が付いていたのと同じように、`Monad` も `Applicative` と整合性を持つために `<*>` は `ap` と結果が一致する必要があります。
+アプリカティブ則に `fmap f x == pure f <*> x` が付いていたのと同じように、`Monad` も `Applicative` と整合性を持つために `<*>` は `ap` と結果が一致する必要があります。`>>=` にはこれとモナド則が同時に要求されるわけです。
 
-この約束を守れないために、「`Applicative` にはなれるが `Monad` にはなれない」型が存在します。標準ライブラリの `ZipList` がその代表です。
+この 2 つを両立できないために、「`Applicative` にはなれるが `Monad` にはなれない」型が存在します。標準ライブラリの `ZipList` がその代表です。
 
-リストの `<*>` は全組み合わせを作りますが、`ZipList` は同じ位置どうしを組み合わせます。
+定義に使う関数を先に確認します。`zipWith` は 2 つのリストを同じ位置どうし組み合わせ、`repeat` は同じ値の無限リストを作ります。
+
+```text:GHCi
+ghci> zipWith (+) [1, 2, 3] [10, 20, 30]
+[11,22,33]
+ghci> zipWith (+) [1, 2, 3] [10, 20]
+[11,22]
+ghci> zipWith ($) [(+ 1), (* 2)] [10, 20]
+[11,40]
+ghci> take 3 (repeat 0)
+[0,0,0]
+```
+
+`zipWith` は短い方の長さに合わせて切り詰めます。最後の `($)` は関数適用の演算子で、`f $ x` が `f x` を意味するものです。演算子として関数を渡すと「関数と引数を組み合わせる」ことになるため、`zipWith ($) fs xs` は関数のリストを値のリストに同じ位置で適用します。`repeat` はそのまま表示すると止まらないので、`take` で打ち切っています。
+
+### Applicative としての ZipList
+
+リストの `<*>` は全組み合わせを作りますが、`ZipList` は同じ位置どうしを組み合わせます。中身はリストそのものです。`import Control.Applicative` で使えますが、定義を見たいので再実装して動かします。
 
 ```hs
-import Control.Applicative
+newtype ZipList a = ZipList { getZipList :: [a] } deriving Show
+
+instance Functor ZipList where
+    fmap f (ZipList xs) = ZipList (map f xs)
+
+instance Applicative ZipList where
+    pure = ZipList . repeat
+    ZipList fs <*> ZipList xs = ZipList (zipWith ($) fs xs)
 
 main = do
     print $ (+) <$> [1, 2, 3] <*> [10, 20, 30]
-    print $ getZipList $ (+) <$> ZipList [1, 2, 3] <*> ZipList [10, 20, 30]
+    print $ (+) <$> ZipList [1, 2, 3] <*> ZipList [10, 20, 30]
+    print $ zipWith (+) [1, 2, 3] [10, 20, 30]
+    print $ (+) <$> pure 100 <*> ZipList [10, 20, 30]
+    print $ take 3 $ getZipList (pure 0)
 ```
 ```text:実行結果
 [11,21,31,12,22,32,13,23,33]
+ZipList {getZipList = [11,22,33]}
 [11,22,33]
+ZipList {getZipList = [110,120,130]}
+[0,0,0]
 ```
 
-同じリストという型に対して 2 通りの `Applicative` の入れ方があるため、片方を `newtype` で包んで区別しているわけです。問2 の `Pair` の `<*>` と同じ形です。
+`ZipList` で包んで `<$>` と `<*>` で書いたものは、`zipWith` を直接呼ぶのと同じ計算になるため、2 行目と 3 行目が同じ値になっています。
 
-この `ZipList` に `instance Monad` はありません。`<*>` と辻褄の合う `>>=` が書けないためです。試しにリストと同じ `>>=` を書いてみます。
+`pure` は `repeat` なので無限リストですが、`<*>` が短い方に合わせるため、相手の長さに揃った定数リストとして働きます。
+
+:::message
+1 要素を相手の長さに合わせて繰り返すことで、アプリカティブ則の恒等 `pure id <*> v == v` を満たします。NumPy のブロードキャストと同じ考え方です。
+:::
+
+`Applicative` はこれで書けました。
+
+### ZipList はモナドにはなれない
+
+続けて `Monad` を書いてみます。`m = ZipList [x0, x1, x2, ...]` とします。
+
+`m >>= f` は、各要素に `f` を当てて得られるリストのリストから、1 本のリストを作る操作です。行が並んだ表だと思ってください。
+
+```text:m >>= f のイメージ
+f x0 = [ a0,  a1,  a2, ... ]
+f x1 = [ b0,  b1,  b2, ... ]
+f x2 = [ c0,  c1,  c2, ... ]
+...
+```
+
+この表からどこを拾うかは、単位元則を満たすように決めます。
+
+行の選び方は右単位元 `m >>= return == m` が決めます。`return` は `pure` と同じ `repeat` なので、`i` 行目には `m` の `i` 番目が延々と並びます。
+
+```text:左辺 m >>= return のイメージ
+return x0 → [x0, x0, x0, ... ]
+return x1 → [x1, x1, x1, ... ]
+return x2 → [x2, x2, x2, ... ]
+...
+
+右辺 m → [x0, x1, x2, ...]
+```
+
+行の中はすべて同じ値なので、どの列を取るかは結果に影響しません。`i` 番目が `xi` になるには、`i` 行目から取ることになります。
+
+列の選び方は左単位元 `return x >>= f == f x` が決めます。`return x` はどの行も同じ値なので、全行が同じ `f x` になります。
+
+```text:左辺 return x >>= f のイメージ
+f x → [ y0,  y1,  y2, ... ]
+f x → [ y0,  y1,  y2, ... ]
+f x → [ y0,  y1,  y2, ... ]
+...
+
+右辺 f x → [y0, y1, y2, ...]
+```
+
+今度は行がすべて同じなので、どの行を取るかは影響しません。`i` 番目が `yi` になるには、`i` 列目を取るしかありません。
+
+つまり `i` 行目の `i` 列目、表の**対角線**です。
+
+```text:対角線
+m >>= f → [a0, b1, c2, ...]
+```
+
+これを `instance Monad` として書きます。
 
 ```hs
 import Control.Monad (ap)
 
-newtype Zip a = Zip { getZip :: [a] }
+-- newtype と Functor・Applicative のインスタンスは上と同じ
 
-instance Functor Zip where
-    fmap f (Zip xs) = Zip (map f xs)
-
-instance Applicative Zip where
-    pure = Zip . repeat
-    Zip fs <*> Zip xs = Zip (zipWith ($) fs xs)
-
--- リストと同じ >>= を書いてみる
-instance Monad Zip where
-    Zip xs >>= f = Zip (concatMap (getZip . f) xs)
+-- i 番目の要素には f の結果の i 番目を使う
+instance Monad ZipList where
+    ZipList xs >>= f = ZipList (go 0 xs)
+      where
+        go i (x:rest) = case drop i (getZipList (f x)) of
+            (y:_) -> y : go (i + 1) rest
+            []    -> []
+        go _ [] = []
 
 main = do
-    print          (getZip $ ((,) <$> Zip [1, 2])  <*>  Zip [10, 20])
-    print $ take 4 (getZip $ ((,) <$> Zip [1, 2]) `ap` Zip [10, 20])
+    print $ ((,) <$> ZipList [1, 2]) <*>  ZipList [10, 20]
+    print $ ((,) <$> ZipList [1, 2]) `ap` ZipList [10, 20]
 ```
 ```text:実行結果
-[(1,10),(2,20)]
-[(1,10),(1,10),(1,10),(1,10)]
+ZipList {getZipList = [(1,10),(2,20)]}
+ZipList {getZipList = [(1,10),(2,20)]}
 ```
 
-コンパイルは通りますが、`<*>` が返す `[(1,10),(2,20)]` と、同じ `>>=` から組み立てた `ap` の結果が食い違っています。しかも後者は無限リストになるため `take` で打ち切らないと止まりません。
+`<*>` と `ap` が一致しました。`<*>` と辻褄の合う `>>=` は、このように書けます。左右の単位元則は、それを指導原理として対角線を導いたので満たしています。
 
-前節で見たとおり、`<*>` と `ap` が一致することはモナドが守るべき規則の 1 つです。この `Zip` は `>>=` を書けてはいますが、`<*>` と整合する `>>=` にはなっていないわけです。`ZipList` に `Monad` インスタンスが用意されていないのは、そういう `>>=` がそもそも存在しないからです。
+残るは結合法則ですが、これが破れます。先ほどのコードの `main` 以下を次のように書き換えて実行してみます。
 
-:::message
-`pure = Zip . repeat` が無限リストなのは、`ZipList` でも同じです。`<*>` は `zipWith` なので結果は短い方の長さになります。`pure x <*> ys` が `ys` と同じ長さになるには、`pure x` が `ys` の長さによらず足りている必要があるためです。
-:::
+```hs
+m = ZipList [1, 2]
+
+f 1 = ZipList [1, 1]
+f 2 = ZipList [9, 2]
+
+g 9 = ZipList []
+g v = ZipList [v * 100, v * 100 + 1]
+
+main = do
+    print $ m >>= f
+    print $ (m >>= f) >>= g
+    print $ m >>= (\x -> f x >>= g)
+```
+```text:実行結果
+ZipList {getZipList = [1,2]}
+ZipList {getZipList = [100,201]}
+ZipList {getZipList = [100]}
+```
+
+2 行目と 3 行目の結果が異なります。入り組んでいるため、順を追って確認します。
+
+まず左辺を表で追います。
+
+```text:(m >>= f) >>= g
+m >>= f:
+f 1 = [1, 1] → 1
+f 2 = [9, 2] → 2
+→ [1, 2]
+
+[1, 2] >>= g:
+g 1 = [100, 101] → 100
+g 2 = [200, 201] → 201
+→ [100, 201]
+```
+
+`f 2` の最初の要素である `9` は対角線から外れるため、この時点で捨てられます。`g 9` は一度も呼ばれません。
+
+右辺も `m` の先頭から順に `x = 1`・`x = 2` として `f x >>= g` を処理します。
+
+```text:m >>= (\x -> f x >>= g)
+f 1 >>= g → [1, 1] >>= g:
+g 1 = [100, 101] → 100（1番目）
+g 1 = [100, 101] → 101（2番目）
+→ [100, 101] → 100（1番目）
+
+f 2 >>= g → [9, 2] >>= g:
+g 9 = [] → 1番目が無いため打ち切り
+→ [] → 2番目が無いため打ち切り
+
+→ [100]
+```
+
+`f 1 = [1, 1]` はどちらも `g 1` になり、対角線上の `[100, 101]` から `100` を取ります。
+
+次は `f 2 = [9, 2]` に `g` を当てますが、これも先頭から対角線を取るので、まず `g 9` の 1 番目が要ります。`g 9` は空リストのため 1 番目が無く、その場で打ち切られて `f 2 >>= g` は `[]` になります。`g 2` は評価されません。
+
+外側から見ると、`m` の 2 番目に対応する行が `[]` です。ここから 2 番目の要素を取ることもできないため、全体も打ち切られます。
+
+同じ `9` に対して、左辺では `g` を当てず、右辺では当てています。捨てる位置が結合の順序で前後するため、結果が食い違うわけです。
+
+このようにモナド則が破れるため、`ZipList` は `Applicative` にはなれても、`Monad` にはなれません。そのため、標準ライブラリの `ZipList` に `instance Monad` は用意されていません。
 
 # モナドを自作する
 
