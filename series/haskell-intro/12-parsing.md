@@ -13,7 +13,7 @@ tags:
 - name: parsec
   versions: []
 title: Haskell 構文解析 超入門
-updated_at: '2026-08-05T09:09:13+09:00'
+updated_at: ''
 url: https://qiita.com/7shi/items/b8c741e78a96ea2c10fe
 slide: false
 ---
@@ -429,7 +429,7 @@ Main.hs:10:1-32: Non-exhaustive patterns in function satisfy
 
 ## Stateモナド
 
-解析対象の文字列を状態と見なせばStateモナドが使えます。
+解析対象の文字列を状態と見なせばStateモナドが使えます。👉[](09#Stateモナド)
 
 ### 練習
 
@@ -495,7 +495,7 @@ Main.hs:17:5-34: Non-exhaustive patterns in function satisfy
 
 ## Maybeモナド
 
-Maybeモナドを使えば例外を使わずに失敗が扱えます。
+Maybeモナドを使えば例外を使わずに失敗が扱えます。👉[](08#Maybeモナド)
 
 ### 練習
 
@@ -505,7 +505,7 @@ Maybeモナドを使えば例外を使わずに失敗が扱えます。
 
 ## Eitherモナド
 
-Maybeモナドにより例外処理をなくしても、失敗はすべて`Nothing`のため理由がよく分かりません。
+Maybeモナドにより例外処理をなくしても、失敗はすべて`Nothing`のため理由がよく分かりません。👉[](11#Eitherモナド)
 
 Eitherモナドを使って、失敗した理由を`Left`で返します。Either用の`<|>`を独自に定義します。
 
@@ -660,7 +660,7 @@ main = do
 
 ### 選択
 
-`<|>`を使えば「アルファベットまたは数字」のような選択的なパーサを構築できます。
+`<|>`を使えば「アルファベットまたは数字」のような選択的なパーサを構築できます。👉[](08#Alternative)
 
 ```hs
 import Control.Applicative ((<$>), (<*>))

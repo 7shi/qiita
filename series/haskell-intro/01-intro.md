@@ -11,7 +11,7 @@ tags:
 - name: Haskell
   versions: []
 title: Haskell 超入門
-updated_at: '2026-08-05T09:08:06+09:00'
+updated_at: ''
 url: https://qiita.com/7shi/items/145f1234f8ec2af923ef
 slide: false
 ---
@@ -124,7 +124,7 @@ main = do
 "World!"
 ```
 
-`do`を理解するにはアクションの知識が必要です。詳細は続編の[Haskell アクション 超入門](http://qiita.com/7shi/items/85afd7bbd5d6c4115ad6)で説明するため、現段階では簡単な説明で先送りとします。
+`do`を理解するにはアクションの知識が必要です。詳細は続編で説明するため、現段階では簡単な説明で先送りとします。👉[](03#アクション)
 
 * `main`では何度も文字が出力できるように`do`を付けた方が無難。
 
@@ -204,7 +204,7 @@ main =
 
 数学の $f(x)=x+1$ や $f(1)$ の括弧がない版だとイメージしてください。C言語の`return`に相当するキーワードは使いません。
 
-※ `return`は存在しますが別の意味です。詳細は続編の[Haskell アクション 超入門](http://qiita.com/7shi/items/85afd7bbd5d6c4115ad6)で説明します。
+※ `return`は存在しますが別の意味です。詳細は続編で説明します。👉[](03#return)
 
 ```hs
 f x = x + 1
@@ -602,7 +602,7 @@ Main.hs:(1,1)-(2,33): Non-exhaustive patterns in function fact
 
 * 出典: [オープンソースアプリケーションのアーキテクチャ 15.1](https://github.com/m-takagi/aosa-ja)
 
-エラーが起きないように処理する方法については、続編の[Haskell Maybeモナド 超入門](http://qiita.com/7shi/items/c7d7eec066af0fe0688d#guard)で説明します。
+エラーが起きないように処理する方法については、続編で説明します。👉[](08#guard)
 
 # case - of
 
@@ -642,7 +642,7 @@ main = do
 [1,2,3,4,5]
 ```
 
-※ Haskellではリストとは別に配列もあります。詳細は続編の[Haskell アクション 超入門](http://qiita.com/7shi/items/85afd7bbd5d6c4115ad6)で説明します。
+※ Haskellではリストとは別に配列もあります。詳細は続編で説明します。👉[](03#IOUArray)
 
 ## !!
 
@@ -1183,7 +1183,7 @@ main = do
 
 `[1..5]`の要素を1つずつ`x`として取り出して、`fact x`として処理したリストを作成しています。
 
-※ 同じことができる`map`という関数もあります。詳細は続編の[Haskell ラムダ 超入門](http://qiita.com/7shi/items/1345bf32003faff435cb)で説明します。
+※ 同じことができる`map`という関数もあります。詳細は続編で説明します。👉[](04#map)
 
 ## 条件
 
@@ -1199,7 +1199,7 @@ main = do
 
 `[1..9]`のうち`x < 5`を満たすものだけでリストを作成しています。
 
-※ 同じことができる`filter`という関数もあります。詳細は続編の[Haskell ラムダ 超入門](http://qiita.com/7shi/items/1345bf32003faff435cb)で説明します。
+※ 同じことができる`filter`という関数もあります。詳細は続編で説明します。👉[](04#filter)
 
 ### 練習
 

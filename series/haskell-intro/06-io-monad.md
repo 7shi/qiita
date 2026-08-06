@@ -11,7 +11,7 @@ tags:
 - name: Haskell
   versions: []
 title: Haskell IOモナド 超入門
-updated_at: '2026-08-05T09:08:36+09:00'
+updated_at: ''
 url: https://qiita.com/7shi/items/d3d3492ddd90d47160f2
 slide: false
 ---
@@ -154,7 +154,7 @@ hello1 = unIO $ return 1
 hello2 = IO hello1
 ```
 
-※ `IO`はコンストラクタ（構築子）です。今回の範囲では型を構築する特殊な関数だと捉えれば十分です。詳細は[Haskell 代数的データ型 超入門](http://qiita.com/7shi/items/1ce76bde464b4a55c143)で説明します。
+※ `IO`はコンストラクタ（構築子）です。今回の範囲では型を構築する特殊な関数だと捉えれば十分です。👉[](02#列挙型)
 
 ## 関数と値
 

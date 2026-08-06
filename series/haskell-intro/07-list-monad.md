@@ -14,7 +14,7 @@ tags:
   versions:
   - '2015'
 title: Haskell リストモナド 超入門
-updated_at: '2026-08-05T09:08:42+09:00'
+updated_at: ''
 url: https://qiita.com/7shi/items/deb19c4cba933590ffbf
 slide: false
 ---
@@ -61,7 +61,7 @@ bind（`>>=`）と`return`で操作できる対象をモナドと呼びます。
 
 ## IOモナド
 
-IOモナドはモナドの一種で、次のような性質を持っています。
+IOモナドはモナドの一種で、次のような性質を持っています。👉[](06#IOモナド)
 
 ![iomonad.png](https://qiita-image-store.s3.amazonaws.com/0/32057/20ef9c29-6282-e929-1d91-20d770d668b8.png)
 
@@ -216,7 +216,7 @@ main = do
 
 ## 型クラス制約
 
-`IO Int`の`IO`の部分を型変数化する場合、型変数に対してそれがモナドであることを指定する必要があります。これを**型クラス制約**と呼びます。
+`IO Int`の`IO`の部分を型変数化する場合、型変数に対してそれがモナドであることを指定する必要があります。これを**型クラス制約**と呼びます。👉[](14#型クラス制約)
 
 ```hs
 inc :: Monad m => Int -> m Int
@@ -241,7 +241,7 @@ c :: Monad m => m  Int
 
 ## Applicativeスタイル
 
-Applicativeスタイルでは関数に渡されるのはモナドではないため、型クラス制約は意識する必要がありません。
+Applicativeスタイルでは関数に渡されるのはモナドではないため、型クラス制約は意識する必要がありません。👉[](03#Applicativeスタイル)
 
 ```hs
 import Control.Applicative

@@ -16,7 +16,7 @@ tags:
   versions:
   - '6'
 title: Haskell Maybeモナド 超入門
-updated_at: '2026-08-05T09:08:47+09:00'
+updated_at: ''
 url: https://qiita.com/7shi/items/c7d7eec066af0fe0688d
 slide: false
 ---
@@ -113,9 +113,7 @@ main = do
 
 ## 関数で失敗を返す
 
-[Haskell 超入門](http://qiita.com/7shi/items/145f1234f8ec2af923ef)で取り上げた階乗の実装では、マイナスの引数はガードで弾いてエラーにしていました。
-
-[使い分け - 併用](http://qiita.com/7shi/items/145f1234f8ec2af923ef#%E4%BD%B5%E7%94%A8)より再掲
+Haskell 超入門で取り上げた階乗の実装では、マイナスの引数はガードで弾いてエラーにしていました。👉[](01#併用)
 
 ```hs
 fact 0 = 1
@@ -561,7 +559,7 @@ main = do
 
 # Alternative
 
-MonadPlus（値を持たないことが可能なモナド）だけで使えるApplicativeスタイルの一種です。評価に失敗したとき、別の評価を試せます。Alternative（オルタナティブ）は**代替・二者択一**という意味です。
+MonadPlus（値を持たないことが可能なモナド）だけで使えるApplicativeスタイルの一種です。評価に失敗したとき、別の評価を試せます。Alternative（オルタナティブ）は**代替・二者択一**という意味です。👉[](12#選択)
 
 ※ この説明は色々と妥協しています。正確にはMonoidの知識が必要ですが、今回の範囲を超えるため詳細は省略します。興味がある方は次の記事を参照してください。
 

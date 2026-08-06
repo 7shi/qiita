@@ -13,7 +13,7 @@ tags:
 - name: Haskell
   versions: []
 title: Haskell 状態系モナド 超入門
-updated_at: '2026-08-05T09:08:53+09:00'
+updated_at: ''
 url: https://qiita.com/7shi/items/2e9bff5d88302de1a9e9
 slide: false
 ---
@@ -493,7 +493,7 @@ s -> (a, s)
 
 `runState`に状態を渡さずに部分適用したものが内部関数です。
 
-※ 実際の内部関数はIdentityという別のモナドの中に入っています。詳細は続編の[Haskell モナド変換子 超入門](http://qiita.com/7shi/items/4408b76624067c17e933)で説明します。
+※ 実際の内部関数はIdentityという別のモナドの中に入っています。詳細は続編で説明します。👉[](10#Identityモナド)
 
 ```hs
 import Control.Monad.State
@@ -635,7 +635,7 @@ main = do
 "abc"
 ```
 
-※ 文字が足りないとエラーになります。エラー処理は今回の範囲を超えるため、詳細は続編の[Haskell モナド変換子 超入門](http://qiita.com/7shi/items/4408b76624067c17e933)や[Haskell 例外処理 超入門](http://qiita.com/7shi/items/73e534c47bbebc71b37e)で説明します。
+※ 文字が足りないとエラーになります。エラー処理は今回の範囲を超えるため、詳細は続編で説明します。👉[](10#モナドスタック) 👉[](11#Eitherモナド)
 
 ### モナドなしと比較
 
@@ -934,9 +934,7 @@ fact 5 = 5 * fact 4 = 5 * 24 = 120
 120
 ```
 
-比較としてIOモナドによるデバッグを再掲します。
-
-[Haskell アクション 超入門](http://qiita.com/7shi/items/85afd7bbd5d6c4115ad6#%E3%83%87%E3%83%90%E3%83%83%E3%82%B0)より
+比較としてIOモナドによるデバッグを再掲します。👉[](03#デバッグ)
 
 ```hs
 fact 0 = do

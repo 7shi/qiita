@@ -13,7 +13,7 @@ tags:
 - name: Haskell
   versions: []
 title: Haskell アクション 超入門
-updated_at: '2026-08-05T09:08:18+09:00'
+updated_at: ''
 url: https://qiita.com/7shi/items/85afd7bbd5d6c4115ad6
 slide: false
 ---
@@ -128,7 +128,7 @@ main =
 parse error on input `<-'
 ```
 
-※ `do`なしで`<-`相当の処理を書くことは可能ですが、ラムダについて説明する必要があります。詳細は続編の[Haskell アクションとラムダ 超入門](http://qiita.com/7shi/items/4a8a2807bb5186576c61)で説明します。
+※ `do`なしで`<-`相当の処理を書くことは可能ですが、ラムダについて説明する必要があります。詳細は続編で説明します。👉[](05#bind)
 
 ## =<<
 
@@ -171,7 +171,7 @@ main = do
 
 説明の都合上`=<<`を先に出しましたが、実は`>>=`が基本で、`=<<`はその逆です。
 
-※ `do`と`>>=`には密接な関係があります。詳細は続編の[Haskell アクションとラムダ 超入門](http://qiita.com/7shi/items/4a8a2807bb5186576c61)で説明します。
+※ `do`と`>>=`には密接な関係があります。詳細は続編で説明します。👉[](05#bind)
 
 ## let
 
@@ -361,7 +361,7 @@ main = do
 
 今回出て来るアクションはすべてIOと呼ばれる型で、型名は`IO＋型`で表記されます。
 
-※ IO以外にもアクションはありますが、今回は分かりやすさを優先してIOアクションを単にアクションとして扱います。IO以外のアクションは続編の[Haskell 状態系モナド 超入門](http://qiita.com/7shi/items/2e9bff5d88302de1a9e9)で取り上げます。
+※ IO以外にもアクションはありますが、今回は分かりやすさを優先してIOアクションを単にアクションとして扱います。IO以外のアクションは続編で取り上げます。👉[](09#状態系モナド)
 
 とりあえず実用的には以下のように認識すれば使えます。
 
@@ -685,7 +685,7 @@ Possible fix: add a type signature that fixes these type variable(s)
 
 bindの結合先はアクションを返す関数という制限がありますが、アクションから値を外に出さないことが目的なら「自動的に入れてくれれば良い」と感じるかもしれません。
 
-実際にそういう方法もサポートされていて**Applicative（アプリカティブ）スタイル**と呼ばれます。
+実際にそういう方法もサポートされていて**Applicative（アプリカティブ）スタイル**と呼ばれます。👉[](15#Applicative)
 
 ![applicative_style.png](https://qiita-image-store.s3.amazonaws.com/0/32057/15d1cbf2-a00d-db22-d973-27ad0b099c26.png)
 
@@ -869,7 +869,7 @@ main = do
 
 # IORef
 
-アクションによって値が変更できる変数のようなものです。
+アクションによって値が変更できる変数のようなものです。👉[](05#IORef)
 
 ```hs
 import Data.IORef
@@ -969,7 +969,7 @@ main = do
 4
 ```
 
-※ ループを実現するには`forM`という関数もありますが、活用するにはラムダが必要です。詳細は続編の[Haskell アクションとラムダ 超入門](http://qiita.com/7shi/items/4a8a2807bb5186576c61)で説明します。
+※ ループを実現するには`forM`という関数もありますが、活用するにはラムダが必要です。詳細は続編で説明します。👉[](05#forM)
 
 ## 練習
 
@@ -991,7 +991,7 @@ console.log(s);
 
 IORefの配列版です。パッケージarrayが必要です。[Leksah](http://qiita.com/7shi/items/d1e5a0c22be6cf61d286)ではdependenciesに追加します。
 
-※ `U`はアンボックス化を意味しています。詳細は続編の[Haskell IOモナド 超入門](http://qiita.com/7shi/items/d3d3492ddd90d47160f2)で説明します。
+※ `U`はアンボックス化を意味しています。詳細は続編で説明します。👉[](06#アンボックス化タプル)
 
 ```hs
 import Data.Array.IO

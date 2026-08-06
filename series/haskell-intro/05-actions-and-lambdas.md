@@ -11,7 +11,7 @@ tags:
 - name: Haskell
   versions: []
 title: Haskell アクションとラムダ 超入門
-updated_at: '2026-08-05T09:08:30+09:00'
+updated_at: ''
 url: https://qiita.com/7shi/items/4a8a2807bb5186576c61
 slide: false
 ---
@@ -199,11 +199,11 @@ main = do
 
 `do`を使わなくても同じ処理を書くことができます。しかし表記が煩雑になるため、以後は特別な事情がない限り`do`を付けたコードを掲載します。重要なのは仕組みを認識していることです。
 
-※ その先には`>>=`の仕組みも待ち構えています。詳細は続編の[Haskell IOモナド 超入門](http://qiita.com/7shi/items/d3d3492ddd90d47160f2)で説明します。
+※ その先には`>>=`の仕組みも待ち構えています。詳細は続編で説明します。👉[](06#bind)
 
 # IORef
 
-[アクション超入門](http://qiita.com/7shi/items/85afd7bbd5d6c4115ad6)で紹介した`IORef`ですが、[ラムダ超入門](http://qiita.com/7shi/items/1345bf32003faff435cb)の知識があれば便利になります。
+アクション超入門で紹介した`IORef`ですが、ラムダ超入門の知識があれば便利になります。👉[](03#IORef) 👉[](04#ラムダ式)
 
 まず比較として、今までの知識で`IORef`の値に1を足してみます。
 
@@ -232,7 +232,7 @@ main = do
     print =<< readIORef a
 ```
 
-[アクション超入門](http://qiita.com/7shi/items/85afd7bbd5d6c4115ad6)で`modifyIORef`を紹介しなかったのは、ラムダ式やセクションの知識がないと有効活用できないためです。
+アクション超入門で`modifyIORef`を紹介しなかったのは、ラムダ式やセクションの知識がないと有効活用できないためです。👉[](03#IORef)
 
 ## 練習
 

@@ -11,7 +11,7 @@ tags:
 - name: Haskell
   versions: []
 title: Haskell モナド変換子 超入門
-updated_at: '2026-08-05T09:09:00+09:00'
+updated_at: ''
 url: https://qiita.com/7shi/items/4408b76624067c17e933
 slide: false
 ---
@@ -673,7 +673,7 @@ Nothing
 
 ![StateT-Maybe-2.png](https://qiita-image-store.s3.amazonaws.com/0/32057/36f0c6f5-2cdf-2297-9836-6023fb2eebf4.png)
 
-※ ここで取り上げたサンプルに少し手を加えたものを続編の[Haskell 例外処理 超入門](http://qiita.com/7shi/items/73e534c47bbebc71b37e)でも説明します。
+※ ここで取り上げたサンプルに少し手を加えたものを続編でも説明します。👉[](11#モナド変換子で合成)
 
 ## 練習
 
@@ -944,7 +944,7 @@ main = print $ liftM2 (+) [1] [1]
 
 ## Applicativeスタイル
 
-関数の持ち上げは[Haskell アクション 超入門](http://qiita.com/7shi/items/85afd7bbd5d6c4115ad6)で取り上げたApplicativeスタイルと同じです。
+関数の持ち上げは前編で取り上げたApplicativeスタイルと同じです。👉[](03#Applicativeスタイル)
 
 ※ そこでは「値の取り出し」という観点で統一するため、敢えて「持ち上げ」とは言わずに別の説明をしています。結果は同じなので、解釈で何かが変わるわけではありません。
 
