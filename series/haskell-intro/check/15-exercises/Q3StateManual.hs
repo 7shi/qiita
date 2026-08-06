@@ -1,14 +1,19 @@
--- 問3 の解答例。liftM・ap の定型を使う（手書き版は Q3StateManual.hs）
-import Control.Monad (replicateM_, liftM, ap)
+-- 問3 の State を 3 つとも手書きした版（本文には載せていない。解答例は Q3State.hs）
+import Control.Monad (replicateM_)
 
 newtype State s a = State { runState :: s -> (a, s) }
 
 instance Functor (State s) where
-    fmap  = liftM
+    fmap f m = State $ \s ->
+        let (a, s1) = runState m s
+        in  (f a, s1)
 
 instance Applicative (State s) where
     pure x = State $ \s -> (x, s)
-    (<*>)  = ap
+    mf <*> m = State $ \s ->
+        let (f, s1) = runState mf s
+            (a, s2) = runState m  s1
+        in  (f a, s2)
 
 instance Monad (State s) where
     m >>= k = State $ \s ->

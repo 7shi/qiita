@@ -1,8 +1,7 @@
 -- instance Monad だけを書くとコンパイルが通らない
-data Tree a = Leaf a | Node (Tree a) (Tree a) deriving Show
+newtype Identity a = Identity { runIdentity :: a }
 
-instance Monad Tree where
-    Leaf x   >>= f = f x
-    Node l r >>= f = Node (l >>= f) (r >>= f)
+instance Monad Identity where
+    Identity x >>= f = f x
 
-main = print (Leaf 1 >>= \x -> Node (Leaf x) (Leaf (x * 2)))
+main = print (runIdentity (Identity 3 >>= \x -> Identity (x * 2)))

@@ -940,74 +940,33 @@ g 9 = [] → 1番目が無いため打ち切り
 
 このようにモナド則が破れるため、`ZipList` は `Applicative` にはなれても、`Monad` にはなれません。そのため、標準ライブラリの `ZipList` に `instance Monad` は用意されていません。
 
-# モナドを自作する
+# モナドの実装
 
-3 段の型クラスが揃ったので、実際にインスタンスを書いていきます。
-
-## 階層は書かされる
-
-準備が済んだので `instance Monad` を書きます。まず `Monad` だけを書いてみます。
-
-```hs:NG
-data Tree a = Leaf a | Node (Tree a) (Tree a) deriving Show
-
-instance Monad Tree where
-    Leaf x   >>= f = f x
-    Node l r >>= f = Node (l >>= f) (r >>= f)
-```
-```text:エラー内容
-    • No instance for ‘Applicative Tree’
-        arising from the superclasses of an instance declaration
-    • In the instance declaration for ‘Monad Tree’
-```
-
-`arising from the superclasses` と出ています。`Monoid` だけを書いて `Semigroup` を書き忘れたときと同じエラーです。`Monad` を名乗るには `Applicative`、ひいては `Functor` のインスタンスでなければなりません。
-
-とはいえ `>>=` さえあれば `fmap` は `liftM`、`<*>` は `ap` で書けることは既に見ました。そこで次の定型が使えます。
-
-```hs
-import Control.Monad (liftM, ap)
-
-instance Functor     Foo where fmap  = liftM
-instance Applicative Foo where pure  = ...
-                               (<*>) = ap
-instance Monad       Foo where (>>=) = ...
-```
-
-自分で中身を書くのは `pure` と `>>=` の 2 つだけで、残りの 2 行は機械的に埋まります。本来は `Functor` から順に下から積み上げるべきところを、一番上の `>>=` さえあれば下の段は自動的に埋まる、という関係です。
-
-`liftM` と `ap` の制約は `Monad` なので、この書き方ができるのは `Monad` のインスタンスでもある型に限られます。`Functor` や `Applicative` だけを実装したい型には使えません。
-
-:::message
-ここで `return` を書いて `pure` を省略すると警告が出ます。
-
-```text:警告
-warning: [GHC-06201] [-Wmissing-methods]
-    • No explicit implementation for
-        ‘pure’
-    • In the instance declaration for ‘Applicative Foo’
-
-warning: [-Wnoncanonical-monad-instances]
-    Noncanonical ‘return’ definition detected
-    in the instance declaration for ‘Monad Foo’.
-    ‘return’ will eventually be removed in favour of ‘pure’
-    Either remove definition for ‘return’ (recommended) or define as ‘return = pure’
-```
-
-`return` は将来 `Monad` から取り除かれる予定だと書かれています。実装するのは `pure` の方だと述べたのはこのためです。
-:::
-
-継続モナドで `Cont` の bind を実装しましたが、あれもここで言う `>>=` の中身そのものです。👉[Haskell 継続モナド 超入門](https://zenn.dev/7shi/articles/20260803-haskell-continuation-monad)
-
-:::message
-`Monad` が `Applicative` をスーパークラスに持つようになったのは GHC 7.10（2015 年）からで、AMP（Applicative Monad Proposal）と呼ばれます。それ以前は `Monad` を `Applicative` と無関係に定義でき、`return` も `Monad` 自身のメソッドでした。
-
-このシリーズの初期の回は AMP より前に書かれたもので、`Monad` と `Applicative` を別々のものとして扱っています。古い記事や書籍で両者の関係が説明されていないことがあるのは、多くがこの変更以前のものだからです。
-:::
+3 段の型クラスが揃ったので、実際にモナドが実装できるようになりました。
 
 ## Identity
 
-最小の `Identity` モナドから始めます。`Functor` と `Applicative` のインスタンスは階層の説明で先に書きましたが、改めて全体を実装します。
+最小の `Identity` モナドから始めます。`Functor` と `Applicative` のインスタンスは階層の説明で先に書きましたが、ここで `Monad` まで揃えます。
+
+標準ライブラリにも `Data.Functor.Identity` として同じものがありますが、`Prelude` には入っていないため、import しない限り名前は衝突しません。
+
+`do` が使えるようになればよいので、まず `instance Monad` だけを書いてみます。
+
+```hs:NG
+newtype Identity a = Identity { runIdentity :: a }
+
+instance Monad Identity where
+    Identity x >>= f = f x
+```
+```text:エラー内容
+    • No instance for ‘Applicative Identity’
+        arising from the superclasses of an instance declaration
+    • In the instance declaration for ‘Monad Identity’
+```
+
+`arising from the superclasses` と出ています。`Monad` を名乗るには `Applicative`、ひいては `Functor` のインスタンスでなければなりません。
+
+3 段すべてを実装します。
 
 ```hs
 newtype Identity a = Identity { runIdentity :: a }
@@ -1048,10 +1007,53 @@ main = do
 
 `fmap` と `<*>` の違いは、適用する関数が持ち上がる前か後かだけです。`>>=` の右辺に `Identity` が現れないのは、渡される関数 `f` が最初から `Identity a` を返すためです。この型の違いが `<*>` と `>>=` を分けています。
 
-そして注目すべきは `calc` です。自分で書いたのは上の 3 つの `instance` だけですが、`do` と `return` がそのまま動いています。冒頭で見た `bind` を並べ書きする問題は、`instance Monad` を書くことで解決しました。
+そして注目すべきは `calc` です。実装したのは上の 3 つの `instance` だけですが、`do` と `return` がそのまま動いています。冒頭で見た `bind` を並べ書きする問題は、`instance Monad` を書くことで解決しました。
+
+## 3 段まとめて書く定型
+
+`Identity` では 3 段とも手で書きましたが、毎回そうする必要はありません。`>>=` さえあれば `fmap` は `liftM`、`<*>` は `ap` で書けることは既に見ました。そこで次の定型が使えます。
+
+```hs
+import Control.Monad (liftM, ap)
+
+instance Functor Foo where
+    fmap = liftM
+
+instance Applicative Foo where
+    pure  = ...
+    (<*>) = ap
+
+instance Monad Foo where
+    (>>=) = ...
+```
+
+自分で中身を書くのは `pure` と `>>=` の 2 つだけで、残りの 2 行は機械的に埋まります。本来は `Functor` から順に下から積み上げるべきところを、一番上の `>>=` さえあれば下の段は自動的に埋まる、という関係です。
+
+`liftM` と `ap` の制約は `Monad` なので、この書き方ができるのは `Monad` のインスタンスでもある型に限られます。`Functor` や `Applicative` だけを実装したい型には使えません。
+
+ここで `return` を書いて `pure` を省略すると警告が出ます。
+
+```text:警告
+warning: [GHC-06201] [-Wmissing-methods]
+    • No explicit implementation for
+        ‘pure’
+    • In the instance declaration for ‘Applicative Foo’
+
+warning: [-Wnoncanonical-monad-instances]
+    Noncanonical ‘return’ definition detected
+    in the instance declaration for ‘Monad Foo’.
+    ‘return’ will eventually be removed in favour of ‘pure’
+    Either remove definition for ‘return’ (recommended) or define as ‘return = pure’
+```
+
+`return` は将来 `Monad` から取り除かれる予定だと書かれています。実装するのは `pure` の方だと述べたのはこのためです。
 
 :::message
-標準ライブラリにも `Data.Functor.Identity` として同じものがありますが、`Prelude` には入っていないため、import しない限り名前は衝突しません。
+`Monad` が `Applicative` をスーパークラスに持つようになったのは GHC 7.10（2015 年）からで、AMP（Applicative Monad Proposal）と呼ばれます。それ以前は `Monad` を `Applicative` と無関係に定義でき、`return` も `Monad` 自身のメソッドでした。
+
+このシリーズの初期の回は AMP より前に書かれたもので、`Monad` と `Applicative` を別々のものとして扱っています。古い記事や書籍で両者の関係が説明されていないことがあるのは、多くがこの変更以前のものだからです。
+
+シリーズは途中で 10 年以上中断していましたが、当時は `Monad` の扱いも含めて仕様が動いている最中でした。結果的に、仕様が落ち着いてから続きを書いた形になりました。
 :::
 
 ## 練習
@@ -1059,11 +1061,11 @@ main = do
 【問3】State モナドを自作してください。内部で持つ関数の型は `s -> (a, s)` です。
 
 ```hs
-import Control.Monad (replicateM_)
+import Control.Monad (replicateM_, liftM, ap)
 
 newtype State s a = State { runState :: s -> (a, s) }
 
--- ここに instance Functor / Applicative / Monad を書く
+-- ここに instance Functor / Applicative / Monad を書く（定型を使う）
 -- get' と put' も書く
 
 evalState m s = fst (runState m s)
@@ -1089,21 +1091,16 @@ main = print $ fib 10
         in  runState (k a) s1
 ```
 
-`instance` の宣言では、型変数 `s` を残した `State s` の形で書きます。種が `* -> *` になっている必要があるためです。
+`instance` の宣言では、型変数 `s` を含めた `(State s)` の形で書きます。種が `* -> *` になっている必要があるためです。
 
 :::details 解答例
 ```hs
 instance Functor (State s) where
-    fmap f m = State $ \s ->
-        let (a, s1) = runState m s
-        in  (f a, s1)
+    fmap = liftM
 
 instance Applicative (State s) where
     pure x = State $ \s -> (x, s)
-    mf <*> m = State $ \s ->
-        let (f, s1) = runState mf s
-            (a, s2) = runState m  s1
-        in  (f a, s2)
+    (<*>)  = ap
 
 instance Monad (State s) where
     m >>= k = State $ \s ->
@@ -1114,14 +1111,14 @@ get'   = State $ \s -> (s , s)
 put' x = State $ \_ -> ((), x)
 ```
 
-どのメソッドも「状態 `s` を受け取って、結果と新しい状態の組を返す関数」を組み立てています。状態を次へ次へと渡していくところが共通で、`fmap` は結果だけを加工し、`<*>` は左右を順に走らせてから適用し、`>>=` は左の結果を `k` に渡して右を組み立てます。
+自分で書いたのは `pure` と `>>=` の 2 つだけです。どちらも「状態 `s` を受け取って、結果と新しい状態の組を返す関数」を組み立てています。`pure` は状態をそのまま通し、`>>=` は `m` を走らせて得た新しい状態 `s1` を `k a` へ渡します。この状態の受け渡しが State の本体で、`fmap` と `<*>` は `liftM`・`ap` 経由で `>>=` から組み立てられます。
 
-以前に書いた `bind`・`return'` を `>>=`・`pure` として `instance` に書き直しただけですが、それによって `do` と `<-` が使えるようになり、`fib` が普通のコードとして書けています。「再実装した関数は使わないでください」という制限は、もう必要ありません。
+以前に書いた `bind`・`return'` を `>>=`・`pure` として `instance` に書き直しただけですが、それによって `do` と `<-` が使えるようになり、`fib` が `do` ブロックとして書けています。
 :::
 
 ## Tree
 
-`Identity` と State は、どちらも「中に値と文脈を持つ入れ物」でした。データ構造そのものがモナドになる例も見ておきます。二分木です。
+`Identity` と `State` は、どちらも「中に値と文脈を持つ入れ物」でした。データ構造そのものがモナドになる例も見ておきます。二分木です。
 
 ```hs
 data Tree a = Leaf a | Node (Tree a) (Tree a) deriving Show
@@ -1136,10 +1133,14 @@ import Control.Monad (liftM, ap)
 
 data Tree a = Leaf a | Node (Tree a) (Tree a) deriving Show
 
-instance Functor     Tree where fmap  = liftM
-instance Applicative Tree where pure  = Leaf
-                                (<*>) = ap
-instance Monad       Tree where
+instance Functor Tree where
+    fmap  = liftM
+
+instance Applicative Tree where
+    pure  = Leaf
+    (<*>) = ap
+
+instance Monad Tree where
     Leaf x   >>= f = f x
     Node l r >>= f = Node (l >>= f) (r >>= f)
 
@@ -1191,15 +1192,19 @@ Node [Node [Leaf 1,Leaf 10],Node [Node [Leaf 2,Leaf 20],Node [Leaf 3,Leaf 30]]]
 
 :::details 解答例
 ```hs
-instance Functor     Rose where fmap  = liftM
-instance Applicative Rose where pure  = Leaf
-                                (<*>) = ap
-instance Monad       Rose where
+instance Functor Rose where
+    fmap  = liftM
+
+instance Applicative Rose where
+    pure  = Leaf
+    (<*>) = ap
+
+instance Monad Rose where
     Leaf x  >>= f = f x
     Node ts >>= f = Node (map (>>= f) ts)
 ```
 
-`Tree` では左右の枝に個別に `>>=` を掛けていましたが、枝がリストになったので `map` でまとめて掛けます。`(>>= f)` はセクションで、「各枝に `>>= f` を適用する」と読めます。
+`Tree` では左右の枝に個別に `>>=` を書いていましたが、枝がリストになったので `map` でまとめて書けます。`(>>= f)` はセクションで、「各枝に `>>= f` を適用する」と読めます。
 
 定型を使わずに `fmap` を手で書くなら次のようになります。枝を辿るのに `map` が要るところが `>>=` と同じ形です。
 

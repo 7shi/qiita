@@ -3,9 +3,13 @@ import Control.Monad (liftM, ap)
 
 newtype Foo a = Foo a deriving Show
 
-instance Functor     Foo where fmap  = liftM
-instance Applicative Foo where (<*>) = ap
-instance Monad       Foo where
+instance Functor Foo where
+    fmap  = liftM
+
+instance Applicative Foo where
+    (<*>) = ap
+
+instance Monad Foo where
     return = Foo
     Foo x >>= f = f x
 

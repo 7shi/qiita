@@ -2,10 +2,14 @@ import Control.Monad (liftM, ap)
 
 data Rose a = Leaf a | Node [Rose a] deriving Show
 
-instance Functor     Rose where fmap  = liftM
-instance Applicative Rose where pure  = Leaf
-                                (<*>) = ap
-instance Monad       Rose where
+instance Functor Rose where
+    fmap  = liftM
+
+instance Applicative Rose where
+    pure  = Leaf
+    (<*>) = ap
+
+instance Monad Rose where
     Leaf x  >>= f = f x
     Node ts >>= f = Node (map (>>= f) ts)
 
