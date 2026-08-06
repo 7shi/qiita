@@ -36,7 +36,7 @@
 
 ## 今後の作業予定
 
-### 1. 仮リンクを実 URL に変換する(未着手)
+### 1. 仮リンクを実 URL に変換する(スクリプト作成済み・実行は保留)
 
 `{2桁}#見出し` を実際のリンクに変換する。変換規則:
 
@@ -45,18 +45,31 @@
 | 01〜12 | `https://qiita.com/7shi/items/{id}` (`id` は各記事の front matter、または [README.md](series/haskell-intro/README.md) のシリーズ目次に記載) |
 | 13 | `https://zenn.dev/7shi/articles/20260803-haskell-continuation-monad` |
 | 14 | `https://zenn.dev/7shi/articles/20260805-haskell-type-classes` |
-| 15 | 未公開(`id`・`url` 空)。相対パス `15-monads-and-friends.md#アンカー` にする([CLAUDE.md](CLAUDE.md) の「記事間のリンク」節に従う。投稿後に URL へ差し替え) |
+| 15 | `https://zenn.dev/7shi/articles/20260807-haskell-monads-and-friends`(Zenn 側スタブは作成済み、本文未同期。`ZENN.tsv` に登録済み) |
 
-見出し部分は `uv run scripts/anchor.py "見出しテキスト"` でパーセントエンコードされたアンカーに変換する(同一記事内に同名見出しが複数ある場合は `-1`・`-2` の連番に注意)。リンクテキスト(空にしてある `[]` の中身)も、README.md のシリーズ目次に合わせた記事タイトル(例: `Haskell アクション 超入門`)を補う。
+見出し部分は `uv run scripts/anchor.py "見出しテキスト"` でパーセントエンコードされたアンカーに変換する(同一記事内に同名見出しが複数ある場合は `-1`・`-2` の連番に注意)。
 
-機械的な変換のため、スクリプト化してから流し込むのが安全(手作業だと id やアンカーの転記ミスが起きやすい)。
+リンクテキスト(空にしてある `[]` の中身)は `👉[記事の省略タイトル](URL#アンカー)` の形にする。省略タイトルは README.md のシリーズ目次のタイトルから機械的に決める:
+
+- 01: `超入門`(例外。「Haskell 超入門」は下記正規表現にマッチしないため個別指定)
+- 02〜14: 正規表現 `Haskell (.*) 超入門` の `$1`(例: 03 なら `アクション`)
+- 15: `モナドとゆかいな仲間たち`(例外。タイトルに「超入門」が付かず正規表現にマッチしないため、「Haskell」を除いた全体を使用)
+
+機械的な変換のため、スクリプト化してから流し込むのが安全(手作業だと id やアンカーの転記ミスが起きやすい)。上記の規則に従って変換する [replace_anchors.py](replace_anchors.py) を作成済み(構文チェックのみ、実行は保留)。
+
+```
+uv run replace_anchors.py --dry-run  # 変換件数だけ確認
+uv run replace_anchors.py            # 実際に書き換え
+```
+
+同一記事内で見出しが重複している場合はエラーにして処理を止める(連番の取り違えを防ぐため、該当箇所は手動で確認してから個別対応する)。
 
 ### 2. 13〜15回を Zenn 側へ反映する(1. の後)
 
 仮リンクのままだと Zenn 側に無効なリンクが伝播するため、実 URL への変換が終わってから着手する。
 
-1. `ZENN.tsv` に 13・14・15 が登録されているか確認する。
-2. 登録されていれば、Qiita 側ファイルを `touch` して mtime を更新し、`make sync -n` で差分確認後 `make sync` を実行する。
+1. `ZENN.tsv` に 13・14・15 が登録済みであることを確認済み(15 は Zenn 側スタブ作成時に追記された。本文はまだ未同期のためそのまま残す)。
+2. 実 URL への変換が終わったら、Qiita 側ファイルを `touch` して mtime を更新し、`make sync -n` で差分確認後 `make sync` を実行する。
 
 ### 3. 解答例ファイル(0Na)への展開は未定
 
@@ -65,3 +78,4 @@
 ## 参考
 
 - アンカー変換規則: [scripts/anchor.py](scripts/anchor.py) の docstring、実例は [anchor-sample.md](anchor-sample.md)
+- 仮リンク→実 URL 変換スクリプト: [replace_anchors.py](replace_anchors.py)(未実行)
