@@ -1,4 +1,4 @@
-.PHONY: help all extract articles sync status
+.PHONY: help all extract articles sync status update
 
 help:
 	@echo "Available targets:"
@@ -9,6 +9,7 @@ help:
 	@echo "  articles     - Aggregate articles from the articles/ directory"
 	@echo "  sync         - Sync article bodies with the Zenn repository (ZENN.tsv)"
 	@echo "  status       - List articles not yet reflected on Qiita"
+	@echo "  update       - Update all articles not yet reflected on Qiita"
 
 all: data/7shi-1.json data/7shi-2.json data/7shi-3.json extract
 
