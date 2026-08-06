@@ -36,11 +36,17 @@ Qiita と Zenn は**同一の規則**だった（どちらも GitHub 系の slug
     anchor("束縛")            # -> '%E6%9D%9F%E7%B8%9B'
     anchors_of_markdown(text) # -> [(レベル, 見出し, アンカー), ...]
 
-単体で実行すると `anchor-sample.md` の実例と照合して、規則が再現できているか検証する。
+コマンドとして実行すると、引数の見出しテキストをアンカーへ変換して表示する。
 
-    uv run scripts/anchor.py
+    uv run scripts/anchor.py 束縛
+    # -> %E6%9D%9F%E7%B8%9B
+
+`--test` を付けると、`anchor-sample.md` の実例と照合して規則が再現できているか検証する。
+
+    uv run scripts/anchor.py --test
 """
 
+import argparse
 import re
 import sys
 import unicodedata
@@ -142,6 +148,16 @@ def load_samples() -> list[tuple[str, Path, list[str]]]:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--test", action="store_true", help="anchor-sample.md との照合を検証する")
+    parser.add_argument("headings", nargs="*", help="アンカーへ変換する見出しテキスト")
+    args = parser.parse_args()
+
+    if not args.test:
+        for text in args.headings:
+            print(anchor(text))
+        return
+
     ok = True
     for platform, path, expected in load_samples():
         actual = [a for _, _, a in anchors_of_markdown(path.read_text(encoding="utf-8"))]
