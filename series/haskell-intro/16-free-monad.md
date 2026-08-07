@@ -200,24 +200,9 @@ instance Functor f => Monad (Free f) where
 
 `Free Two` で木を組み立てて、元の `Tree` と同じことができるのを確認します。
 
-`Two` の `Functor` インスタンスを書き、葉と枝を作る関数に名前を付けます。木の中身を見るために、葉の値を左から集める `toList` も用意します。
+`Two` の `Functor` インスタンスを書き、葉と枝を作る関数に名前を付けます。木の形を見るために、葉を値、枝を括弧で表示する `Show` インスタンスも書きます。上の `Free` の定義に続けて書きます。
 
 ```hs
-import Control.Monad (liftM, ap)
-
-data Free f a = Pure a | Free (f (Free f a))
-
-instance Functor f => Functor (Free f) where
-    fmap = liftM
-
-instance Functor f => Applicative (Free f) where
-    pure  = Pure
-    (<*>) = ap
-
-instance Functor f => Monad (Free f) where
-    Pure a >>= k = k a
-    Free g >>= k = Free (fmap (>>= k) g)
-
 data Two x = Two x x
 
 instance Functor Two where
@@ -225,34 +210,42 @@ instance Functor Two where
 
 type Tree = Free Two
 
+instance Show a => Show (Tree a) where
+    show (Pure a)         = show a
+    show (Free (Two l r)) = "(" ++ show l ++ " " ++ show r ++ ")"
+
 leaf :: a -> Tree a
 leaf = Pure
 
 node :: Tree a -> Tree a -> Tree a
 node l r = Free (Two l r)
 
-toList :: Tree a -> [a]
-toList (Pure a)         = [a]
-toList (Free (Two l r)) = toList l ++ toList r
-
 grow x = node (leaf x) (leaf (x * 10))
 
 main = do
     let t = node (leaf 1) (leaf 2)
-    print $ toList t
-    print $ toList $ fmap (* 2) t
-    print $ toList $ t >>= grow
+    print t
+    print $ fmap (* 2) t
+    print $ t >>= grow
 ```
 ```text:実行結果
-[1,2]
-[2,4]
-[1,10,2,20]
+(1 2)
+(2 4)
+((1 10) (2 20))
 ```
 
-`grow` は葉の値 `x` を `x` と `x * 10` の 2 枚の葉に育てる関数です。`t >>= grow` で 2 枚の葉がそれぞれ育ち、葉が 4 枚になっています。接ぎ木がそのまま動いています。
+`grow` は葉の値 `x` を `x` と `x * 10` の 2 枚の葉に育てる関数です。`t >>= grow` で 2 枚の葉がそれぞれ育ち、その場所に小さな木が挿さっています。接ぎ木がそのまま動いています。
+
+表示は `Show` インスタンスを手で書きました。`Free f a` に `deriving Show` は付けられません。中身を表示するには `f (Free f a)` が `Show` であることが必要ですが、`f` が型変数のままなので、その条件を `deriving` で書けないためです。`Free Two` のように `f` を固定すれば条件が決まるので、上のように `instance` を書けます。
+
+`show` は本来、`read` で読み戻せる Haskell の式を返すのが建前です。`(1 2)` はそうなっていません。ここでは木の形が見やすいことを優先して、表示専用の形式にしています。
 
 :::message
-`Free f a` に `deriving Show` は付けられません。中身を表示するには `f (Free f a)` が `Show` であることが必要ですが、`f` が型変数のままなので、その条件を `deriving` が書けないためです。ここで `toList` を用意したのはそのためで、木の中身は走査する関数を通して確認します。
+`Free Two a` のように型を固定した `instance` は、GHC2021 では書けますが、それ以前の標準（Haskell2010）では `FlexibleInstances` という言語拡張が必要となります。言語拡張はソースの先頭に `{-# LANGUAGE ~ #-}` と書きます。👉[IOモナド](https://qiita.com/7shi/items/d3d3492ddd90d47160f2#%E3%82%A2%E3%83%B3%E3%83%9C%E3%83%83%E3%82%AF%E3%82%B9%E5%8C%96%E3%82%BF%E3%83%97%E3%83%AB)
+
+```hs
+{-# LANGUAGE FlexibleInstances #-}
+```
 :::
 
 `f` を `[]` に替えれば多分岐の木になります。`Free` と `Pure` をそのまま使うので、専用のコンストラクタは要りません。
@@ -260,30 +253,33 @@ main = do
 ```hs
 type Rose = Free []
 
-toList :: Rose a -> [a]
-toList (Pure a)  = [a]
-toList (Free ts) = concatMap toList ts
+instance Show a => Show (Rose a) where
+    show (Pure a)  = show a
+    show (Free ts) = "[" ++ unwords (map show ts) ++ "]"
 
 grow x = Free [Pure x, Pure (x * 10)]
 
 main = do
     let r = Free [Pure 1, Free [Pure 2, Pure 3]]
-    print $ toList r
-    print $ toList $ r >>= grow
+    print r
+    print $ r >>= grow
 ```
 ```text:実行結果
-[1,2,3]
-[1,10,2,20,3,30]
+[1 [2 3]]
+[[1 10] [[2 20] [3 30]]]
 ```
 
-`instance` は 1 行も書き足していません。`[]` は最初から `Functor` なので、`Free []` はそれだけでモナドになります。
+`Functor` インスタンスは 1 行も書き足していません。`[]` は最初から `Functor` なので、`Free []` はそれだけでモナドになります。書き足したのは表示のための `Show` だけです。
 
 ## 練習
 
-【問1】自作した `Tree`（`Leaf`・`Node`）と `Free Two` が本当に同じものか、両方で同じ木を組み立てて `>>=` の結果を見比べてください。`Free Two a` を `Tree a` に変換する関数 `toTree` を書いて、`print` で比べるとよいでしょう。
+【問1】自作した `Tree`（`Leaf`・`Node`）と `Free Two` が本当に同じものか、両方で同じ木を組み立てて `>>=` と `fmap` の結果を見比べてください。`Tree` の `Show` インスタンスを本文の `Free Two` 版と同じ形式で書けば、表示が揃って直接比べられます。
 
 ```hs
-data Tree a = Leaf a | Node (Tree a) (Tree a) deriving Show
+data Tree a = Leaf a | Node (Tree a) (Tree a)
+
+instance Show a => Show (Tree a) where
+    show = undefined  -- ここを書く
 
 -- Tree 側
 grow :: Int -> Tree Int
@@ -293,32 +289,31 @@ grow x = Node (Leaf x) (Leaf (x * 10))
 grow' :: Int -> Free Two Int
 grow' x = Free (Two (Pure x) (Pure (x * 10)))
 
-toTree :: Free Two a -> Tree a
-toTree = undefined  -- ここを書く
-
 main = do
     let t  = Node (Leaf 1) (Leaf 2)
         t' = Free (Two (Pure 1) (Pure 2))
-    print $ t >>= grow
-    print $ toTree $ t' >>= grow'
+    print $ t  >>= grow
+    print $ t' >>= grow'
     print $ fmap (* 2) t
-    print $ toTree $ fmap (* 2) t'
+    print $ fmap (* 2) t'
 ```
 ```text:実行結果
-Node (Node (Leaf 1) (Leaf 10)) (Node (Leaf 2) (Leaf 20))
-Node (Node (Leaf 1) (Leaf 10)) (Node (Leaf 2) (Leaf 20))
-Node (Leaf 2) (Leaf 4)
-Node (Leaf 2) (Leaf 4)
+((1 10) (2 20))
+((1 10) (2 20))
+(2 4)
+(2 4)
 ```
 
 :::details 解答例
 ```hs
-toTree :: Free Two a -> Tree a
-toTree (Pure a)         = Leaf a
-toTree (Free (Two l r)) = Node (toTree l) (toTree r)
+instance Show a => Show (Tree a) where
+    show (Leaf a)   = show a
+    show (Node l r) = "(" ++ show l ++ " " ++ show r ++ ")"
 ```
 
-`Pure` を `Leaf` に、`Free (Two l r)` を `Node l r` に置き換えるだけです。1 対 1 に対応しているので、変換に迷うところがありません。`>>=` の結果も `fmap` の結果も一致します。
+本文の `Free Two` 版と見比べてください。`Pure a` が `Leaf a` に、`Free (Two l r)` が `Node l r` に変わっただけで、右辺は同じです。パターンの名前が違うだけで、書くことがありません。
+
+表示が一致するということは、`>>=` も `fmap` も同じ木を組み立てているということです。`Free Two` は `Tree` の別名でした。
 :::
 
 # 手順書を組み立てる
@@ -354,18 +349,20 @@ instance Functor (GenF o) where
 
 この実装は型の構造から機械的に決まります。「続きの位置に関数を適用する」以外に書きようがないからです。`deriving` が使えるのは型の構造から機械的に実装が決まるものだけでした。👉[型クラス](https://zenn.dev/7shi/articles/20260805-haskell-type-classes#deriving)
 
-`Functor` はまさにそれに当てはまるため、`DeriveFunctor` という言語拡張を有効にすると `deriving` に書けるようになります。
+`Functor` はまさにそれに当てはまるため、`deriving` に書けます。
 
 ```hs
-{-# LANGUAGE DeriveFunctor #-}
-
 data GenF o next = Yield o next deriving Functor
 ```
 
-これで `instance Functor` の 2 行が消えます。標準の `deriving` は 6 種類に限られていましたが、言語拡張で対象を増やせるということです。
+これで `instance Functor` の 2 行が消えます。標準の `deriving` は 6 種類に限られていましたが、言語拡張で対象を増やせるということです。`Functor` を対象に加えるのは `DeriveFunctor` という言語拡張で、GHC2021 では既定で有効になっています。
 
 :::message
-言語拡張はソースの先頭に `{-# LANGUAGE ~ #-}` と書きます。👉[IOモナド](https://qiita.com/7shi/items/d3d3492ddd90d47160f2#%E3%82%A2%E3%83%B3%E3%83%9C%E3%83%83%E3%82%AF%E3%82%B9%E5%8C%96%E3%82%BF%E3%83%97%E3%83%AB)
+Haskell2010 で試すときは `DeriveFunctor` を明示的に有効にします。
+
+```hs
+{-# LANGUAGE DeriveFunctor #-}
+```
 :::
 
 ## liftF
@@ -436,25 +433,21 @@ toList (Free (Yield o k)) = o : toList k
 * `Pure _` は手順書の終わりなので、空リスト
 * `Free (Yield o k)` は「`o` を出して、続きは `k`」なので、`o` を先頭に付けて `k` を辿る
 
-全体を通すと次のようになります。
+この形は初めてではありません。木を表示するために書いた `Show` インスタンスも、`Pure` と `Free` で場合分けし、`Free` の中を辿って 1 つの値にまとめていました。
 
 ```hs
-{-# LANGUAGE DeriveFunctor #-}
-import Control.Monad (liftM, ap)
+show   (Pure a)           = show a                                 -- Free Two
+show   (Free (Two l r))   = "(" ++ show l ++ " " ++ show r ++ ")"
 
-data Free f a = Pure a | Free (f (Free f a))
+toList (Pure _)           = []                                     -- Gen o
+toList (Free (Yield o k)) = o : toList k
+```
 
-instance Functor f => Functor (Free f) where
-    fmap = liftM
+違うのは枝の形と、まとめ方だけです。インタプリタは特別な仕組みではなく、木を辿る関数に意味づけを載せたものです。
 
-instance Functor f => Applicative (Free f) where
-    pure  = Pure
-    (<*>) = ap
+`Free` の定義に続けて、ここまでを通すと次のようになります。
 
-instance Functor f => Monad (Free f) where
-    Pure a >>= k = k a
-    Free g >>= k = Free (fmap (>>= k) g)
-
+```hs
 liftF :: Functor f => f a -> Free f a
 liftF c = Free (fmap Pure c)
 
@@ -584,8 +577,6 @@ instance Functor TeletypeF where
 【問3】`TeletypeF` を使って、`putLine`・`getLine'` のスマートコンストラクタと、次の `greet` が書けるようにしてください。`getLine'` の名前に `'` が付いているのは、標準の `getLine` と衝突を避けるためです。
 
 ```hs
-{-# LANGUAGE DeriveFunctor #-}
-
 data TeletypeF next
     = PutLine String next
     | GetLine (String -> next)
@@ -708,7 +699,6 @@ data Free f a = Pure a | Free (f (Free f a))
 `foldFree` と `iterM` を使うと、`IO` 版インタプリタが 1 行で書けます。木を辿る再帰の部分をパッケージが持っているので、命令 1 つの扱い方だけを渡せば済みます。
 
 ```hs
-{-# LANGUAGE DeriveFunctor #-}
 import Control.Monad.Free
 
 data GenF o next = Yield o next deriving Functor

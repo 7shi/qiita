@@ -1,5 +1,4 @@
 -- 【問2】同じ手順書を走らせる IO 版インタプリタ
-{-# LANGUAGE DeriveFunctor #-}
 import Control.Monad (liftM, ap)
 
 data Free f a = Pure a | Free (f (Free f a))

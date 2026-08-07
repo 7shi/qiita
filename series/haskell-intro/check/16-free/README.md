@@ -4,7 +4,7 @@
 
 |ファイル|内容|実行方法|
 |---|---|---|
-|`Free.hs`|本文の掲載コード。自作 `Free` と `Free Two`（二分木）|`runghc Free.hs`|
+|`Free.hs`|本文の掲載コード（「インスタンス」節と「動かす」節を連結）。自作 `Free` と `Free Two`（二分木）|`runghc Free.hs`|
 |`Rose.hs`|`Free []`（多分岐の木）|`runghc Rose.hs`|
 |`Ex1.hs`|【問1】自作 `Tree` と `Free Two` の結果が一致することの確認|`runghc Ex1.hs`|
 |`TupleTwo.hs`|`Two` をタプルの型シノニムで代用できないことの確認（**コンパイルエラーになるのが期待結果**）|`runghc TupleTwo.hs`|
@@ -14,21 +14,21 @@
 ## 実行結果
 
 ```text:Free.hs
-[1,2]
-[2,4]
-[1,10,2,20]
+(1 2)
+(2 4)
+((1 10) (2 20))
 ```
 
 ```text:Rose.hs
-[1,2,3]
-[1,10,2,20,3,30]
+[1 [2 3]]
+[[1 10] [[2 20] [3 30]]]
 ```
 
 ```text:Ex1.hs
-Node (Node (Leaf 1) (Leaf 10)) (Node (Leaf 2) (Leaf 20))
-Node (Node (Leaf 1) (Leaf 10)) (Node (Leaf 2) (Leaf 20))
-Node (Leaf 2) (Leaf 4)
-Node (Leaf 2) (Leaf 4)
+((1 10) (2 20))
+((1 10) (2 20))
+(2 4)
+(2 4)
 ```
 
 `Ex1.hs` の 1・2 行目、3・4 行目がそれぞれ一致している。`Free Two` が自作 `Tree` と
@@ -123,9 +123,25 @@ stack script --resolver lts-22.28 --package free test.hs
           so you can specify the instance context yourself
 ```
 
-standalone deriving（`StandaloneDeriving`）が要るため、本文では使わず、木の中身は
-`toList` で走査して確認する方式にした（16-PLAN.md の決定事項 6：`DeriveFunctor` 以外の
-言語拡張は出さない）。
+standalone deriving（`StandaloneDeriving`）が要るため、本文では使わない。ただし
+`f` を固定すれば条件が決まるので、`instance Show a => Show (Tree a)`（`type Tree = Free Two`）
+のように手で書ける。葉を値、枝を括弧（`Free []` では角括弧）で表示するので、
+葉を並べるだけの `toList` と違い、木の形がそのまま見える。
+
+## 言語拡張の基準（GHC2021）
+
+本文・検証コードとも **GHC2021 を基準にして pragma を書かない**。GHC 9.2 以降の既定。
+Haskell2010 で必要になる拡張は、本文の該当箇所に `:::message` で補足してある。
+
+`runghc -XHaskell2010` で全ファイルを確認した結果（`free` パッケージを使う
+`Pkg.hs`・`test.hs` は `stack script` で別途確認）。
+
+|拡張|要求するファイル|該当する本文の箇所|
+|---|---|---|
+|`FlexibleInstances`|`Free.hs`・`Rose.hs`・`Ex1.hs`|「動かす」節の `instance Show`。`Free Two a` は `Two` が型変数でないため。`TypeSynonymInstances`（`type Tree = Free Two` を `instance` の頭に書く分）も含意される|
+|`DeriveFunctor`|`Gen.hs`・`GenIO.hs`・`Teletype.hs`・`Pkg.hs`|「Functor インスタンス」節の `deriving Functor`|
+
+他のファイル（`Slow.hs`・`Manual.hs`・`TupleTwo.hs`）は Haskell2010 でも通る。
 
 ## `free` パッケージとの差分
 

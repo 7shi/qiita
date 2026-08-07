@@ -1,5 +1,4 @@
 -- 本文「手順書を組み立てる」「インタプリタ」の掲載コード
-{-# LANGUAGE DeriveFunctor #-}
 import Control.Monad (liftM, ap)
 
 data Free f a = Pure a | Free (f (Free f a))

@@ -4,7 +4,7 @@
 
 |ファイル|内容|
 |---|---|
-|`Teletype.hs`|`deriving Functor` 版。【問3】のスマートコンストラクタと【問4】の `runPure`|
+|`Teletype.hs`|`deriving Functor` 版。【問3】のスマートコンストラクタと【問4】の `runPure`（`Free` の定義を先頭に補ってある）|
 |`Manual.hs`|`instance Functor TeletypeF` を手書きした版|
 
 ## 実行結果

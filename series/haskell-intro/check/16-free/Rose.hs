@@ -16,13 +16,13 @@ instance Functor f => Monad (Free f) where
 
 type Rose = Free []
 
-toList :: Rose a -> [a]
-toList (Pure a)  = [a]
-toList (Free ts) = concatMap toList ts
+instance Show a => Show (Rose a) where
+    show (Pure a)  = show a
+    show (Free ts) = "[" ++ unwords (map show ts) ++ "]"
 
 grow x = Free [Pure x, Pure (x * 10)]
 
 main = do
     let r = Free [Pure 1, Free [Pure 2, Pure 3]]
-    print $ toList r
-    print $ toList $ r >>= grow
+    print r
+    print $ r >>= grow

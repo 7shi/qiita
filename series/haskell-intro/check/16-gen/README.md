@@ -4,7 +4,7 @@
 
 |ファイル|内容|
 |---|---|
-|`Gen.hs`|本文の掲載コード。`GenF`・`liftF`・`yield`・`toList`|
+|`Gen.hs`|本文の掲載コード（`Free` の定義を先頭に補って連結）。`GenF`・`liftF`・`yield`・`toList`|
 |`GenIO.hs`|【問2】`IO` 版インタプリタ|
 |`Slow.hs`|左結合の `>>=` が遅くなることの確認（本文には載せない）|
 

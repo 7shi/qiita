@@ -1,4 +1,3 @@
-{-# LANGUAGE DeriveFunctor #-}
 import Control.Monad (liftM, ap)
 
 data Free f a = Pure a | Free (f (Free f a))

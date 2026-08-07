@@ -2,7 +2,11 @@
 import Control.Monad (liftM, ap)
 
 -- 15 回の Tree
-data Tree a = Leaf a | Node (Tree a) (Tree a) deriving Show
+data Tree a = Leaf a | Node (Tree a) (Tree a)
+
+instance Show a => Show (Tree a) where
+    show (Leaf a)   = show a
+    show (Node l r) = "(" ++ show l ++ " " ++ show r ++ ")"
 
 instance Functor Tree where
     fmap  = liftM
@@ -37,19 +41,19 @@ instance Functor f => Monad (Free f) where
     Pure a >>= k = k a
     Free g >>= k = Free (fmap (>>= k) g)
 
+-- 本文「動かす」節の Show（type Tree = Free Two を使わない形）
+instance Show a => Show (Free Two a) where
+    show (Pure a)         = show a
+    show (Free (Two l r)) = "(" ++ show l ++ " " ++ show r ++ ")"
+
 grow' :: Int -> Free Two Int
 grow' x = Free (Two (Pure x) (Pure (x * 10)))
-
--- Free Two を Tree に写して見比べる
-toTree :: Free Two a -> Tree a
-toTree (Pure a)         = Leaf a
-toTree (Free (Two l r)) = Node (toTree l) (toTree r)
 
 main :: IO ()
 main = do
     let t  = Node (Leaf 1) (Leaf 2)
         t' = Free (Two (Pure 1) (Pure 2))
     print $ t  >>= grow
-    print $ toTree $ t' >>= grow'
+    print $ t' >>= grow'
     print $ fmap (* 2) t
-    print $ toTree $ fmap (* 2) t'
+    print $ fmap (* 2) t'

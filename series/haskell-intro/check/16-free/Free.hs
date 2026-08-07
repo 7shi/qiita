@@ -21,20 +21,20 @@ instance Functor Two where
 
 type Tree = Free Two
 
+instance Show a => Show (Tree a) where
+    show (Pure a)         = show a
+    show (Free (Two l r)) = "(" ++ show l ++ " " ++ show r ++ ")"
+
 leaf :: a -> Tree a
 leaf = Pure
 
 node :: Tree a -> Tree a -> Tree a
 node l r = Free (Two l r)
 
-toList :: Tree a -> [a]
-toList (Pure a)         = [a]
-toList (Free (Two l r)) = toList l ++ toList r
-
 grow x = node (leaf x) (leaf (x * 10))
 
 main = do
     let t = node (leaf 1) (leaf 2)
-    print $ toList t
-    print $ toList $ fmap (* 2) t
-    print $ toList $ t >>= grow
+    print t
+    print $ fmap (* 2) t
+    print $ t >>= grow

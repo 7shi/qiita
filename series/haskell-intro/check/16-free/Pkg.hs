@@ -1,4 +1,3 @@
-{-# LANGUAGE DeriveFunctor #-}
 import Control.Monad.Free
 
 data GenF o next = Yield o next deriving Functor
