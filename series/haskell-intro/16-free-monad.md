@@ -107,7 +107,7 @@ data Tree a = Leaf a | Node (Two (Tree a))
 data Rose a = Leaf a | Node [Rose a]
 ```
 
-`[Rose a]` は `[]` に `Rose a` を入れた形で、`Two (Tree a)` と同じ構造です。リストだけは `[] (Rose a)` とは書けない決まりなので見た目が揃いませんが、やっていることは同じです。
+`[Rose a]` は `[]` に `Rose a` を入れた形で、`Two (Tree a)` と同じ構造です。リストだけは `[] (Rose a)` とは書けないので見た目が揃いませんが、やっていることは同じです。
 
 違いは `Two` と `[]` だけになりました。抜き出した「枝の形」を型引数 `f` にして、木を定義し直します。
 
@@ -345,11 +345,18 @@ instance Functor (GenF o) where
     fmap f (Yield o next) = Yield o (f next)
 ```
 
-`fmap` が触るのは `next` だけです。出力する値 `o` は型引数の位置が違うので、そのまま残ります。
+`fmap` が触るのは `next` だけです。出力する値 `o` は型引数の位置が違うので、そのまま残ります。`instance` に指定したのが `(GenF o)` になっているのがその理由です。`Functor` にできるのは種が `* -> *` の型だけで、`GenF` は種が 1 つ多いため、そのままではインスタンスにできません。
 
-この実装は型の構造から機械的に決まります。「続きの位置に関数を適用する」以外に書きようがないからです。`deriving` が使えるのは型の構造から機械的に実装が決まるものだけでした。👉[型クラス](https://zenn.dev/7shi/articles/20260805-haskell-type-classes#deriving)
+```text:GHCi
+ghci> :k GenF
+GenF :: * -> * -> *
+ghci> :k GenF Int
+GenF Int :: * -> *
+```
 
-`Functor` はまさにそれに当てはまるため、`deriving` に書けます。
+`o` を埋めて `* -> *` に揃えると、残る型引数は最後の `next` だけになります。同じことは標準の型でも起きていて、`Either e a` のインスタンスは `Functor (Either e)` なので、`fmap` は `Right` 側にしか効きません。
+
+つまり `Functor` にしたい対象を最後の型引数に置くよう、`GenF o next` の順序を決めてあるということです。作用する対象がこうして型から機械的に決まるため、`Functor` には `deriving` が使えます。👉[型クラス](https://zenn.dev/7shi/articles/20260805-haskell-type-classes#deriving)
 
 ```hs
 data GenF o next = Yield o next deriving Functor
@@ -374,7 +381,17 @@ liftF :: Functor f => f a -> Free f a
 liftF c = Free (fmap Pure c)
 ```
 
-命令 `c` の続きの位置には、まだ `Free` ではない値が入っています。それを `fmap Pure` で `Pure` に包み、全体を `Free` で 1 段の木にします。「この命令 1 つを実行して終わり」という手順書ができます。
+`c = Yield 1 ()` としたときの変化を追います。
+
+```hs
+c                  = Yield 1 ()
+fmap Pure c        = Yield 1 (Pure ())
+Free (fmap Pure c) = Free (Yield 1 (Pure ()))
+```
+
+続きの位置にあった `()` が葉 `Pure ()` に変わり、それを `Free` で包んで木になりました。「1 を出して終わり」という 1 命令の手順書です。
+
+`Pure` で包みたい値は命令の中にあるので、直接は適用できません。そのために `fmap` で中まで届かせています。`Free` が受け取れるのは続きの位置に木が入った命令だけなので、先にその形へ整えてから被せる、という順序です。
 
 これを使って、コンストラクターを直接使う代わりの窓口となる関数を用意します。このように使いやすい形に整えて公開する関数を**スマートコンストラクター**と呼びます。
 
@@ -385,7 +402,7 @@ yield :: o -> Gen o ()
 yield x = liftF (Yield x ())
 ```
 
-`Yield x ()` の `()` は続きの位置に置いた仮の値です。`liftF` がこれを `Pure ()` に変えるので、`yield x` は「`x` を出して終わり」という 1 命令の手順書になります。`Gen o ()` の `()` は、`do` で `<-` しても意味のある値は返らないことを表しています。
+`Yield x ()` の `()` は続きの位置に置いた仮の値です。`liftF` がこれを `Pure ()` に変えるので、`yield x` は「`x` を出して終わり」という 1 命令の手順書になります。
 
 ## 手順書を書く
 
@@ -399,13 +416,20 @@ count = do
     yield 3
 ```
 
-この `count` は何もしません。`do` で書いてあっても実行されるわけではなく、`count` の正体は次のデータです。
+この `count` は何もしません。`do` で書いてあっても実行されるわけではなく、正体はただのデータです。それを確かめるため、`Tree` のときと同じように `Show` インスタンスを書いて中身を覗きます。コンストラクターと同じ表記を出力する形にします。
 
 ```hs
+instance (Show o, Show a) => Show (Gen o a) where
+    show (Pure a)           = "Pure " ++ show a
+    show (Free (Yield o k)) = "Free (Yield " ++ show o ++ " (" ++ show k ++ "))"
+
+main = print count
+```
+```text:実行結果
 Free (Yield 1 (Free (Yield 2 (Free (Yield 3 (Pure ()))))))
 ```
 
-`>>=` が命令をつないだ結果、`Yield` が 3 つ数珠つなぎになり、最後が `Pure ()` で終わっています。手順書がそのまま木として組み上がっています。
+`>>=` が命令をつないだ結果、`Yield` が 3 つ数珠つなぎになり、最後が `Pure ()` で終わっています。`do` で書いた 3 行が、そのまま木として組み上がっていたということです。
 
 無限の手順書も組めます。組むだけなら終わらないということはありません。
 
@@ -433,19 +457,11 @@ toList (Free (Yield o k)) = o : toList k
 * `Pure _` は手順書の終わりなので、空リスト
 * `Free (Yield o k)` は「`o` を出して、続きは `k`」なので、`o` を先頭に付けて `k` を辿る
 
-この形は初めてではありません。木を表示するために書いた `Show` インスタンスも、`Pure` と `Free` で場合分けし、`Free` の中を辿って 1 つの値にまとめていました。
+これは `count` の中身を覗くために書いた `show` と同じパターンです。`Pure` と `Free` で場合分けし、`Free` の中を辿って 1 つの値にまとめています。違うのはまとめ方だけで、文字列を作れば表示、リストを作ればインタープリターになります。特別な仕組みではなく、木を辿る関数に意味づけを載せたものです。
 
-```hs
-show   (Pure a)           = show a                                 -- Free Two
-show   (Free (Two l r))   = "(" ++ show l ++ " " ++ show r ++ ")"
+## ジェネレーターの全体
 
-toList (Pure _)           = []                                     -- Gen o
-toList (Free (Yield o k)) = o : toList k
-```
-
-違うのは枝の形と、まとめ方だけです。インタープリターは特別な仕組みではなく、木を辿る関数に意味づけを載せたものです。
-
-`Free` の定義に続けて、ここまでを通すと次のようになります。
+ここまでのコードをまとめます。
 
 ```hs
 liftF :: Functor f => f a -> Free f a
@@ -486,7 +502,7 @@ Free (Yield 1 (Free (Yield 2 (Free (Yield 3 (Pure ()))))))
 [0,1,2,3,4]
 ```
 
-`count` をそのまま表示すると、コンストラクターがそのまま出てきます。`do` で書いた 3 行が、確かに `Yield` 3 つの木として組み上がっていたということです。手順書がデータである以上、こうして中身を覗けます。この `Show` インスタンスも `Pure` と `Free` を辿るだけなので、`toList` と同じ形をしています。
+1 行目が `count` の中身で、手順書がデータである以上、こうして覗けます。この `Show` インスタンスも `Pure` と `Free` を辿るだけなので、`toList` と同じ形をしています。
 
 無限の手順書 `nats` にも `take 5` が効いています。`toList` は先頭から必要な分だけ木を辿るので、遅延評価がそのまま働きます。
 
