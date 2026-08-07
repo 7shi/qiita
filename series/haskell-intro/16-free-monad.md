@@ -612,6 +612,37 @@ instance Functor TeletypeF where
 
 `PutLine` は続きに `f` を適用するだけですが、`GetLine` は続きが関数なので、その結果に `f` を適用する形、つまり関数合成 `f . k` になります。`DeriveFunctor` はここも機械的に導出してくれます。
 
+## 続きが関数のときの liftF
+
+`liftF` は続きの位置にある値を `Pure` で包む関数でした。`PutLine` は続きが値なので `Yield` と同じ扱いですが、`GetLine` の続きは関数なので、置くのは値ではなく関数になります。**そこに何を置くかで、その命令の結果が決まります。**
+
+型の別名を用意して、例を 1 つ作ります。
+
+```hs
+type Teletype = Free TeletypeF
+```
+
+「行を読んで、その長さを結果にする」という命令です。
+
+```hs
+getLength :: Teletype Int
+getLength = liftF (GetLine length)
+```
+
+`GetLine` の続きは `String -> next` でした。ここに `length :: String -> Int` を置いたので `next` が `Int` に決まり、`GetLine length :: TeletypeF Int` になります。`liftF :: f a -> Free f a` なので、`a` も `Int` になり、全体は `Teletype Int` です。
+
+`liftF c = Free (fmap Pure c)` と `fmap f (GetLine k) = GetLine (f . k)` から、変化を追います。
+
+```hs
+c                  = GetLine length
+fmap Pure c        = GetLine (Pure . length)
+Free (fmap Pure c) = Free (GetLine (\s -> Pure (length s)))
+```
+
+「文字列を受け取ったら、その長さを結果として終わる」という 1 命令の手順書になりました。`do` の中で `n <- getLength` と書けば、`n` は `Int` です。
+
+続きの位置に置いた関数が、そのまま「読み込んだ文字列から結果を作る関数」になっている、と読めます。`PutLine` で続きの位置に `()` を置くと結果が `()` になるのと同じことが、関数の戻り値の位置で起きています。
+
 ## 練習
 
 【問3】`TeletypeF` を使って、`putLine`・`getLine'` のスマートコンストラクターと、次の `greet` が書けるようにしてください。`getLine'` の名前に `'` が付いているのは、標準の `getLine` と衝突を避けるためです。
@@ -648,10 +679,18 @@ getLine' = liftF (GetLine id)
 
 `putLine` は `yield` と同じ形です。続きの位置に `()` を置いて `liftF` に渡します。
 
-`getLine'` の `id` が要点です。`liftF` は続きの位置にある値を `Pure` で包むので、`GetLine id` は `GetLine (\s -> s)` を経て `GetLine (\s -> Pure s)` になります。読み込んだ文字列がそのまま `do` の結果になる、という意味です。型が `Teletype String` になっているのはこのためで、`greet` では `name <- getLine'` で受け取れます。
+`getLine'` は `getLength` と同じ形です。続きの位置に置いた関数が結果を作るので、読み込んだ文字列をそのまま結果にしたければ、受け取った値をそのまま返す関数、つまり `id` を置きます。
+
+```hs
+c                  = GetLine id
+fmap Pure c        = GetLine (Pure . id)
+Free (fmap Pure c) = Free (GetLine (\s -> Pure s))
+```
+
+`GetLine id :: TeletypeF String` なので全体は `Teletype String` になり、`greet` では `name <- getLine'` で読み込んだ文字列を受け取れます。`getLength` の `length` を `id` に替えただけで、`Int` だった結果が `String` になった、と見ることもできます。
 :::
 
-【問4】【問3】の `greet` を `IO` を使わずに走らせる純粋インタープリター `runPure` を書いてください。入力をリストで与え、出力をリストで集めます。入力が尽きたら空文字列を返すことにします。
+【問4】問3の `greet` を `IO` を使わずに走らせる純粋インタープリター `runPure` を書いてください。入力をリストで与え、出力をリストで集めます。入力が尽きたら空文字列を返すことにします。
 
 ```hs
 runPure :: [String] -> Teletype a -> [String]
@@ -720,7 +759,7 @@ Free モナドはこれのモナド版です。`>>=` は命令をつなぐだけ
 
 # free パッケージ
 
-ここまで `Free` を自分で定義してきましたが、実用では [free](https://hackage.haskell.org/package/free) パッケージを使います。`Control.Monad.Free` の定義は、本記事で書いたものとコンストラクター名まで同じです。
+ここまで `Free` を自分で定義してきましたが、実用では [free](https://hackage.haskell.org/package/free) パッケージを使います。[`Control.Monad.Free`](https://hackage.haskell.org/package/free/docs/Control-Monad-Free.html) の定義は、本記事で書いたものとコンストラクター名まで同じです。
 
 ```hs
 data Free f a = Pure a | Free (f (Free f a))
@@ -825,7 +864,8 @@ Free モナドは、木の枝の形を型引数にくくり出したものでし
 
 作る側の手間も違います。モナドを 1 つ自作するには `>>=` を定義して 3 段を揃える必要がありましたが、Free モナドを使うなら命令の型を `Functor` にするだけです。ジェネレーターで書いたのも `data GenF o next = Yield o next deriving Functor` の 1 行で、`instance Monad` は書いていません。`>>=` の側は `Free f` が持っているので、命令の型を書けば、その分だけ新しいモナドが手に入ります。
 
-# 参考
+# 関連記事
 
-* [free](https://hackage.haskell.org/package/free) — Free モナドのパッケージ
-* [Control.Monad.Free](https://hackage.haskell.org/package/free/docs/Control-Monad-Free.html) — 本記事で書いた `Free` に対応するモジュール
+初期の Haskell についての記事です。テレタイプと同じような仕組みで `OS` を模倣する例があります。
+
+https://zenn.dev/7shi/articles/20260731-haskell-io-history
