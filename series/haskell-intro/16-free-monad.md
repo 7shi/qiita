@@ -18,7 +18,7 @@ tags:
   versions: []
 title: Haskell Freeモナド 超入門
 updated_at: ''
-url: ''
+url: 'https://zenn.dev/7shi/articles/20260808-haskell-free-monad'
 slide: false
 ---
 

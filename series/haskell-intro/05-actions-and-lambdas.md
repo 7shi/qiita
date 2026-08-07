@@ -11,7 +11,7 @@ tags:
 - name: Haskell
   versions: []
 title: Haskell アクションとラムダ 超入門
-updated_at: '2026-08-07T03:40:59+09:00'
+updated_at: '2026-08-08T06:17:04+09:00'
 url: https://qiita.com/7shi/items/4a8a2807bb5186576c61
 slide: false
 ---
@@ -35,7 +35,7 @@ Haskellの`do`ブロックの中はbindで結ばれています。アクショ�
 1. [Haskell 継続モナド 超入門](https://zenn.dev/7shi/articles/20260803-haskell-continuation-monad)
 1. [Haskell 型クラス 超入門](https://zenn.dev/7shi/articles/20260805-haskell-type-classes)
 1. [Haskell モナドとゆかいな仲間たち](https://zenn.dev/7shi/articles/20260807-haskell-monads-and-friends)
-1. 【予定】Haskell Freeモナド 超入門
+1. [Haskell Freeモナド 超入門](https://zenn.dev/7shi/articles/20260808-haskell-free-monad)
 1. 【予定】Haskell Operationalモナド 超入門
 1. 【予定】Haskell Effモナド 超入門
 1. 【予定】Haskell アロー 超入門

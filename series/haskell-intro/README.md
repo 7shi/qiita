@@ -27,7 +27,7 @@
 13. [Haskell 継続モナド 超入門](13-continuation-monad.md)（Zenn で公開）
 14. [Haskell 型クラス 超入門](14-type-classes.md)（Zenn で公開）
 15. [Haskell モナドとゆかいな仲間たち](15-monads-and-friends.md)（Zenn で公開）
-16. [Haskell Freeモナド 超入門](16-free-monad.md)（Zenn で公開予定）
+16. [Haskell Freeモナド 超入門](16-free-monad.md)（Zenn で公開）
 
 各回の導入文（前書き）は [PREFACES.md](PREFACES.md) にまとめてある。新しい回を書くときの文体合わせに使う。
 
