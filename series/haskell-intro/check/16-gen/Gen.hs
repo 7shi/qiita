@@ -21,6 +21,10 @@ data GenF o next = Yield o next deriving Functor
 
 type Gen o = Free (GenF o)
 
+instance (Show o, Show a) => Show (Gen o a) where
+    show (Pure a)           = "Pure " ++ show a
+    show (Free (Yield o k)) = "Free (Yield " ++ show o ++ " (" ++ show k ++ "))"
+
 yield :: o -> Gen o ()
 yield x = liftF (Yield x ())
 
@@ -30,9 +34,6 @@ count = do
     yield 2
     yield 3
 
-count' :: Gen Int ()
-count' = Free (Yield 1 (Free (Yield 2 (Free (Yield 3 (Pure ()))))))
-
 nats :: Gen Int ()
 nats = mapM_ yield [0 ..]
 
@@ -41,6 +42,6 @@ toList (Pure _)           = []
 toList (Free (Yield o k)) = o : toList k
 
 main = do
+    print count
     print $ toList count
-    print $ toList count'
     print $ take 5 $ toList nats
