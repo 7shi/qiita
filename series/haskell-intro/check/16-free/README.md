@@ -7,6 +7,7 @@
 |`Free.hs`|本文の掲載コード。自作 `Free` と `Free Two`（二分木）|`runghc Free.hs`|
 |`Rose.hs`|`Free []`（多分岐の木）|`runghc Rose.hs`|
 |`Ex1.hs`|【問1】自作 `Tree` と `Free Two` の結果が一致することの確認|`runghc Ex1.hs`|
+|`TupleTwo.hs`|`Two` をタプルの型シノニムで代用できないことの確認（**コンパイルエラーになるのが期待結果**）|`runghc TupleTwo.hs`|
 |`Pkg.hs`|`free` パッケージ版（`foldFree`・`iterM`）|下記 stack|
 |`test.hs`|`free` パッケージの最初の動作確認（`Free Two` で木を組む）|下記 stack|
 
@@ -60,6 +61,33 @@ Free Two :: * -> *
 ghci> :k Free Two Int
 Free Two Int :: *
 ```
+
+## `Two` をタプルで代用できないこと
+
+本文「種」節の `:::message`（`Two` はタプルで済ませられそうにも見えますが〜）の裏取り。
+`TupleTwo.hs` の結果。
+
+```text:エラー内容
+    • The type synonym ‘Two’ should have 1 argument, but has been given none
+    • In the type synonym declaration for ‘Tree’
+```
+
+`Free Two a` は `Two` を未適用のまま渡すが、型シノニムは常に適用しきる必要があるため通らない。
+
+タプルの型構築子 `(,)` を直接使う場合は種が合わない。
+
+```text:GHCi
+ghci> :k (,)
+(,) :: * -> * -> *
+ghci> :k (,) Int
+(,) Int :: * -> *
+ghci> fmap (+1) (1,2)
+(1,3)
+```
+
+`* -> *` にするには片方を固定するしかなく、その `Functor` は右側だけに作用する
+（`fmap (+1) (1,2)` が `(1,3)` になる）。枝の中のすべての木に `fmap` が届かないので、
+木の枝としては使えない。
 
 ## `free` パッケージを使うファイルの実行方法
 
