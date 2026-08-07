@@ -1,0 +1,460 @@
+---
+coediting: false
+comments_count: 0
+created_at: '2026-08-08T00:00:00+09:00'
+id: ''
+likes_count: 0
+private: false
+reactions_count: 0
+stocks_count: 0
+tags:
+- name: Haskell
+  versions: []
+- name: モナド
+  versions: []
+- name: Operationalモナド
+  versions: []
+- name: DSL
+  versions: []
+title: Haskell Operationalモナド 超入門
+updated_at: ''
+url: ''
+slide: false
+---
+
+Haskell ではモナドと呼ばれる部品を組み合わせてプログラムを作ります。**Operational モナド**は、前回の Free モナドと同じく命令をデータとしてつなぐモナドですが、続きを命令の型ではなく `>>=` の側が持つ形にすることで、`Functor` インスタンスなしで手順書を組み立てられるようにしたものです。Free モナドとの差分を追いながら、同じ題材を書き直す形で説明します。
+
+:::message
+本記事の執筆には GitHub Copilot CLI (Kimi K3) を利用しました。
+:::
+
+シリーズの記事です。
+
+1. [Haskell 超入門](http://qiita.com/7shi/items/145f1234f8ec2af923ef)
+1. [Haskell 代数的データ型 超入門](http://qiita.com/7shi/items/1ce76bde464b4a55c143)
+1. [Haskell アクション 超入門](http://qiita.com/7shi/items/85afd7bbd5d6c4115ad6)
+1. [Haskell ラムダ 超入門](http://qiita.com/7shi/items/1345bf32003faff435cb)
+1. [Haskell アクションとラムダ 超入門](http://qiita.com/7shi/items/4a8a2807bb5186576c61)
+1. [Haskell IOモナド 超入門](http://qiita.com/7shi/items/d3d3492ddd90d47160f2)
+1. [Haskell リストモナド 超入門](http://qiita.com/7shi/items/deb19c4cba933590ffbf)
+1. [Haskell Maybeモナド 超入門](http://qiita.com/7shi/items/c7d7eec066af0fe0688d)
+1. [Haskell 状態系モナド 超入門](http://qiita.com/7shi/items/2e9bff5d88302de1a9e9)
+1. [Haskell モナド変換子 超入門](http://qiita.com/7shi/items/4408b76624067c17e933)
+1. [Haskell 例外処理 超入門](http://qiita.com/7shi/items/73e534c47bbebc71b37e)
+1. [Haskell 構文解析 超入門](http://qiita.com/7shi/items/b8c741e78a96ea2c10fe)
+1. [Haskell 継続モナド 超入門](https://zenn.dev/7shi/articles/20260803-haskell-continuation-monad)
+1. [Haskell 型クラス 超入門](https://zenn.dev/7shi/articles/20260805-haskell-type-classes)
+1. [Haskell モナドとゆかいな仲間たち](https://zenn.dev/7shi/articles/20260807-haskell-monads-and-friends)
+1. [Haskell Freeモナド 超入門](https://zenn.dev/7shi/articles/20260808-haskell-free-monad)
+1. **Haskell Operationalモナド 超入門** ← この記事
+1. 【予定】Haskell Effモナド 超入門
+1. 【予定】Haskell アロー 超入門
+
+# Free モナドの復習
+
+前回は、命令を並べた手順書をデータとして組み立て、後からインタープリターで解釈するという枠組みを、Free モナドで実現しました。👉[Freeモナド](https://zenn.dev/7shi/articles/20260808-haskell-free-monad)
+
+復習します。Free モナドは葉と枝からなる木構造で、枝の形を型引数にくくり出したものです。
+
+```hs
+data Free f a = Pure a | Free (f (Free f a))
+```
+
+命令の型は、続きを `next` という型引数で受け取ります。ジェネレーターの命令なら次の 1 行です。
+
+```hs
+data GenF o next = Yield o next deriving Functor
+```
+
+`Yield` は出力する値と続きを持ちます。`>>=` が枝の中の続きを `fmap` で辿るので、命令の型に `Functor` インスタンスが必要でした。
+
+```hs
+instance Functor f => Monad (Free f) where
+    Pure a >>= k = k a
+    Free g >>= k = Free (fmap (>>= k) g)
+```
+
+入出力を伴う命令では、続きが関数になりました。👉[Freeモナド](https://zenn.dev/7shi/articles/20260808-haskell-free-monad#%E3%83%86%E3%83%AC%E3%82%BF%E3%82%A4%E3%83%97)
+
+```hs
+data TeletypeF next
+    = PutLine String next
+    | GetLine (String -> next)
+
+instance Functor TeletypeF where
+    fmap f (PutLine s next) = PutLine s (f next)
+    fmap f (GetLine k)      = GetLine (f . k)
+```
+
+`GetLine` は読み込んだ文字列が決まらないと続きが決まらないので、続きが `String -> next` という関数です。`fmap` も関数合成 `f . k` になり、少し込み入っていました。
+
+命令の型を作るたびに `Functor` インスタンスが要ること、続きが関数になる命令ではその捌き方まで考えないといけないことが、Free モナドの手間でした。今回はこの 2 つを同時に解消します。
+
+# 続きを外に出す
+
+発想は単純です。続きを命令の型から外してしまいます。
+
+続きがどこにも書かれていない命令は、それだけでは手順書になりません。そこで「命令と、その結果を受け取って続きを返す関数」の組を、手順書の型の側に持たせます。この形を **Operational モナド**と呼びます。
+
+```hs
+data Program instr a where
+    Return :: a -> Program instr a
+    (:>>=) :: instr b -> (b -> Program instr a) -> Program instr a
+```
+
+見慣れない書き方ですが、各コンストラクターが自分の戻り値の型を宣言しているだけです。この宣言方法は次の節で説明します。
+
+- `Return` は結果の値を受け取って手順書を終えます。`Pure` に相当します。
+- `:>>=` は命令 `instr b` と、命令の結果 `b` を受け取って続きの手順書 `Program instr a` を返す関数の組です。
+
+命令の結果の型 `b` は、手順書全体の型 `a` には現れません。途中の命令が何を返すかは、外からは見えないようになっています。命令の型 `instr` は `* -> *` の種を持つ型引数で、前回の `Free` の `f` と同じ位置づけです。👉[Freeモナド](https://zenn.dev/7shi/articles/20260808-haskell-free-monad#%E7%A8%AE)
+
+この型に 3 段を揃えます。`Functor`・`Applicative` は定型です。👉[モナドとゆかいな仲間たち](https://zenn.dev/7shi/articles/20260807-haskell-monads-and-friends#3-%E6%AE%B5%E3%81%BE%E3%81%A8%E3%82%81%E3%81%A6%E6%9B%B8%E3%81%8F%E5%AE%9A%E5%9E%8B)
+
+```hs
+import Control.Monad (liftM, ap)
+
+instance Functor (Program instr) where
+    fmap = liftM
+
+instance Applicative (Program instr) where
+    pure  = Return
+    (<*>) = ap
+```
+
+前回と違って、`instance` に `Functor instr =>` という制約が付いていません。要点は `Monad` の方です。
+
+```hs
+instance Monad (Program instr) where
+    Return a   >>= k = k a
+    (i :>>= j) >>= k = i :>>= (\b -> j b >>= k)
+```
+
+`Return` の行は Free と同じです。`:>>=` の行を読み解きます。「命令 `i` の結果を `j` に渡して得られた手順書に、さらに `k` を続ける」のを、「命令 `i` の結果を、『`j` に渡してさらに `k` を続ける関数』に渡す」に書き換えています。続きの関数を合成しているだけです。
+
+Free の `>>=` と並べます。
+
+```hs
+Free g     >>= k = Free (fmap (>>= k) g)      -- Free
+(i :>>= j) >>= k = i :>>= (\b -> j b >>= k)   -- Program
+```
+
+Free は枝の中に続きがあるので `fmap` で辿る必要がありました。Program は続きが最初から関数の中にあるので、辿る対象がありません。`fmap` が消え、命令の型への `Functor` 要求がなくなりました。
+
+「結果を受け取って続きを返す関数」を持ち回るのは、継続渡しスタイルと同じ形です。👉[継続モナド](https://zenn.dev/7shi/articles/20260803-haskell-continuation-monad#bind-%E3%81%A8-cps)
+
+命令 1 つだけの手順書を作る関数も用意します。Free の `liftF` に相当します。
+
+```hs
+singleton :: instr a -> Program instr a
+singleton i = i :>>= Return
+```
+
+「命令を実行して、その結果をそのまま手順書の結果として終わる」という形です。`liftF` のように `fmap` で続きを書き換える必要がない分、素直な定義になっています。
+
+# GADTs で命令を並べる
+
+命令の型を作ります。テレタイプを例にします。今度は続きを持たないので、まず普通の `data` で書いてみます。
+
+```hs
+data TeletypeI a
+    = PutLine String
+    | GetLine
+```
+
+これでは困ります。型引数 `a` がどのコンストラクターにも現れないので、`PutLine` の結果が `()` で `GetLine` の結果が `String` だという情報を、型に書き込めません。
+
+そこで、先ほど `Program` で使ったのと同じ、コンストラクターごとに戻り値の型を宣言する書き方を使います。
+
+```hs
+data TeletypeI a where
+    PutLine :: String -> TeletypeI ()
+    GetLine :: TeletypeI String
+```
+
+この宣言方法を **GADT**（Generalized Algebraic Data Type、一般化代数的データ型）と呼びます。各コンストラクターが、型引数に何が入るかを自分で決められるので、`GetLine` の結果が `String` であることを直接宣言できます。
+
+前回は「続きが値の命令では置いた値が結果になり、続きが関数の命令では置いた関数の戻り値が結果になる」という対応を、スマートコンストラクターの中で自分で作っていました。👉[Freeモナド](https://zenn.dev/7shi/articles/20260808-haskell-free-monad#%E3%82%B9%E3%83%9E%E3%83%BC%E3%83%88%E3%82%B3%E3%83%B3%E3%82%B9%E3%83%88%E3%83%A9%E3%82%AF%E3%82%BF%E3%83%BC) 今度はその対応が、命令の型の宣言そのものになっています。
+
+GADT 構文を使うには言語拡張が必要で、ファイルの先頭にプラグマを書きます。
+
+```hs
+{-# LANGUAGE GADTs #-}
+```
+
+これまでのコードは GHC2021 という既定の拡張セットだけで動いていましたが、GADTs はそこに含まれていません。前回の `DeriveFunctor` は「手書きでも書けるものを楽にする」便利のための拡張でしたが、GADTs は「それがないと表現できない型」を可能にする拡張です。書かなくて済むものではないので、明示が要ります。GHC への拡張の指定方法自体は以前に使いました。👉[状態系モナド](http://qiita.com/7shi/items/2e9bff5d88302de1a9e9)
+
+スマートコンストラクターは `singleton` を使って書きます。
+
+```hs
+type Teletype = Program TeletypeI
+
+putLine :: String -> Teletype ()
+putLine s = singleton (PutLine s)
+
+getLine' :: Teletype String
+getLine' = singleton GetLine
+```
+
+前回の `getLine'` は `liftF (GetLine id)` と、続きの位置に関数 `id` を置く必要がありました。命令の結果の型が宣言されている今度は、単に `singleton GetLine` で `Teletype String` になります。
+
+これで `do` が使えます。前回と同じ手順書です。
+
+```hs
+greet :: Teletype ()
+greet = do
+    putLine "name?"
+    name <- getLine'
+    putLine ("Hello, " ++ name ++ "!")
+```
+
+# インタープリター
+
+ジェネレーターの方も、命令の型を作り直しておきます。
+
+```hs
+data GenI o a where
+    Yield :: o -> GenI o ()
+
+type Gen o = Program (GenI o)
+
+yield :: o -> Gen o ()
+yield x = singleton (Yield x)
+```
+
+インタープリターは手順書を 1 段ずつ剥がして辿ります。前回と同じ形です。👉[Freeモナド](https://zenn.dev/7shi/articles/20260808-haskell-free-monad#%E3%82%A4%E3%83%B3%E3%82%BF%E3%83%BC%E3%83%97%E3%83%AA%E3%82%BF%E3%83%BC)
+
+```hs
+toList :: Gen o a -> [o]
+toList (Return _)       = []
+toList (Yield o :>>= k) = o : toList (k ())
+```
+
+`Yield` の中身は出力する値だけになりました。続きは `:>>=` の右側の関数に入っているので、`k ()` を評価して続きの手順書を得ます。
+
+```hs
+count :: Gen Int ()
+count = do
+    yield 1
+    yield 2
+    yield 3
+
+nats :: Gen Int ()
+nats = mapM_ yield [0 ..]
+
+main = do
+    print $ toList count
+    print $ take 5 $ toList nats
+```
+```text:実行結果
+[1,2,3]
+[0,1,2,3,4]
+```
+
+テレタイプのインタープリターも、前回と同じ骨組みで書けます。入力をリストで与え、出力をリストで集めます。入力が尽きたら空文字列を返します。
+
+```hs
+runPure :: [String] -> Teletype a -> [String]
+runPure _        (Return _)         = []
+runPure ins      (PutLine s :>>= k) = s : runPure ins (k ())
+runPure []       (GetLine :>>= k)   = runPure [] (k "")
+runPure (i : is) (GetLine :>>= k)   = runPure is (k i)
+```
+
+`GetLine` の続きは、型の中の関数ではなく `:>>=` の右側に来ました。`k i` で続きを得る点は同じですが、命令の型の側で関数を捌く必要はもうありません。
+
+本物の `IO` で走らせるインタープリターも同様です。
+
+```hs
+runIO :: Teletype a -> IO ()
+runIO (Return _)         = return ()
+runIO (PutLine s :>>= k) = putStrLn s >> runIO (k ())
+runIO (GetLine :>>= k)   = getLine >>= runIO . k
+```
+
+```hs
+main = do
+    mapM_ putStrLn $ runPure ["Haskell"] greet
+    mapM_ putStrLn $ runPure ["世界"] greet
+```
+```text:実行結果
+name?
+Hello, Haskell!
+name?
+Hello, 世界!
+```
+
+手順書の表現を差し替えても、インタープリターの書き方は変わりませんでした。組み立てと解釈の分離という枠組みは、そのまま残っています。
+
+## 練習
+
+【問1】前回の練習で作ったスタックマシンを、Operational 流に書き直します。整数のスタックを操作する命令の型 `StackI` と、スマートコンストラクター `push`・`pop` を定義してください。`push` は値を 1 つ積む命令、`pop` は 1 つ取り出す命令です。次の `calc` が書けることが目標です。
+
+```hs
+-- ここに StackI を定義する
+
+type Stack = Program StackI
+
+push :: Int -> Stack ()
+push = undefined  -- ここを書く
+
+pop :: Stack Int
+pop = undefined  -- ここを書く
+
+calc :: Stack Int
+calc = do
+    push 3
+    push 4
+    a <- pop
+    b <- pop
+    push (a + b)
+    pop
+```
+
+:::details 解答例
+```hs
+data StackI a where
+    Push :: Int -> StackI ()
+    Pop :: StackI Int
+
+push :: Int -> Stack ()
+push n = singleton (Push n)
+
+pop :: Stack Int
+pop = singleton Pop
+```
+
+前回は `Pop` の続きが `Int -> next` という関数で、`deriving Functor` が要りました。今度は `Pop :: StackI Int` と、取り出した値の型を宣言するだけです。`Functor` インスタンスはまるごと不要になりました。
+
+`calc` は 3 と 4 を積み、2 つ取り出して足し、積み直して、最後に取り出しています。
+:::
+
+【問2】問1の `calc` を走らせるインタープリター `runStack` を書いてください。第 1 引数が初期スタックです。`Pop` でスタックが空だったときは 0 を返すことにします。
+
+```hs
+runStack :: [Int] -> Stack a -> a
+runStack = undefined  -- ここを書く
+
+main = print $ runStack [] calc
+```
+```text:実行結果
+7
+```
+
+:::details 解答例
+```hs
+runStack :: [Int] -> Stack a -> a
+runStack _        (Return a)      = a
+runStack st       (Push n :>>= k) = runStack (n : st) (k ())
+runStack []       (Pop :>>= k)    = runStack [] (k 0)
+runStack (x : xs) (Pop :>>= k)    = runStack xs (k x)
+```
+
+前回の解答と見比べると、違いは続きのありかだけです。`Push n k` の `k` が手順書そのものだったのに対し、`Push n :>>= k` の `k` は「結果を受け取って手順書を返す関数」なので、`k ()` と適用してから辿ります。
+
+スタックという状態は手順書の側には現れません。状態を持つのはインタープリターの引数だけ、という点も前回のままです。
+:::
+
+# 「Operational」とは何か
+
+名前の由来を説明します。
+
+計算の意味を、実行する操作（命令）の並びとして記述する手法を、操作的意味論（operational semantics）と呼びます。命令の型を並べて手順書を組み立て、意味はインタープリターが与えるという今回の方式は、まさにこの発想です。`operational` パッケージの作者である Heinrich Apfelmus が、The Monad.Reader 誌のチュートリアル記事（2010 年）でこの方式を紹介しています。
+
+同じエンコーディングは **Freer モナド**とも呼ばれます。Free が「モナド則だけを満たす自由な構造」だったのに対し、Freer は `Functor` インスタンスすら要求しない、より自由な構造、という命名です。👉[Freeモナド](https://zenn.dev/7shi/articles/20260808-haskell-free-monad#%E8%87%AA%E7%94%B1%E3%81%A8%E3%81%AF%E4%BD%95%E3%81%8B) Kiselyov と Ishii による 2015 年の論文で、拡張可能なエフェクト（extensible effects）の土台として使われました。Eff 系のライブラリはこの名前を使っているので、資料によっては Freer という呼び名で出てきます。
+
+# operational パッケージ
+
+ここまで `Program` を自分で定義してきましたが、実際には [operational](https://hackage.haskell.org/package/operational) パッケージを使います。[`Control.Monad.Operational`](https://hackage.haskell.org/package/operational/docs/Control-Monad-Operational.html) の `Program` は、本記事で書いたものと同じ構造です。
+
+ただしコンストラクターは公開されていません。代わりに、手順書を 1 段だけ剥がす関数 `view` が用意されています。
+
+```hs
+view :: Program instr a -> ProgramView instr a
+
+data ProgramView instr a where
+    Return :: a -> ProgramView instr a
+    (:>>=) :: instr b -> (b -> Program instr a) -> ProgramView instr a
+```
+
+`ProgramView` のコンストラクターは `Program` と同じ名前・同じ形ですが、こちらはパターンマッチに使えます。`view` を挟めば、あとは今までどおりインタープリターが書けます。
+
+```hs
+run :: Teletype a -> IO a
+run p = case view p of
+    Return a         -> return a
+    PutLine s :>>= k -> putStrLn s >> run (k ())
+    GetLine :>>= k   -> getLine >>= run . k
+```
+
+命令を 1 つずつ別のモナドへ変換する `interpretWithMonad` も用意されています。free パッケージの `foldFree` に相当します。👉[Freeモナド](https://zenn.dev/7shi/articles/20260808-haskell-free-monad#free-%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8)
+
+```hs
+import Control.Monad.Operational
+
+interp :: TeletypeI a -> IO a
+interp (PutLine s) = putStrLn s
+interp GetLine     = getLine
+
+main = do
+    run greet
+    interpretWithMonad interp greet
+```
+```text:実行結果（標準入力: alice、carol）
+name?
+Hello, alice!
+name?
+Hello, carol!
+```
+
+:::message
+`operational` は GHC に同梱されていないため、実行には導入が必要です。[Stack](https://docs.haskellstack.org/) を使う場合は次のように起動できます。
+
+```
+stack script --resolver lts-22.28 --package operational ファイル名.hs
+```
+:::
+
+パッケージ自体を実務で使う機会は多くありません。このエンコーディングの実用面での価値は、Eff 系のエフェクトライブラリの土台になっていることにあります。
+
+## 性能の注意
+
+`>>=` を左結合で重ねると遅くなるのは、Free と同じです。
+
+```hs
+((yield 1 >> yield 2) >> yield 3) >> yield 4
+```
+
+`:>>=` の行は左側の構造を 1 段剥がして続きを付け替えるので、左に積み上がっていると、後ろに 1 つ足すたびに先頭から辿り直すことになります。実測でも、左結合では要素数を 2 倍にすると時間が約 4 倍になる、二乗のオーダーが確認できました。`do` で素直に並べれば右結合になるので、通常は問題になりません。
+
+# Free と Operational の使い分け
+
+同じ「命令を組み立てて後から解釈する」枠組みの、2 つの表現です。
+
+| |Free|Operational|
+|---|---|---|
+|続きのありか|命令の型の中（`next`）|`>>=` の側（関数）|
+|命令の型への要求|`Functor` インスタンス|なし（GADT で戻り値の型を宣言）|
+|必要な言語拡張|なし|GADTs|
+|中身の検査|続きが値なら辿れる|インタープリターを通す以外に方法がない|
+
+最後の行を説明します。Operational では、続きが常に関数の中にあります。入力を与えないと先へ進めないので、手順書の中身を外から並べて取り出すことはできません。前回 `print` で手順書の構造をそのままダンプできたのは、Free の続きが値だったからです。ただしこの違いは絶対ではなく、Free でも `GetLine` のように続きが関数の命令を含む手順書は、同じように中を見られません。
+
+Free は再帰的なデータ構造そのものなので、木として扱いたい場合に向いています。Operational は命令の列挙が楽なので、DSL を手早く作るのに向いています。どちらが上位ということではなく、用途の違いです。
+
+# まとめ
+
+Operational モナドは、続きを命令の型から外して `>>=` の側に持たせた手順書でした。
+
+|Free|Operational|
+|---|---|
+|`data GenF o next = Yield o next deriving Functor`|`data GenI o a where Yield :: o -> GenI o ()`|
+|続きは `next` の位置に埋め込む|続きは `>>=` 側が `b -> Program instr a` として持つ|
+|`GetLine` の続きが関数になるのを自分で捌く|命令の戻り値の型を書くだけ|
+|`liftF` で持ち上げる|`singleton` で持ち上げる|
+
+`>>=` は続きの関数を合成するだけになり、`fmap` を使いません。だから命令の型に `Functor` インスタンスは要らず、前回手で書いた `instance Functor` がまるごと消えました。
+
+代わりに必要になったのが GADTs です。各コンストラクターが戻り値の型を自分で宣言できるので、`GetLine :: TeletypeI String` のように、命令の結果の型を直接書けます。シリーズで初めて出てきた「それがないと表現できない」言語拡張でした。
+
+組み立てと解釈の分離という枠組みは前回のままで、インタープリターの書き方も変わりませんでした。変わったのは手順書の表現だけです。そしてこの同じエンコーディングが、Freer という名前で Eff 系ライブラリの土台になっています。

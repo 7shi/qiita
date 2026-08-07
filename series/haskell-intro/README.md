@@ -61,7 +61,7 @@ Zenn は投稿すると自動的に英語版が生成されるため、13回以�
 
 ## 予定
 
-17. Haskell Operationalモナド 超入門
+17. [Haskell Operationalモナド 超入門](17-operational-monad.md)（Zenn で公開）
 18. Haskell Effモナド 超入門
 19. Haskell アロー 超入門
 
