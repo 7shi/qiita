@@ -612,64 +612,13 @@ instance Functor TeletypeF where
 
 `PutLine` は続きに `f` を適用するだけですが、`GetLine` は続きが関数なので、その結果に `f` を適用する形、つまり関数合成 `f . k` になります。`DeriveFunctor` はここも機械的に導出してくれます。
 
-## 続きが関数のときの liftF
+## スマートコンストラクター
 
-`liftF` は続きの位置にある値を `Pure` で包む関数でした。`PutLine` は続きが値なので `Yield` と同じ扱いですが、`GetLine` の続きは関数なので、置くのは値ではなく関数になります。**そこに何を置くかで、その命令の結果が決まります。**
-
-型の別名を用意して、例を 1 つ作ります。
+型の別名を用意して、命令を 1 つずつ持ち上げます。
 
 ```hs
 type Teletype = Free TeletypeF
-```
 
-「行を読んで、その長さを結果にする」という命令です。
-
-```hs
-getLength :: Teletype Int
-getLength = liftF (GetLine length)
-```
-
-`GetLine` の続きは `String -> next` でした。ここに `length :: String -> Int` を置いたので `next` が `Int` に決まり、`GetLine length :: TeletypeF Int` になります。`liftF :: f a -> Free f a` なので、`a` も `Int` になり、全体は `Teletype Int` です。
-
-`liftF c = Free (fmap Pure c)` と `fmap f (GetLine k) = GetLine (f . k)` から、変化を追います。
-
-```hs
-c                  = GetLine length
-fmap Pure c        = GetLine (Pure . length)
-Free (fmap Pure c) = Free (GetLine (\s -> Pure (length s)))
-```
-
-「文字列を受け取ったら、その長さを結果として終わる」という 1 命令の手順書になりました。`do` の中で `n <- getLength` と書けば、`n` は `Int` です。
-
-続きの位置に置いた関数が、そのまま「読み込んだ文字列から結果を作る関数」になっている、と読めます。`PutLine` で続きの位置に `()` を置くと結果が `()` になるのと同じことが、関数の戻り値の位置で起きています。
-
-## 練習
-
-【問3】`TeletypeF` を使って、`putLine`・`getLine'` のスマートコンストラクターと、次の `greet` が書けるようにしてください。`getLine'` の名前に `'` が付いているのは、標準の `getLine` と衝突を避けるためです。
-
-```hs
-data TeletypeF next
-    = PutLine String next
-    | GetLine (String -> next)
-    deriving Functor
-
-type Teletype = Free TeletypeF
-
-putLine :: String -> Teletype ()
-putLine = undefined  -- ここを書く
-
-getLine' :: Teletype String
-getLine' = undefined  -- ここを書く
-
-greet :: Teletype ()
-greet = do
-    putLine "name?"
-    name <- getLine'
-    putLine ("Hello, " ++ name ++ "!")
-```
-
-:::details 解答例
-```hs
 putLine :: String -> Teletype ()
 putLine s = liftF (PutLine s ())
 
@@ -677,9 +626,9 @@ getLine' :: Teletype String
 getLine' = liftF (GetLine id)
 ```
 
-`putLine` は `yield` と同じ形です。続きの位置に `()` を置いて `liftF` に渡します。
+`putLine` は `yield` と同じ形です。続きの位置に仮の値 `()` を置くと、`liftF` がそれを `Pure ()` に変えます。`getLine'` の名前に `'` が付いているのは、標準の `getLine` と衝突を避けるためです。
 
-`getLine'` は `getLength` と同じ形です。続きの位置に置いた関数が結果を作るので、読み込んだ文字列をそのまま結果にしたければ、受け取った値をそのまま返す関数、つまり `id` を置きます。
+`getLine'` の `id` が要点です。`GetLine` の続きは `String -> next` という関数なので、置くのは値ではなく関数になります。`liftF c = Free (fmap Pure c)` と `fmap f (GetLine k) = GetLine (f . k)` から、変化を追います。
 
 ```hs
 c                  = GetLine id
@@ -687,14 +636,32 @@ fmap Pure c        = GetLine (Pure . id)
 Free (fmap Pure c) = Free (GetLine (\s -> Pure s))
 ```
 
-`GetLine id :: TeletypeF String` なので全体は `Teletype String` になり、`greet` では `name <- getLine'` で読み込んだ文字列を受け取れます。`getLength` の `length` を `id` に替えただけで、`Int` だった結果が `String` になった、と見ることもできます。
-:::
+「文字列を受け取ったら、それを結果として終わる」という 1 命令の手順書です。`GetLine id :: TeletypeF String` なので、`liftF :: f a -> Free f a` を通した全体は `Teletype String` になります。
 
-【問4】問3の `greet` を `IO` を使わずに走らせる純粋インタープリター `runPure` を書いてください。入力をリストで与え、出力をリストで集めます。入力が尽きたら空文字列を返すことにします。
+続きの位置に置いた関数が、そのまま「読み込んだ文字列から結果を作る関数」になっている、と読めます。試しに `id` の代わりに `length` を置けば `Teletype Int` になり、行の長さを結果とする別の命令ができます。続きが値の命令では置いた値が結果になり、続きが関数の命令では置いた関数の戻り値が結果になる、という対応です。
+
+これで `do` が使えます。
+
+```hs
+greet :: Teletype ()
+greet = do
+    putLine "name?"
+    name <- getLine'
+    putLine ("Hello, " ++ name ++ "!")
+```
+
+`name <- getLine'` で文字列を受け取れるのは、`getLine'` が `Teletype String` だからです。`count` と同じで、これもまだ何も起きていないデータです。
+
+## 2 つのインタープリター
+
+`greet` を `IO` を使わずに走らせます。入力をリストで与え、出力をリストで集めるインタープリターです。入力が尽きたら空文字列を返すことにします。
 
 ```hs
 runPure :: [String] -> Teletype a -> [String]
-runPure = undefined  -- ここを書く
+runPure _        (Pure _)             = []
+runPure ins      (Free (PutLine s k)) = s : runPure ins k
+runPure []       (Free (GetLine k))   = runPure [] (k "")
+runPure (i : is) (Free (GetLine k))   = runPure is (k i)
 
 main = do
     mapM_ putStrLn $ runPure ["Haskell"] greet
@@ -705,15 +672,6 @@ name?
 Hello, Haskell!
 name?
 Hello, 世界!
-```
-
-:::details 解答例
-```hs
-runPure :: [String] -> Teletype a -> [String]
-runPure _        (Pure _)             = []
-runPure ins      (Free (PutLine s k)) = s : runPure ins k
-runPure []       (Free (GetLine k))   = runPure [] (k "")
-runPure (i : is) (Free (GetLine k))   = runPure is (k i)
 ```
 
 第 1 引数が残りの入力です。`PutLine` は出力を先頭に付けて入力はそのまま渡し、`GetLine` は入力を 1 つ取り出して関数 `k` に渡します。`k i` を評価すると続きの手順書が得られるので、それを辿ります。
@@ -728,6 +686,79 @@ runIO (Pure _)             = return ()
 runIO (Free (PutLine s k)) = putStrLn s >> runIO k
 runIO (Free (GetLine k))   = getLine >>= runIO . k
 ```
+
+骨組みは `runPure` と同じで、`PutLine` を `putStrLn`、`GetLine` を `getLine` に対応させただけです。`greet` は書き換えていません。
+
+## 練習
+
+【問3】今度は自分で DSL を設計します。整数のスタックを操作する命令の型 `StackF` と、スマートコンストラクター `push`・`pop` を定義してください。`push` は値を 1 つ積む命令、`pop` は 1 つ取り出す命令です。次の `calc` が書けることが目標です。
+
+```hs
+-- ここに StackF を定義する
+
+type Stack = Free StackF
+
+push :: Int -> Stack ()
+push = undefined  -- ここを書く
+
+pop :: Stack Int
+pop = undefined  -- ここを書く
+
+calc :: Stack Int
+calc = do
+    push 3
+    push 4
+    a <- pop
+    b <- pop
+    push (a + b)
+    pop
+```
+
+:::details 解答例
+```hs
+data StackF next
+    = Push Int next
+    | Pop (Int -> next)
+    deriving Functor
+
+push :: Int -> Stack ()
+push n = liftF (Push n ())
+
+pop :: Stack Int
+pop = liftF (Pop id)
+```
+
+`Push` は積む値と続きを持つので `PutLine` と同じ形です。`Pop` は取り出した値が決まらないと続きが決まらないので、続きが `Int -> next` という関数になります。`GetLine` の `String` が `Int` に変わっただけです。
+
+スマートコンストラクターも対応しています。`push` は続きの位置に `()` を置くので結果が `()`、`pop` は `id` を置くので取り出した値がそのまま結果になります。だから `a <- pop` で受け取れます。
+
+`calc` は 3 と 4 を積み、2 つ取り出して足し、積み直して、最後に取り出しています。
+:::
+
+【問4】問3の `calc` を走らせるインタープリター `runStack` を書いてください。第 1 引数が初期スタックです。`Pop` でスタックが空だったときは 0 を返すことにします。
+
+```hs
+runStack :: [Int] -> Stack a -> a
+runStack = undefined  -- ここを書く
+
+main = print $ runStack [] calc
+```
+```text:実行結果
+7
+```
+
+:::details 解答例
+```hs
+runStack :: [Int] -> Stack a -> a
+runStack _        (Pure a)          = a
+runStack st       (Free (Push n k)) = runStack (n : st) k
+runStack []       (Free (Pop k))    = runStack [] (k 0)
+runStack (x : xs) (Free (Pop k))    = runStack xs (k x)
+```
+
+`runPure` と同じ形です。違うのは、持ち回るものが残りの入力ではなくスタックであることと、`Pure` まで来たときに集めたリストではなく手順書の結果 `a` を返すことです。`Push` はスタックの先頭に積んで続きへ進み、`Pop` は先頭を取り出して関数 `k` に渡します。
+
+スタックという状態は手順書の側には現れません。`calc` は「積む・取り出す」と書いてあるだけで、それがリストで表されていることを知らないままです。状態を持つのはインタープリターの引数だけ、ということです。
 :::
 
 # 「自由」とは何か
