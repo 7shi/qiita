@@ -107,7 +107,7 @@ Free ベースで `Functor` を要求していた。** 2015 年の Freer 版が�
 |`Foldable`・`Traversable`|**扱わない（決定）**|下記。対比が綺麗に立たなかった|
 |codensity・Church エンコード|保留|左結合 `>>=` の対策。18 回以降でも可|
 |`Alternative`・`MonadFail`|保留|Operational と関係が薄い|
-|Filinski『Representing Monads』|保留|置き場所未定のまま|
+|Filinski『Representing Monads』|**扱わない（決定）**|README の「未定のアイデア」＞「制御構造をモナドで書くという理論」へ集約した|
 
 ### `Foldable`・`Traversable` の扱い（検討して見送りに決定）
 
