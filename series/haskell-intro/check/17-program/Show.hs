@@ -1,5 +1,5 @@
 {-# LANGUAGE GADTs #-}
--- 本文「続きを外に出す」「GADTs で命令を並べる」「インタープリター」の掲載コード
+-- 本文「Show は書けるのか」の掲載コード（Program・GenI・toList は Gen.hs と同じ）
 import Control.Monad (liftM, ap)
 
 
@@ -42,6 +42,8 @@ toList :: Gen o a -> [o]
 toList (Return _)       = []
 toList (Yield o :>>= k) = o : toList (k ())
 
-main = do
-    print $ toList count
-    print $ take 5 $ toList nats
+instance (Show o, Show a) => Show (Gen o a) where
+    show (Return a)       = "Return " ++ show a
+    show (Yield o :>>= k) = "Yield " ++ show o ++ " :>>= \n  " ++ show (k ())
+
+main = print count

@@ -25,7 +25,7 @@ slide: false
 Operational モナドは、Free モナドと同じく命令をデータとしてつなぐモナドですが、続きを命令の型ではなく bind の側が持つ形にすることで、`Functor` インスタンスなしで手順書を組み立てられるようにしたものです。Free モナドとの差分を追いながら、同じ題材を書き直す形で説明します。
 
 :::message
-本記事の執筆には GitHub Copilot CLI (Kimi K3) を利用しました。
+本記事の執筆には GitHub Copilot CLI (Kimi K3) と Claude Code (Opus 5) を利用しました。
 :::
 
 シリーズの記事です。
@@ -107,6 +107,8 @@ data Program instr a where
 - `Return` は結果の値を受け取って手順書を終えます。`Pure` に相当します。
 - `:>>=` は命令 `instr b` と、命令の結果 `b` を受け取って続きの手順書 `Program instr a` を返す関数の組です。
 
+演算子をコンストラクターの名前にするときは、`:` で始める決まりがあります。`>>=` に似せた `:>>=` にしたのは、この組が bind そのものを表しているからです。以降、`:` の有無でコンストラクターの `:>>=` とメソッドの `>>=` を見分けてください。
+
 命令の結果の型 `b` は、手順書全体の型 `a` には現れません。途中の命令が何を返すかは、外からは見えないようになっています。命令の型 `instr` は `* -> *` の種を持つ型引数で、前回の `Free` の `f` と同じ位置づけです。👉[Freeモナド](https://zenn.dev/7shi/articles/20260808-haskell-free-monad#%E7%A8%AE)
 
 この型に 3 段を揃えます。`Functor`・`Applicative` は定型です。👉[モナドとゆかいな仲間たち](https://zenn.dev/7shi/articles/20260807-haskell-monads-and-friends#3-%E6%AE%B5%E3%81%BE%E3%81%A8%E3%82%81%E3%81%A6%E6%9B%B8%E3%81%8F%E5%AE%9A%E5%9E%8B)
@@ -174,15 +176,17 @@ data TeletypeI a where
 
 この宣言方法を **GADT**（Generalized Algebraic Data Type、一般化代数的データ型）と呼びます。各コンストラクターが、型引数に何が入るかを自分で決められるので、`GetLine` の結果が `String` であることを直接宣言できます。
 
-前回は「続きが値の命令では置いた値が結果になり、続きが関数の命令では置いた関数の戻り値が結果になる」という対応を、スマートコンストラクターの中で自分で作っていました。👉[Freeモナド](https://zenn.dev/7shi/articles/20260808-haskell-free-monad#%E3%82%B9%E3%83%9E%E3%83%BC%E3%83%88%E3%82%B3%E3%83%B3%E3%82%B9%E3%83%88%E3%83%A9%E3%82%AF%E3%82%BF%E3%83%BC) 今度はその対応が、命令の型の宣言そのものになっています。
+前回は「続きが値の命令では置いた値が結果になり、続きが関数の命令では置いた関数の戻り値が結果になる」という対応を、スマートコンストラクターの中で自分で作っていました。今度はその対応が、命令の型の宣言そのものになっています。👉[Freeモナド](https://zenn.dev/7shi/articles/20260808-haskell-free-monad#%E3%82%B9%E3%83%9E%E3%83%BC%E3%83%88%E3%82%B3%E3%83%B3%E3%82%B9%E3%83%88%E3%83%A9%E3%82%AF%E3%82%BF%E3%83%BC)
 
-GADT 構文を使うには言語拡張が必要で、ファイルの先頭にプラグマを書きます。
+GADT 構文を使うには言語拡張が必要で、ファイルの先頭にプラグマを書きます。概念としての GADT に対して、拡張の名前は複数形の `GADTs` です。`FlexibleInstances`・`UnboxedTuples` のように、言語拡張の名前は複数形で綴るものが多くあります。
 
 ```hs
 {-# LANGUAGE GADTs #-}
 ```
 
-これまでのコードは GHC2021 という既定の拡張セットだけで動いていましたが、GADTs はそこに含まれていません。前回の `DeriveFunctor` は「手書きでも書けるものを楽にする」便利のための拡張でしたが、GADTs は「それがないと表現できない型」を可能にする拡張です。書かなくて済むものではないので、明示が要ります。GHC への拡張の指定方法自体は以前に使いました。👉[状態系モナド](http://qiita.com/7shi/items/2e9bff5d88302de1a9e9)
+:::message
+これまでのコードは GHC2021 という既定の拡張セットだけで動いていましたが、GADTs はそこに含まれていません。前回の `DeriveFunctor` は「手書きでも書けるものを楽にする」便利のための拡張でしたが、GADTs は「それがないと表現できない型」を可能にする拡張です。書かなくて済むものではないので、明示が要ります。
+:::
 
 スマートコンストラクターは `singleton` を使って書きます。
 
@@ -306,6 +310,15 @@ Yield 1 :>>=
   Return ()
 ```
 
+:::message
+`Gen o` は `Program (GenI o)` の型シノニムなので、この `instance` は GHC2021 では書けますが、それ以前の標準（Haskell2010）では `TypeSynonymInstances` と `FlexibleInstances` が必要となります。
+
+```hs
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
+```
+:::
+
 ただし、よく見ると `k ()` を適用して辿る骨組みは `toList` と同じです。文字列を作るかリストを作るかの違いしかない、つまりこれはインタープリターです。Free 版の `show` が「データの構造をそのまま文字列に写す」ものだったのに対し、Operational 版の `show` は「続きを駆動して辿る」もので、中身を見るために解釈を行っています。「`Show` が書ける」からといって「インタープリターを通さずに中身を見られる」ことにはなりません。
 
 この `Show` が書けたのは、`GenI` の全命令が `()` を返すという知識があったからです。`TeletypeI` では `GetLine :: TeletypeI String` が `()` 以外を返すので、続きの関数は `String -> Teletype a` です。駆動するには `String` の値が要りますが、手順書を表示する段階では本物の入力はまだ存在しません。`k ""` のようにダミーの入力を与えることはできますが、その時点で `runPure` と同じ「入力を仮定した解釈」をしているので、もはや手順書そのものの表示ではありません。
@@ -383,9 +396,9 @@ runStack (x : xs) (Pop :>>= k)    = runStack xs (k x)
 
 # operational パッケージ
 
-ここまで `Program` を自分で定義してきましたが、実際には [operational](https://hackage.haskell.org/package/operational) パッケージを使います。[`Control.Monad.Operational`](https://hackage.haskell.org/package/operational/docs/Control-Monad-Operational.html) の `Program` は、本記事で書いたものと同じ構造です。
+ここまで `Program` を自分で定義してきましたが、実際には [operational](https://hackage.haskell.org/package/operational) パッケージを使います。[`Control.Monad.Operational`](https://hackage.haskell.org/package/operational/docs/Control-Monad-Operational.html) の `Program` は、本記事で書いたものと同じ発想の型です。
 
-ただしコンストラクターを直接呼び出すことは想定されていません。代わりに、手順書を 1 段だけ剥がす関数 `view` が用意されています。
+ただし内部表現は同じではなく、コンストラクターも公開されていないので、直接パターンマッチすることはできません。代わりに、手順書を 1 段だけ剥がして `Return`・`:>>=` の形に整えて見せる関数 `view` が用意されています。
 
 ```hs
 view :: Program instr a -> ProgramView instr a
@@ -427,6 +440,16 @@ name?
 Hello, carol!
 ```
 
+`interp` に型を書いてあるのには理由があります。`interpretWithMonad` の第 1 引数の型は次のようになっています。
+
+```hs
+interpretWithMonad :: Monad m => (forall a. instr a -> m a) -> Program instr b -> m b
+```
+
+手順書には `PutLine :: TeletypeI ()` と `GetLine :: TeletypeI String` のように、戻り値の型が違う命令が混ざります。変換する関数はそのどれにも使えなければならないので、`a` を 1 つに決めさせない `forall a.` が付いています。`runST` の型で出てきたのと同じ書き方です。👉[状態系モナド](https://qiita.com/7shi/items/2e9bff5d88302de1a9e9#forall)
+
+型を書かずに `let` で定義して渡すと、`a` が 1 つに決め打ちされて型が合いません。`interp` のように型を明記すれば済みます。
+
 :::message
 `operational` は GHC に同梱されていないため、実行には導入が必要です。[Stack](https://docs.haskellstack.org/) を使う場合は次のように起動できます。
 
@@ -439,13 +462,15 @@ stack script --resolver lts-22.28 --package operational ファイル名.hs
 
 ## 性能の注意
 
-`>>=` を左結合で重ねると遅くなるのは、Free と同じです。
+自作した `Program` は、`>>=` を左結合で重ねると遅くなります。Free と同じ現象です。
 
 ```hs
 ((yield 1 >> yield 2) >> yield 3) >> yield 4
 ```
 
 `:>>=` の行は左側の構造を 1 段剥がして続きを付け替えるので、左に積み上がっていると、後ろに 1 つ足すたびに先頭から辿り直すことになります。実測でも、左結合では要素数を 2 倍にすると時間が約 4 倍になる、二乗のオーダーが確認できました。`do` で素直に並べれば右結合になるので、通常は問題になりません。
+
+パッケージの `Program` で同じ計測をすると、左結合でもほぼ線形のままです。内部表現が違うのはこのためで、`>>=` はその場で関数を合成せず、つないだ手順書をデータとして溜めておきます。そして `view` が 1 段求められるたびに、必要な分だけ右結合へ組み替えます。組み替えを後回しにすることで、先頭からの辿り直しが起きません。
 
 # 「Operational」とは何か
 
@@ -459,7 +484,7 @@ stack script --resolver lts-22.28 --package operational ファイル名.hs
 
 Kiselyov と Ishii による 2015 年の論文で、拡張可能なエフェクト（extensible effects）の土台として使われました。Eff 系のライブラリはこの名前を使っているので、資料によっては Freer という呼び名で出てきます。
 
-- Kiselyov, O., & Ishii, H. (2015). Freer monads, more extensible effects. In Proceedings of the 2015 ACM SIGPLAN Symposium on Haskell (pp. 94–105). ACM. ICFP’15: 20th ACM SIGPLAN International Conference on Functional Programming. https://doi.org/10.1145/2804302.2804319
+- Kiselyov, O., & Ishii, H. (2015). Freer monads, more extensible effects. In Proceedings of the 2015 ACM SIGPLAN Symposium on Haskell (pp. 94–105). ACM. https://doi.org/10.1145/2804302.2804319
 
 論文での定義を見ると、コンストラクターの名前が違うだけで、本記事の `Program` と同じ構造です。
 
@@ -471,7 +496,7 @@ data Freer f a where
 
 `Pure` が `Return`、`Impure` が `:>>=` に対応します。
 
-さらに論文では、続きの持ち方を変える工夫も示されています。「性能の注意」で見たように、左に積み上がっていると、後ろに 1 つ足すたびに先頭から辿り直すことになります。そこで続きを、関数 1 本ではなく、型の合う関数の列（キュー）として保持します。
+さらに論文では、続きの持ち方を変える工夫も示されています。この形を素朴に実装すると、「性能の注意」で見たとおり、左に積み上がった続きを後ろから 1 つ足すたびに先頭から辿り直すことになります。そこで続きを、関数 1 本ではなく、型の合う関数の列（キュー）として保持します。
 
 ```hs
 data FTCQueue m a b where
@@ -485,7 +510,7 @@ data FTCQueue m a b where
 Impure u q >>= k = Impure u (q |> k)   -- q の末尾に k を追加
 ```
 
-積み上がった続きの合成が、平坦な 1 列に変わります——線形化です。剥がすときはキューの先頭から 1 つずつ取り出すので、左結合で積み上げても辿り直しは起きません。`freer-simple` などの Eff 系ライブラリは、このキューで性能上の問題を回避しています。
+積み上がった続きの合成が、平坦な 1 列に変わります——線形化です。剥がすときはキューの先頭から 1 つずつ取り出すので、左結合で積み上げても辿り直しは起きません。`freer-simple` などの Eff 系ライブラリは、このキューで性能上の問題を回避しています。`operational` が手順書を溜めておいて後から組み替えていたのに対し、こちらは続きを最初から 1 列に並べておく、という違いです。
 
 # Free と Operational の使い分け
 
@@ -498,7 +523,7 @@ Impure u q >>= k = Impure u (q |> k)   -- q の末尾に k を追加
 |必要な言語拡張|なし|GADTs|
 |中身の検査|続きが値なら辿れる|インタープリターを通す以外に方法がない|
 
-最後の行を説明します。Operational では、続きが常に関数の中にあります。入力を与えないと先へ進めないので、手順書の中身を外から並べて取り出すことはできません。前回 `print` で手順書の構造をそのままダンプできたのは、Free の続きが値だったからです。ただしこの違いは絶対ではなく、Free でも `GetLine` のように続きが関数の命令を含む手順書は、同じように中を見られません。
+最後の行は `Show` のところで見たとおりです。前回 `print` で手順書の構造をそのままダンプできたのは、Free の続きが値だったからです。ただしこの違いは絶対ではなく、Free でも `GetLine` のように続きが関数の命令を含む手順書は、同じように中を見られません。
 
 Free は再帰的なデータ構造そのものなので、木として扱いたい場合に向いています。Operational は命令の列挙が楽なので、DSL を手早く作るのに向いています。どちらが上位ということではなく、用途の違いです。
 
