@@ -54,7 +54,7 @@ Haskell ではモナドと呼ばれる部品を組み合わせてプログラム
 
 前回は、命令を並べた手順書をデータとして組み立て、後からインタープリターで解釈するという枠組みを、Free モナドで実現しました。👉[Freeモナド](https://zenn.dev/7shi/articles/20260808-haskell-free-monad)
 
-復習します。Free モナドは葉と枝からなる木構造で、枝の形を型引数にくくり出したものです。
+Free モナドは葉と枝からなる木構造で、枝の形を型引数にくくり出したものです。
 
 ```hs
 data Free f a = Pure a | Free (f (Free f a))
@@ -361,13 +361,21 @@ runStack (x : xs) (Pop :>>= k)    = runStack xs (k x)
 
 計算の意味を、実行する操作（命令）の並びとして記述する手法を、操作的意味論（operational semantics）と呼びます。命令の型を並べて手順書を組み立て、意味はインタープリターが与えるという今回の方式は、まさにこの発想です。`operational` パッケージの作者である Heinrich Apfelmus が、The Monad.Reader 誌のチュートリアル記事（2010 年）でこの方式を紹介しています。
 
-同じエンコーディングは **Freer モナド**とも呼ばれます。Free が「モナド則だけを満たす自由な構造」だったのに対し、Freer は `Functor` インスタンスすら要求しない、より自由な構造、という命名です。👉[Freeモナド](https://zenn.dev/7shi/articles/20260808-haskell-free-monad#%E8%87%AA%E7%94%B1%E3%81%A8%E3%81%AF%E4%BD%95%E3%81%8B) Kiselyov と Ishii による 2015 年の論文で、拡張可能なエフェクト（extensible effects）の土台として使われました。Eff 系のライブラリはこの名前を使っているので、資料によっては Freer という呼び名で出てきます。
+## Freer モナド
+
+同じエンコーディングは **Freer モナド**とも呼ばれます。Free が「モナド則だけを満たす自由な構造」だったのに対し、Freer は `Functor` インスタンスすら要求しない、より自由な構造（比較級）、という命名です。
+
+- [freer: Implementation of the Freer Monad](https://hackage.haskell.org/package/freer)
+
+Kiselyov と Ishii による 2015 年の論文で、拡張可能なエフェクト（extensible effects）の土台として使われました。Eff 系のライブラリはこの名前を使っているので、資料によっては Freer という呼び名で出てきます。
+
+- Kiselyov, O., & Ishii, H. (2015). Freer monads, more extensible effects. In Proceedings of the 2015 ACM SIGPLAN Symposium on Haskell (pp. 94–105). ACM. ICFP’15: 20th ACM SIGPLAN International Conference on Functional Programming. https://doi.org/10.1145/2804302.2804319
 
 # operational パッケージ
 
 ここまで `Program` を自分で定義してきましたが、実際には [operational](https://hackage.haskell.org/package/operational) パッケージを使います。[`Control.Monad.Operational`](https://hackage.haskell.org/package/operational/docs/Control-Monad-Operational.html) の `Program` は、本記事で書いたものと同じ構造です。
 
-ただしコンストラクターは公開されていません。代わりに、手順書を 1 段だけ剥がす関数 `view` が用意されています。
+ただしコンストラクターを直接呼び出すことは想定されていません。代わりに、手順書を 1 段だけ剥がす関数 `view` が用意されています。
 
 ```hs
 view :: Program instr a -> ProgramView instr a
