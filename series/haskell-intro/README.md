@@ -28,6 +28,9 @@
 14. [Haskell 型クラス 超入門](14-type-classes.md)（Zenn で公開）
 15. [Haskell モナドとゆかいな仲間たち](15-monads-and-friends.md)（Zenn で公開）
 16. [Haskell Freeモナド 超入門](16-free-monad.md)（Zenn で公開）
+17. [Haskell Operationalモナド 超入門](17-operational-monad.md)（Zenn で公開）
+18. Haskell Effモナド 超入門（予定）
+19. Haskell アロー 超入門（予定）
 
 各回の導入文（前書き）は [PREFACES.md](PREFACES.md) にまとめてある。新しい回を書くときの文体合わせに使う。
 
@@ -58,12 +61,6 @@ Zenn は投稿すると自動的に英語版が生成されるため、13回以�
   - `:::message` はタイトルを持てないので、`:::details` のタイトルにあたる文言はブロック冒頭の一文に溶かして書く。既存の `:::message` は太字見出しを置かず、いきなり本文から始まる文体で統一されている。
 - 完成後、Zenn リポジトリ（`~/repos/zenn`）へ複製して公開する。手順は [CLAUDE.md](../../CLAUDE.md) の「Zenn への移植」節を参照。
 - **移動ではなく複製。** この Qiita 側のファイルはそのまま残し、`id` は空のままにする（Qiita へは投稿しない）。`url` は上記のとおり Zenn の記事 URL を入れる。
-
-## 予定
-
-17. [Haskell Operationalモナド 超入門](17-operational-monad.md)（Zenn で公開）
-18. Haskell Effモナド 超入門
-19. Haskell アロー 超入門
 
 ## 構想
 
