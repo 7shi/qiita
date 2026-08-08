@@ -545,6 +545,6 @@ Operational モナドは、続きを命令の型から外して `>>=` の側に�
 
 https://apfelmus.nfshost.com/articles/operational-monad.html
 
-Freer モナドは、拡張可能なエフェクト（extensible effects）の土台として使われました。
+Freer モナドは、拡張可能なエフェクト（extensible effects）の土台として使われています。
 
 - Kiselyov, O., & Ishii, H. (2015). Freer monads, more extensible effects. In Proceedings of the 2015 ACM SIGPLAN Symposium on Haskell (pp. 94–105). ACM. https://doi.org/10.1145/2804302.2804319
