@@ -355,22 +355,6 @@ runStack (x : xs) (Pop :>>= k)    = runStack xs (k x)
 スタックという状態は手順書の側には現れません。状態を持つのはインタープリターの引数だけ、という点も前回のままです。
 :::
 
-# 「Operational」とは何か
-
-名前の由来を説明します。
-
-計算の意味を、実行する操作（命令）の並びとして記述する手法を、操作的意味論（operational semantics）と呼びます。命令の型を並べて手順書を組み立て、意味はインタープリターが与えるという今回の方式は、まさにこの発想です。`operational` パッケージの作者である Heinrich Apfelmus が、The Monad.Reader 誌のチュートリアル記事（2010 年）でこの方式を紹介しています。
-
-## Freer モナド
-
-同じエンコーディングは **Freer モナド**とも呼ばれます。Free が「モナド則だけを満たす自由な構造」だったのに対し、Freer は `Functor` インスタンスすら要求しない、より自由な構造（比較級）、という命名です。
-
-- [freer: Implementation of the Freer Monad](https://hackage.haskell.org/package/freer)
-
-Kiselyov と Ishii による 2015 年の論文で、拡張可能なエフェクト（extensible effects）の土台として使われました。Eff 系のライブラリはこの名前を使っているので、資料によっては Freer という呼び名で出てきます。
-
-- Kiselyov, O., & Ishii, H. (2015). Freer monads, more extensible effects. In Proceedings of the 2015 ACM SIGPLAN Symposium on Haskell (pp. 94–105). ACM. ICFP’15: 20th ACM SIGPLAN International Conference on Functional Programming. https://doi.org/10.1145/2804302.2804319
-
 # operational パッケージ
 
 ここまで `Program` を自分で定義してきましたが、実際には [operational](https://hackage.haskell.org/package/operational) パッケージを使います。[`Control.Monad.Operational`](https://hackage.haskell.org/package/operational/docs/Control-Monad-Operational.html) の `Program` は、本記事で書いたものと同じ構造です。
@@ -434,6 +418,48 @@ stack script --resolver lts-22.28 --package operational ファイル名.hs
 ```
 
 `:>>=` の行は左側の構造を 1 段剥がして続きを付け替えるので、左に積み上がっていると、後ろに 1 つ足すたびに先頭から辿り直すことになります。実測でも、左結合では要素数を 2 倍にすると時間が約 4 倍になる、二乗のオーダーが確認できました。`do` で素直に並べれば右結合になるので、通常は問題になりません。
+
+# 「Operational」とは何か
+
+ここまで出てきた名前の由来を説明します。
+
+計算の意味を、実行する操作（命令）の並びとして記述する手法を、操作的意味論（operational semantics）と呼びます。命令の型を並べて手順書を組み立て、意味はインタープリターが与えるという今回の方式は、まさにこの発想です。`operational` パッケージの作者である Heinrich Apfelmus が、The Monad.Reader 誌のチュートリアル記事（2010 年）でこの方式を紹介しています。
+
+## Freer モナド
+
+同じエンコーディングは **Freer モナド**とも呼ばれます。Free が「モナド則だけを満たす自由な構造」だったのに対し、Freer は `Functor` インスタンスすら要求しない、より自由な構造（比較級）、という命名です。
+
+- [freer: Implementation of the Freer Monad](https://hackage.haskell.org/package/freer)
+
+Kiselyov と Ishii による 2015 年の論文で、拡張可能なエフェクト（extensible effects）の土台として使われました。Eff 系のライブラリはこの名前を使っているので、資料によっては Freer という呼び名で出てきます。
+
+- Kiselyov, O., & Ishii, H. (2015). Freer monads, more extensible effects. In Proceedings of the 2015 ACM SIGPLAN Symposium on Haskell (pp. 94–105). ACM. ICFP’15: 20th ACM SIGPLAN International Conference on Functional Programming. https://doi.org/10.1145/2804302.2804319
+
+論文での定義を見ると、コンストラクターの名前が違うだけで、本記事の `Program` と同じ構造です。
+
+```hs
+data Freer f a where
+    Pure   :: a -> Freer f a
+    Impure :: f b -> (b -> Freer f a) -> Freer f a
+```
+
+`Pure` が `Return`、`Impure` が `:>>=` に対応します。
+
+さらに論文では、続きの持ち方を変える工夫も示されています。「性能の注意」で見たように、左に積み上がっていると、後ろに 1 つ足すたびに先頭から辿り直すことになります。そこで続きを、関数 1 本ではなく、型の合う関数の列（キュー）として保持します。
+
+```hs
+data FTCQueue m a b where
+    Leaf :: (a -> m b) -> FTCQueue m a b
+    Node :: FTCQueue m a x -> FTCQueue m x b -> FTCQueue m a b
+```
+
+`Leaf` が続き 1 つ、`Node` が列の結合です。`Impure` が持つ続きをこのキューに変えると、`>>=` は関数の合成ではなく、末尾への追加で済みます。
+
+```hs
+Impure u q >>= k = Impure u (q |> k)   -- q の末尾に k を追加
+```
+
+積み上がった続きの合成が、平坦な 1 列に変わります——線形化です。剥がすときはキューの先頭から 1 つずつ取り出すので、左結合で積み上げても辿り直しは起きません。`freer-simple` などの Eff 系ライブラリは、このキューで性能上の問題を回避しています。
 
 # Free と Operational の使い分け
 
