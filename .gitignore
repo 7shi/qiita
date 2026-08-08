@@ -9,5 +9,9 @@ wheels/
 # Virtual environments
 .venv
 
+# Haskell-generated files
+*.o
+*.hi
+
 # Generated files
 data/
