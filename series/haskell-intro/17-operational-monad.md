@@ -379,6 +379,8 @@ run p = case view p of
     GetLine :>>= k   -> getLine >>= run . k
 ```
 
+自作の `runIO` は `Return _` で結果を捨てて `IO ()` を返していましたが、動かす対象が `Teletype ()` の `greet` だけだったからです。ここでは `Return a` の値を取り出してそのまま結果として返すので、型は `IO a` になります。結果が `()` 以外の手順書にもそのまま使え、後述の `interpretWithMonad` とも型が揃います。
+
 命令を 1 つずつ別のモナドへ変換する `interpretWithMonad` も用意されています。free パッケージの `foldFree` に相当します。👉[Freeモナド](https://zenn.dev/7shi/articles/20260808-haskell-free-monad#free-%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8)
 
 ```hs
@@ -429,8 +431,6 @@ stack script --resolver lts-22.28 --package operational ファイル名.hs
 
 同じエンコーディングは **Freer モナド**とも呼ばれます。Free が「モナド則だけを満たす自由な構造」だったのに対し、Freer は `Functor` インスタンスすら要求しない、より自由な構造（比較級）、という命名です。
 
-- [freer: Implementation of the Freer Monad](https://hackage.haskell.org/package/freer)
-
 Kiselyov と Ishii による 2015 年の論文で、拡張可能なエフェクト（extensible effects）の土台として使われました。Eff 系のライブラリはこの名前を使っているので、資料によっては Freer という呼び名で出てきます。
 
 - Kiselyov, O., & Ishii, H. (2015). Freer monads, more extensible effects. In Proceedings of the 2015 ACM SIGPLAN Symposium on Haskell (pp. 94–105). ACM. ICFP’15: 20th ACM SIGPLAN International Conference on Functional Programming. https://doi.org/10.1145/2804302.2804319
@@ -453,7 +453,7 @@ data FTCQueue m a b where
     Node :: FTCQueue m a x -> FTCQueue m x b -> FTCQueue m a b
 ```
 
-`Leaf` が続き 1 つ、`Node` が列の結合です。`Impure` が持つ続きをこのキューに変えると、`>>=` は関数の合成ではなく、末尾への追加で済みます。
+`Leaf` が続き 1 つ、`Node` が列の結合です。`Impure` が持つ続きをこのキューに変えると、`>>=` は関数の合成ではなく、末尾への追加で済みます。次の `|>` は「キューの末尾に追加する」操作を表す略記で、そのままではコンパイルできない擬似コードです。
 
 ```hs
 Impure u q >>= k = Impure u (q |> k)   -- q の末尾に k を追加
