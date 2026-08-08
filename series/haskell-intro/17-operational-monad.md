@@ -425,7 +425,13 @@ runStack (x : xs) (Pop :>>= k)    = runStack xs (k x)
 
 ここまで `Program` を自分で定義してきましたが、実際には [operational](https://hackage.haskell.org/package/operational) パッケージを使います。[`Control.Monad.Operational`](https://hackage.haskell.org/package/operational/docs/Control-Monad-Operational.html) の `Program` は、本記事で書いたものと同じ発想の型です。
 
-ただし内部表現は同じではなく、コンストラクターも公開されていないので、直接パターンマッチすることはできません。代わりに、手順書を 1 段だけ剥がして `Return`・`:>>=` の形に整えて見せる関数 `view` が用意されています。
+ただし内部表現は同じではなく、コンストラクターも公開されていないので、直接パターンマッチすることはできません。
+
+:::message
+コンストラクターが公開されていない、というのはモジュールのエクスポートの話です。Haskell では公開するものをモジュール名の後ろに列挙します。`module M (Program) where` のように型名だけを書くと、外からは型 `Program` は使えてもコンストラクターは見えません。両方公開するには `Program(..)` と書きます。`Data.Map` の `Map` などと同じで、内部表現を隠すことで、ライブラリ側が実装を変えても利用者のコードが壊れないようにします。
+:::
+
+代わりに、手順書を 1 段だけ剥がして `Return`・`:>>=` の形に整えて見せる関数 `view` が用意されています。
 
 ```hs
 view :: Program instr a -> ProgramView instr a
