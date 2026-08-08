@@ -18,7 +18,7 @@ tags:
   versions: []
 title: Haskell Operationalモナド 超入門
 updated_at: ''
-url: ''
+url: 'https://zenn.dev/7shi/articles/20260809-haskell-operational-monad'
 slide: false
 ---
 
