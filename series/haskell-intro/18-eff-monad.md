@@ -50,13 +50,13 @@ Eff モナドは、複数の効果を混ぜられるよう命令の型を型レ�
 1. **Haskell Effモナド 超入門** ← この記事
 1. 【予定】Haskell アロー 超入門
 
-# 複数の効果を混ぜる
+# Free モナドから拡張可能な効果へ
 
 前々回・前回は、命令を並べた手順書をデータとして組み立て、後からインタープリターで解釈するという枠組みを扱ってきました。Free モナドは続きを命令の型の中に持ち、Operational モナドは続きを `>>=` の側に持ちます。👉[Freeモナド](https://zenn.dev/7shi/articles/20260808-haskell-free-monad#%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B) 👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%9A%E3%81%8D%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
 
-どちらも命令の型は 1 つでした。テレタイプの手順書にはテレタイプの命令しか置けません。今回はここを開きます。
+どちらも命令の型は 1 つでした。テレタイプの手順書にはテレタイプの命令しか置けません。
 
-テレタイプによる入出力、状態の読み書き、ログの記録のように、手順書に持たせたい機能の一まとまりを**効果**（effect）と呼びます。命令の型 1 つが効果 1 つにあたります。今回のゴールは、複数の効果を 1 つの手順書に混ぜることです。
+命令の型がまとまってひとかたまりの機能になったものを**効果**（effect）と呼びます。Free モナドの系譜は、当初から複数の効果を混ぜる方向へ発展してきており、行き着く先はモナド変換子が担ってきた役割の置き換えです。今回はその発展をたどります。
 
 ## 発展の系譜
 
@@ -71,9 +71,9 @@ Eff モナドは、複数の効果を混ぜられるよう命令の型を型レ�
 
 書誌は最後の参考に挙げます。
 
-2015 年の論文の題にある Freer は、前回の Operational と同じ方式を指す名前でした。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%9A%E3%81%8D%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
+2015 年の論文の題にある Freer は、前回の Operational と基本的に同じ方式を指す名前です。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%9A%E3%81%8D%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
 
-つまり前回書いた `Program instr a` は、この系譜の 2015 年版の土台そのものです。あとは `instr` を複数にするだけで、論文の言う extensible effects（拡張可能な効果）にたどり着きます。
+`Program instr a` における `instr` を複数に拡張することで、拡張可能な効果（extensible effects）にたどり着きます。
 
 ## モナド変換子への対案
 
@@ -81,7 +81,9 @@ Eff モナドは、複数の効果を混ぜられるよう命令の型を型レ�
 
 `State` と `IO` を一緒に使いたければ `StateT Int IO` のように型を積み、内側のアクションは `lift` で持ち上げます。積んだ型のことをモナドスタックと呼びました。👉[モナド変換子](https://qiita.com/7shi/items/4408b76624067c17e933#%E3%83%A2%E3%83%8A%E3%83%89%E3%82%B9%E3%82%BF%E3%83%83%E3%82%AF)
 
-Free から始まった拡張可能な効果の系譜は、この役割を発展させる方向へ育ちました。前々回・前回は「組み立てと解釈の分離」という観点だけで Free と Operational を見てきましたが、向かっていた先はモナドスタックの置き換えだったわけです。
+前々回・前回は「組み立てと解釈の分離」という観点で Free と Operational を見てきましたが、Free モナドから始まった発展の系譜は、モナドスタックの置き換えに向かっていたわけです。
+
+# 複数の効果を混ぜる
 
 ここからは実装に入り、複数の効果を混ぜるための仕組みを組み立てていきます。
 
@@ -91,7 +93,7 @@ Free から始まった拡張可能な効果の系譜は、この役割を発展
 
 前回のテレタイプ（`Teletype`）を使って確かめます。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E3%81%BE%E3%81%A8%E3%82%81)
 
-これに加えて、通し番号を返す命令（`Counter`）を新たに用意します。命令は手順書を構成するデータなので、Counter 自体には副作用はありません。
+これに加えて、通し番号を返す命令（`Counter`）を新たに用意します。命令は手順書を構成するデータなので、Counter 自体に副作用はありません。
 
 ```hs
 data Teletype a where
@@ -109,17 +111,17 @@ greet :: Program Teletype ()
 greet = do
     putLine "name?"
     name <- getLine'
-    n <- tick            -- エラー: Tick は Teletype の命令ではない
+    n <- tick         -- エラー: Tick は Teletype の命令ではない
     putLine ("Hello, " ++ name ++ "! " ++ show n)
 ```
 
-`instr` が 1 つに固定されているのが原因なので、ここをリストにします。`Teletype` と `Counter` を両方使う手順書、と書けるようにするわけです。そのために、まず型のレベルでリストを扱う方法が要ります。
+`instr` が 1 つに固定されているのが原因なので、ここをリストにします。`Teletype` と `Counter` を両方使う手順書、と書けるようにするわけです。そのために、まず型のレベルでリストを扱う方法が必要になります。
 
 ## 型レベルのリスト
 
 `[1, 2, 3]` は値のリストです。同じ書き方で `[Teletype, Counter]` のように型を並べたものを、型として扱えるようにするのが `DataKinds` という言語拡張です。
 
-```hs
+```hs:言語拡張
 {-# LANGUAGE DataKinds #-}
 ```
 
@@ -132,12 +134,10 @@ greet = do
 要素を 1 つ足すコンス演算子も、値の `:` に対して `':` になります。値のリストで `1 : [2, 3]` と書くのと同じ関係です。
 
 ```hs
-Teletype ': '[Counter]     -- '[Teletype, Counter] と同じ
+Teletype ': '[Counter]  -- '[Teletype, Counter] と同じ
 ```
 
-種を確かめます。種は「型の型」でした。👉[Freeモナド](https://zenn.dev/7shi/articles/20260808-haskell-free-monad#%E7%A8%AE)
-
-GHCi では `:set` で言語拡張を有効にできます。
+GHCi では `:set` で言語拡張を有効にできます。種を確認します。👉[Freeモナド](https://zenn.dev/7shi/articles/20260808-haskell-free-monad#%E7%A8%AE)
 
 ```text:GHCi
 ghci> :set -XDataKinds
@@ -165,7 +165,7 @@ Illegal type: ‘'[Teletype, Counter]’
 
 ## 手順書に複数の命令を混ぜる
 
-前回の `Program instr a` を持ってきて、`instr` の位置を差し替えます。差し替える先は「リスト `es` のうちどれか 1 つの命令」を表す型です。これを**オープンユニオン**（open union）と呼びます。ユニオンは和、オープンは要素を後から足せることを指します。
+`Program instr a` における `instr` の型を、「リスト `es` のうちどれか 1 つの命令」を表す型に差し替えます。このような型を**オープンユニオン**（open union）と呼びます。ユニオンは和、オープンは要素を後から足せることを指します。
 
 ```hs
 data Union es a where
@@ -178,22 +178,30 @@ GADT で書いています。前回と同じく、コンストラクターごと
 - `Here` はリストの先頭の型 `e` の命令をそのまま包みます。
 - `There` は先頭以外のどこかにある命令を包みます。中身は 1 つ短いリストのユニオンです。
 
-`There (There (Here Tick))` なら、リストの 3 番目が `Counter` だということです。値としては、包んだ `There` の数が位置を表しています。
+`'[Teletype, Counter]` なら、`Tick :: Counter Int` は 2 番目なので `There (Here Tick)` になります。値としては、包んだ `There` の数が位置を表しています。
 
 ## 型クラスで位置を隠す
 
-`There (There (Here Tick))` と手で書くのは現実的ではありません。効果をリストのどこに置いたかを、使う側が数えることになるからです。位置の計算は型クラスに任せます。
+`There (Here Tick)` のように手で書くのは現実的ではありません。効果をリストのどこに置いたかを、使う側が数えることになるからです。位置の計算は型クラスに任せます。
 
 ```hs
+{-# LANGUAGE MultiParamTypeClasses #-}
+
 class e :> es where
     inj :: e a -> Union es a
 ```
+
+`class e :> es where` は中置（infix）のクラス宣言で、`class (:>) e es where` の糖衣構文です。`:>` がクラス名で、`e` と `es` が型変数にあたります。前回 `:>>=` のところで見たように、演算子を名前にするときは `:` で始める決まりがあります。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%9A%E3%81%8D%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
+
+中置のクラス宣言には `TypeOperators` という拡張が必要ですが、GHC2021 に含まれているのでプラグマは不要です。標準の型クラスは型変数 1 つに限られるため、型変数を 2 つ取るには `MultiParamTypeClasses` が必要です。
 
 `e :> es` は「効果 `e` がリスト `es` に含まれる」と読みます。`inj` は inject（注入）の略で、命令を然るべき位置に包む関数です。
 
 インスタンスは 2 本です。先頭で見つかったらそこで止め、そうでなければ 1 つ潜って探し直します。リストに対する再帰と同じ形が、型クラスの解決として動きます。
 
 ```hs
+{-# LANGUAGE FlexibleInstances #-}
+
 instance {-# OVERLAPPING #-} e :> (e ': es) where
     inj = Here
 
@@ -203,16 +211,11 @@ instance {-# OVERLAPPABLE #-} e :> es => e :> (e' ': es) where
 
 `e :> (e ': es)` と `e :> (e' ': es)` は、`e'` が `e` と同じ場合に両方あてはまります。どちらを選ぶかをコンパイラが決められないので、そのままでは「Overlapping instances」というエラーになります。`{-# OVERLAPPING #-}` を付けた方を優先し、`{-# OVERLAPPABLE #-}` を付けた方は譲る、と指示することで、先頭を優先して選ばせています。
 
-引数を 2 つ取る型クラスと、インスタンスの頭に具体的な型を書くことは、どちらも標準では許されていないので拡張が要ります。
-
-```hs
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-```
+インスタンスの頭に `e ': es` のような具体的な型を書くことも標準では許されていないので、`FlexibleInstances` が必要です。
 
 # Eff モナド
 
-準備ができたので、前回の `Program` の `instr` を `Union es` に差し替えます。名前は `Eff` にします。
+`Program` の `instr` を `Union es` に差し替えます。名前は effect（効果）に由来する `Eff` とします。
 
 ```hs
 data Eff es a where
@@ -220,20 +223,25 @@ data Eff es a where
     (:>>=) :: Union es b -> (b -> Eff es a) -> Eff es a
 ```
 
-前回の宣言と並べると、変わったのは 1 か所だけです。
+前回の宣言と並べると、`Program`/`instr` を `Eff`/`es` に読み替えた名前の違いを除けば、変わったのは `instr` が `Union es` になった 1 か所だけです。
 
 ```hs
 (:>>=) :: instr b    -> (b -> Program instr a) -> Program instr a  -- 前回
 (:>>=) :: Union es b -> (b -> Eff es a)        -> Eff es a         -- 今回
 ```
 
-3 段のインスタンスも前回のままです。👉[モナドとゆかいな仲間たち](https://zenn.dev/7shi/articles/20260807-haskell-monads-and-friends#3-%E6%AE%B5%E3%81%BE%E3%81%A8%E3%82%81%E3%81%A6%E6%9B%B8%E3%81%8F%E5%AE%9A%E5%9E%8B)
+3 段のインスタンスも前回のままです。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%9A%E3%81%8D%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
 
 ```hs
 import Control.Monad (ap, liftM)
 
-instance Functor (Eff es) where fmap = liftM
-instance Applicative (Eff es) where pure = Return; (<*>) = ap
+instance Functor (Eff es) where
+    fmap = liftM
+
+instance Applicative (Eff es) where
+    pure = Return
+    (<*>) = ap
+
 instance Monad (Eff es) where
     Return a   >>= k = k a
     (u :>>= j) >>= k = u :>>= (\b -> j b >>= k)
