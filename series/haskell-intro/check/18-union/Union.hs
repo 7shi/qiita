@@ -1,35 +1,35 @@
 {-# LANGUAGE DataKinds, GADTs, FlexibleInstances, MultiParamTypeClasses #-}
 import Control.Monad (ap, liftM)
 
-data Union effs a where
-    Here  :: eff a -> Union (eff ': effs) a
-    There :: Union effs a -> Union (eff ': effs) a
+data Union es a where
+    Here  :: e a -> Union (e ': es) a
+    There :: Union es a -> Union (e ': es) a
 
-class Member eff effs where
-    inj :: eff a -> Union effs a
-    prj :: Union effs a -> Maybe (eff a)
+class e :> es where
+    inj :: e a -> Union es a
+    prj :: Union es a -> Maybe (e a)
 
-instance {-# OVERLAPPING #-} Member eff (eff ': effs) where
+instance {-# OVERLAPPING #-} e :> (e ': es) where
     inj = Here
     prj (Here x) = Just x
     prj _        = Nothing
 
-instance {-# OVERLAPPABLE #-} Member eff effs => Member eff (eff' ': effs) where
+instance {-# OVERLAPPABLE #-} e :> es => e :> (e' ': es) where
     inj = There . inj
     prj (There u) = prj u
     prj _         = Nothing
 
-data Eff effs a where
-    Return :: a -> Eff effs a
-    (:>>=) :: Union effs b -> (b -> Eff effs a) -> Eff effs a
+data Eff es a where
+    Return :: a -> Eff es a
+    (:>>=) :: Union es b -> (b -> Eff es a) -> Eff es a
 
-instance Functor (Eff effs) where fmap = liftM
-instance Applicative (Eff effs) where pure = Return; (<*>) = ap
-instance Monad (Eff effs) where
-    Return a >>= k = k a
+instance Functor (Eff es) where fmap = liftM
+instance Applicative (Eff es) where pure = Return; (<*>) = ap
+instance Monad (Eff es) where
+    Return a   >>= k = k a
     (u :>>= j) >>= k = u :>>= (\b -> j b >>= k)
 
-send :: Member eff effs => eff a -> Eff effs a
+send :: e :> es => e a -> Eff es a
 send e = inj e :>>= Return
 
 -- 命令
@@ -40,23 +40,23 @@ data Teletype r where
 data Counter r where
     Tick :: Counter Int
 
-putLine :: Member Teletype effs => String -> Eff effs ()
+putLine :: Teletype :> es => String -> Eff es ()
 putLine s = send (PutLine s)
 
-getLine' :: Member Teletype effs => Eff effs String
+getLine' :: Teletype :> es => Eff es String
 getLine' = send GetLine
 
-tick :: Member Counter effs => Eff effs Int
+tick :: Counter :> es => Eff es Int
 tick = send Tick
 
-greet :: (Member Teletype effs, Member Counter effs) => Eff effs ()
+greet :: (Teletype :> es, Counter :> es) => Eff es ()
 greet = do
     putLine "name?"
     name <- getLine'
     n <- tick
     putLine ("Hello, " ++ name ++ "! " ++ show n)
 
-runCounter :: Int -> Eff (Counter ': effs) a -> Eff effs a
+runCounter :: Int -> Eff (Counter ': es) a -> Eff es a
 runCounter _ (Return a) = Return a
 runCounter n (u :>>= k) = case u of
     Here Tick -> runCounter (n + 1) (k n)
