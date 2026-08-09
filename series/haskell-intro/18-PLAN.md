@@ -375,6 +375,7 @@ sum' xs = runEff $ execState (0 :: Int) $
 |モナド変換子・モナドスタック・`lift`・`liftIO`・多重持ち上げ|`10-monad-transformers.md`|**比較対象そのもの**|
 |`State`・`Writer`・`Reader`|`09-state-monads.md`|既製の効果と同じ顔ぶれ|
 |`forall`（明示的な全称量化）|`09-state-monads.md` `### forall`・`17-operational-monad.md`|`Env` のハンドラー・`interpret` の型|
+|存在型（existential type）|`17-operational-monad.md`（`:>>=` の `b`。**用語名を出してある**）|構成案 3 の `(:>>=) :: Union es b -> ...` がそのまま同じ形|
 |`class` / `instance` / 種（`:k`）|`14-type-classes.md`|`:>` 制約・型レベルリストの種|
 |`Functor` / `Applicative` / `Monad` の 3 段・定型|`15-monads-and-friends.md`|自作 `Eff` を 3 段揃える|
 |Free モナド・命令の型・手順書・インタープリター|`16-free-monad.md`|系譜の起点|
@@ -398,6 +399,16 @@ sum' xs = runEff $ execState (0 :: Int) $
 
 ⚠ **`DataKinds` が唯一の重い新出。** 17 回は GADTs と存在型を背負ったが、
 18 回は GADTs が既習なので、新しく背負うのは型レベルリストだけになる。
+
+⚠ **存在型と全称量化（`forall`）を混同させない。** 18 回では 2 種類の `forall` が近接する。
+
+|箇所|正体|扱い|
+|---|---|---|
+|構成案 3 の `(:>>=) :: Union es b -> (b -> Eff es a) -> Eff es a`|**存在型**（`b` が型全体に現れない）|17 回で用語名まで説明済み。**再説明しない**|
+|構成案 4 の `ECons :: (forall x. e x -> IO x) -> ...`・`interpret`|**全称量化**（`RankNTypes`）|09 回 `### forall`・17 回 `interpretWithMonad` と同じ形。👉リンクで済ませる|
+
+構成案 3 の `b` は 17 回の `Program` から形が変わらないので、**存在型の語を出す必要すら
+無い見込み**。構成案 4 で `forall` が明示的に現れるほうだけ、既習の形として繋ぐ。
 
 ## 検証済みの事実（2026-08-09）
 
