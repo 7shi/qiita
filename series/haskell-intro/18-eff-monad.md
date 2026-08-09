@@ -52,7 +52,7 @@ Eff モナドは、複数の効果を 1 つの手順書に混ぜられるよう�
 
 # 複数の効果を混ぜる
 
-ここ 2 回は、命令を並べた手順書をデータとして組み立て、後からインタープリターで解釈するという枠組みを扱ってきました。Free モナドは続きを命令の型の中に持ち、Operational モナドは続きを `>>=` の側に持ちます。👉[Freeモナド](https://zenn.dev/7shi/articles/20260808-haskell-free-monad#%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B) 👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%9A%E3%81%8D%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
+前々回・前回は、命令を並べた手順書をデータとして組み立て、後からインタープリターで解釈するという枠組みを扱ってきました。Free モナドは続きを命令の型の中に持ち、Operational モナドは続きを `>>=` の側に持ちます。👉[Freeモナド](https://zenn.dev/7shi/articles/20260808-haskell-free-monad#%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B) 👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%9A%E3%81%8D%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
 
 どちらも命令の型は 1 つでした。テレタイプの手順書にはテレタイプの命令しか置けません。今回はここを開きます。
 
@@ -77,20 +77,21 @@ Eff モナドは、複数の効果を 1 つの手順書に混ぜられるよう�
 
 ## モナド変換子への対案
 
-では、その拡張可能な効果は何のために作られたのでしょうか。答えは 2013 年の論文の題に書いてあります。
-
-> Extensible Effects: An Alternative to Monad Transformers
-> （拡張可能な効果: モナド変換子への対案）
-
-別種のモナドを組み合わせるという課題は、シリーズで一度扱いました。モナド変換子です。👉[モナド変換子](https://qiita.com/7shi/items/4408b76624067c17e933#%E3%83%A2%E3%83%8A%E3%83%89%E5%A4%89%E6%8F%9B%E5%AD%90)
+従来、別種のモナドを組み合わせる手段としては、モナド変換子が用いられてきました。👉[モナド変換子](https://qiita.com/7shi/items/4408b76624067c17e933#%E3%83%A2%E3%83%8A%E3%83%89%E5%A4%89%E6%8F%9B%E5%AD%90)
 
 `State` と `IO` を一緒に使いたければ `StateT Int IO` のように型を積み、内側のアクションは `lift` で持ち上げます。積んだ型のことをモナドスタックと呼びました。👉[モナド変換子](https://qiita.com/7shi/items/4408b76624067c17e933#%E3%83%A2%E3%83%8A%E3%83%89%E3%82%B9%E3%82%BF%E3%83%83%E3%82%AF)
 
-Free から始まった系譜は、この仕事を引き受ける方向へ育ちました。前々回・前回は「組み立てと解釈の分離」という観点だけで Free と Operational を見てきましたが、向かっていた先はモナドスタックの置き換えだったわけです。今回はその答え合わせになります。
+Free から始まった拡張可能な効果の系譜は、この役割を発展させる方向へ育ちました。前々回・前回は「組み立てと解釈の分離」という観点だけで Free と Operational を見てきましたが、向かっていた先はモナドスタックの置き換えだったわけです。
+
+ここからは実装に入り、複数の効果を混ぜるための仕組みを組み立てていきます。
 
 ## 混ぜられない手順書
 
-具体的に何が困るのかを見ておきます。前回のテレタイプに加えて、呼ぶたびに増える通し番号を返す命令を考えます。
+前回の `Program instr a` の `instr` は 1 つの型しか受け取れないため、複数の効果を混ぜることはできません。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%9A%E3%81%8D%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
+
+前回のテレタイプ（`Teletype`）を使って確かめます。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E3%81%BE%E3%81%A8%E3%82%81)
+
+これに加えて、通し番号を返す命令（`Counter`）を新たに用意します。命令は手順書を構成するデータなので、Counter 自体には副作用はありません。
 
 ```hs
 data Teletype a where
@@ -101,7 +102,7 @@ data Counter a where
     Tick :: Counter Int
 ```
 
-どちらも命令の型として問題なく書けますが、`Program Teletype` の手順書に `Tick` は置けません。型が違うからです。
+`Teletype` と `Counter` は別々の命令の型です。実際に `Program Teletype` の手順書に `Counter` の命令 `Tick` を混ぜようとすると、型エラーになります。
 
 ```hs
 greet :: Program Teletype ()
@@ -114,7 +115,7 @@ greet = do
 
 `instr` が 1 つに固定されているのが原因なので、ここをリストにします。`Teletype` と `Counter` を両方使う手順書、と書けるようにするわけです。そのために、まず型のレベルでリストを扱う方法が要ります。
 
-# 型レベルのリスト
+## 型レベルのリスト
 
 `[1, 2, 3]` は値のリストです。同じ書き方で `[Teletype, Counter]` のように型を並べたものを、型として扱えるようにするのが `DataKinds` という言語拡張です。
 
@@ -162,7 +163,7 @@ Illegal type: ‘'[Teletype, Counter]’
 
 今回はリストが書ければ十分なので、型レベルの計算には踏み込みません。
 
-# 手順書に複数の命令を混ぜる
+## 手順書に複数の命令を混ぜる
 
 前回の `Program instr a` を持ってきて、`instr` の位置を差し替えます。差し替える先は「リスト `es` のうちどれか 1 つの命令」を表す型です。これを**オープンユニオン**（open union）と呼びます。ユニオンは和、オープンは要素を後から足せることを指します。
 
@@ -209,7 +210,7 @@ instance {-# OVERLAPPABLE #-} e :> es => e :> (e' ': es) where
 {-# LANGUAGE MultiParamTypeClasses #-}
 ```
 
-## Eff モナド
+# Eff モナド
 
 準備ができたので、前回の `Program` の `instr` を `Union es` に差し替えます。名前は `Eff` にします。
 
@@ -852,15 +853,13 @@ sum' xs = runPureEff $ runWriter @[String] $ execState (0 :: Int) $
 
 # エフェクトシステムの現在
 
-拡張可能な効果を提供するライブラリは、Haskell に複数あります。標準ライブラリに含まれるものはなく、どれも外部パッケージです。似た機能を別々の名前と方式で提供しているので、名前から順に整理します。
-
-## 名前は当てにならない
+拡張可能な効果を提供するライブラリは、Haskell に複数あります。標準ライブラリに含まれるものはなく、どれも外部パッケージで、似た機能を別々の名前と方式で提供しています。
 
 `Eff` という型名は `freer-simple`・`effectful`・`cleff` のどれも使っていますが、中身は同じではありません。今回自作した 2 つがそうだったように、型の見え方が一致していても実装は別物です。
 
 一方で `polysemy` だけは型名が `Sem` で、`Eff` ではありません。名前でグループ分けはできない、ということです。
 
-Freer という語も紛らわしいところです。`freer-simple` はモジュール名が `Control.Monad.Freer` ですが、そこから出てくる型は `Eff` だけで、`Freer` という名前の型はありません。前回 Operational の別名として出てきた Freer は、論文とモジュール名に残る呼び名であって、書くコードには現れないと思ってください。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%9A%E3%81%8D%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
+Freer という語も紛らわしいところです。`freer-simple` はモジュール名が `Control.Monad.Freer` ですが、そこから出てくる型は `Eff` だけで、`Freer` という名前の型はありません。前回 Operational の別名として出てきた Freer は、論文とモジュール名に残る呼び名であって、コードには現れなくなっています。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%9A%E3%81%8D%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
 
 ## 実装の方式で分かれる
 
