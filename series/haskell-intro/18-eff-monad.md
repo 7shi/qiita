@@ -52,7 +52,7 @@ Eff モナドは、複数の効果を 1 つの手順書に混ぜられるよう�
 
 # 複数の効果を混ぜる
 
-ここ 2 回は、命令を並べた手順書をデータとして組み立て、後からインタープリターで解釈するという枠組みを扱ってきました。Free モナドは続きを命令の型の中に持ち、Operational モナドは続きを `>>=` の側に持ちます。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%9A%E3%81%8D%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
+ここ 2 回は、命令を並べた手順書をデータとして組み立て、後からインタープリターで解釈するという枠組みを扱ってきました。Free モナドは続きを命令の型の中に持ち、Operational モナドは続きを `>>=` の側に持ちます。👉[Freeモナド](https://zenn.dev/7shi/articles/20260808-haskell-free-monad#%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B) 👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%9A%E3%81%8D%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
 
 どちらも命令の型は 1 つでした。テレタイプの手順書にはテレタイプの命令しか置けません。今回はここを開きます。
 
