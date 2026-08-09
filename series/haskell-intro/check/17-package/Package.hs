@@ -1,6 +1,6 @@
 {-# LANGUAGE GADTs #-}
 -- 本文「operational パッケージ」の掲載コード
--- 実行: stack script --resolver lts-22.28 --package operational Package.hs
+-- 実行: stack script --resolver lts-24.53 --package operational Package.hs
 import Control.Monad.Operational
 
 data TeletypeI a where

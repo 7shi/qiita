@@ -1,6 +1,6 @@
 {-# LANGUAGE GADTs #-}
 -- interpretWithMonad の第 1 引数が forall a. を要求することの確認
--- 実行: stack script --resolver lts-22.28 --package operational Forall.hs
+-- 実行: stack script --resolver lts-24.53 --package operational Forall.hs
 import Control.Monad.Operational
 
 data TeletypeI a where

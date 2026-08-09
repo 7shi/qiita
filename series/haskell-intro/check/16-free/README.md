@@ -97,11 +97,18 @@ ghci> fmap (+1) (1,2)
 まま保つため）。
 
 ```
-stack script --resolver lts-22.28 --package free Pkg.hs
-stack script --resolver lts-22.28 --package free test.hs
+stack script --resolver lts-24.53 --package free Pkg.hs
+stack script --resolver lts-24.53 --package free test.hs
 ```
 
-- resolver `lts-22.28` は GHC 9.6.6 を使い、システムの GHC と同じバージョンになる。
+- resolver `lts-24.53`（GHC 9.10.3、`free-5.2`）は執筆時点の現行 LTS。
+  **当初は `lts-22.28`（GHC 9.6.6、システムの GHC と同じバージョン）を使っていたが、
+  執筆環境の都合を読者に押し付ける理由が無いので 2026-08-09 に現行 LTS へ更新した**
+  （18-PLAN「過去記事の resolver 更新」）。`free` はどちらの resolver でも 5.2 で、
+  出力は `diff` で完全一致することを確認済み。
+- この環境の stack は GHC 9.6 以降に対して
+  「Stack has not been tested with GHC versions above 9.4」の警告を出す。
+  **動作には影響しない。**
 - **`--system-ghc` は付けてはいけない。** 付けると `Setup.hs` のビルドで
   「There are files missing in the `base-4.18.2.1` package」というエラーになる。
   この環境の GHC は動的リンク前提（`ghc` で自前ビルドするときも `-dynamic` が要る）で、

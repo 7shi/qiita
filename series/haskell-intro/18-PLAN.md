@@ -74,7 +74,8 @@
 
 ### 得たもの
 
-- **resolver の但し書きが軽くなる。** 現行 LTS にも 16・17 回の lts-22.28 にもある。
+- **resolver の但し書きが軽くなる。** 現行 LTS にも lts-22.28 にもある
+  （その後 16・17 回も lts-24.53 へ揃えたので、断りそのものが不要になった）。
 - **`liftIO` が使える。** 10 回で既に出た名前なので、`sendM` という新語を導入せずに済む。
 - **`:>` の素朴な実装が実ライブラリと一致する。** `{-# OVERLAPPING #-}` は
   `effectful-core/src/Effectful/Internal/Effect.hs:52` の実装そのもの。
@@ -93,6 +94,42 @@
 - **モジュール名の分岐が増える。** `Effectful.State.Static.Local` / `.Static.Shared` /
   `.Dynamic`（`freer-simple` は `Control.Monad.Freer.State` だけ）。
   記事では `Static.Local` に決め打ちして `:::message` で一言添える。
+
+## 過去記事の resolver 更新（2026-08-09）
+
+**16・17 回の resolver も `lts-22.28` から `lts-24.53` へ更新した**（ユーザー判断）。
+
+理由は、`lts-22.28` を選んだのが**執筆環境の都合だった**こと。システムの GHC が 9.6.6 で
+resolver の GHC と一致する（`--system-ghc` が使える）という点が決め手だったが、
+これは読者には関係がない。18 回だけ現行 LTS になり、16・17 回が古いままなのは、
+シリーズを通して読む読者にとって理由の分からない不揃いにしかならない。
+
+**検証してから書き換えた。**
+
+|対象|`lts-22.28`|`lts-24.53`|結果|
+|---|---|---|---|
+|`check/16-free/Pkg.hs`・`test.hs`|`free-5.2` / GHC 9.6.6|**`free-5.2`** / GHC 9.10.3|出力が `diff` で完全一致|
+|`check/17-package/Package.hs`・`Forall.hs`|`operational-0.2.4.2`|**`operational-0.2.4.2`**|出力が `diff` で完全一致|
+|`check/17-package/Slow.hs`|下記|下記|傾向は同じ（ほぼ線形）。数値だけ再測定して差し替え|
+
+- **パッケージのバージョンは両 resolver で同一。** 上がったのは GHC だけ（9.6.6 → 9.10.3）。
+- `Slow.hs` の左結合の実測は 40 万要素で 0.084 s → **0.074 s**。
+  「二乗にならない」という結論は変わらないので、本文（17 回 `## 性能の注意`）は
+  数値を載せていない分そのままでよい。`check/17-package/README.md` の表だけ差し替えた。
+- ⚠ この環境の stack は GHC 9.6 以降に「Stack has not been tested with GHC versions
+  above 9.4」の警告を出すが、**16・17 回の掲載コードでも増えるものは無かった。**
+
+書き換えた箇所。
+
+- `16-free-monad.md` の `:::message`（`stack script --resolver lts-24.53 --package free`）
+- `17-operational-monad.md` の `:::message`（同 `--package operational`）
+- `check/16-free/README.md`・`check/17-package/README.md`（経緯の但し書きを追記）
+- `check/17-package/Forall.hs`・`Package.hs` の冒頭コメント
+- `README.md`（シリーズ）の「構想」にある freer-simple / lts-23.28 の記述
+
+**16-PLAN・17-PLAN は当時の判断の記録なので書き換えない。** 16-PLAN の
+「記事に載せる resolver の値は執筆時点のものを使う」という方針は、
+**「現行 LTS に合わせて過去記事も追随させる」へ改めた**のがこの更新にあたる。
 
 ## 発展の系譜（記事の入口）
 
@@ -314,7 +351,8 @@ sum' xs = runEff $ execState (0 :: Int) $
 4. **言語拡張は `DataKinds` と `GADTs` の 2 つ**（検証済み）。
    `GADTs` は 17 回で導入済みなので、**新しく増えるのは `DataKinds` だけ。**
 5. **実行環境は `stack script --resolver lts-24.53 --package effectful`**（2026-08-09 ユーザー判断）。
-   16・17 回は lts-22.28 だったので、resolver が変わることを `:::message` で断る。
+   **16・17 回も同じ lts-24.53 へ更新したので、resolver が変わる旨の断りは要らない**
+   （上記「過去記事の resolver 更新」）。
    - **現行 LTS をそのまま使う。** `freer-simple` の制約（lts-23 系列にしか無い）が
      消えた以上、古い resolver に留まる理由が無い。
    - lts-22.28 でも `effectful-2.3.1.0` で動くが、そちらには `interpret_` が無く、
@@ -341,7 +379,7 @@ sum' xs = runEff $ execState (0 :: Int) $
 |`Functor` / `Applicative` / `Monad` の 3 段・定型|`15-monads-and-friends.md`|自作 `Eff` を 3 段揃える|
 |Free モナド・命令の型・手順書・インタープリター|`16-free-monad.md`|系譜の起点|
 |`Program`・`singleton`・GADT で命令を並べる|`17-operational-monad.md`|**`Union` に差し替えるだけ、という説明の土台**|
-|外部パッケージを stack で使う|`16-free-monad.md` `# free パッケージ`|同じ手順（resolver だけ違う）|
+|外部パッケージを stack で使う|`16-free-monad.md` `# free パッケージ`|**まったく同じ手順**（resolver も lts-24.53 で揃った）|
 |`IORef`|`09-state-monads.md`|構成案 4 の `State` の実装|
 
 ⚠ `IORef` を 09 回のどこでどう扱ったか、執筆前に確認する（TODO）。

@@ -11,11 +11,17 @@
 ## 実行方法
 
 `operational` は GHC に同梱されていないため、stack でパッケージを指定する
-（lts-22.28 に `operational-0.2.4.2` が収録されている）。
+（lts-24.53 に `operational-0.2.4.2` が収録されている）。
 
 ```
-stack script --resolver lts-22.28 --package operational Package.hs
+stack script --resolver lts-24.53 --package operational Package.hs
 ```
+
+⚠ **当初は `lts-22.28` を使っていたが、2026-08-09 に現行 LTS の `lts-24.53`
+（GHC 9.10.3）へ更新した**（18-PLAN「過去記事の resolver 更新」）。`operational` は
+どちらの resolver でも 0.2.4.2 で、`Package.hs`・`Forall.hs` の出力は `diff` で
+完全一致することを確認済み。この環境の stack は GHC 9.6 以降に対して
+「Stack has not been tested with GHC versions above 9.4」の警告を出すが、動作には影響しない。
 
 ## 実行結果（標準入力: alice、carol）
 
@@ -39,17 +45,17 @@ Hello, carol!
 **自作版と違い、パッケージ版は左結合でも二乗にならない。**
 
 ```
-stack script --resolver lts-22.28 --package operational --optimize Slow.hs
+stack script --resolver lts-24.53 --package operational --optimize Slow.hs
 ```
 
 |N|right|left|
 |---|---|---|
-|50000|0.007 s|0.006 s|
-|100000|0.008 s|0.022 s|
-|200000|0.019 s|0.043 s|
-|400000|0.060 s|0.084 s|
+|50000|0.007 s|0.007 s|
+|100000|0.008 s|0.018 s|
+|200000|0.017 s|0.037 s|
+|400000|0.060 s|0.074 s|
 
-N を 2 倍にすると時間もおおむね 2 倍で、ほぼ線形。**40 万要素でも 0.084 s** で、
+N を 2 倍にすると時間もおおむね 2 倍で、ほぼ線形。**40 万要素でも 0.074 s** で、
 自作版が 1.6 万要素に 1.026 s かかるのと桁違い（`check/17-program/README.md` の表）。
 
 理由は内部表現の違い。`ghci` で確認すると `Program instr` は
