@@ -1,13 +1,14 @@
 # check/18-union
 
-18 回の構成案 3「手順書に複数の命令を混ぜる」の検証（2026-08-09）。
+18 回の `# 手順書に複数の命令を混ぜる` の掲載コード（2026-08-09）。
 
 17 回の `Program instr a` の `instr` を `Union es` に差し替えると、複数の効果が
 1 つの手順書に混ざる。**17 回から地続きの自作版。**
 
 |ファイル|内容|
 |---|---|
-|`Union.hs`|`Union`・`:>`（`inj`/`prj`）・`Eff`・`send`・2 つの効果（`Teletype`・`Counter`）とハンドラー|
+|`Union.hs`|`Union`・`:>`（`inj`）・`Eff`・`send`・2 つの効果（`Teletype`・`Counter`）とハンドラー|
+|`Logger.hs`|**練習【問1】の解答例。** 3 つ目の効果 `Logger` と、結果の型を変えるハンドラー `runLogger`|
 
 同じ型・同じ API を別の実装で満たしたものが `check/18-env/`（構成案 4）。
 **両者は出力が完全に一致する。**
@@ -18,11 +19,19 @@
 
 ```
 echo alice | runghc Union.hs
+echo alice | runghc Logger.hs
 ```
 
-```text:実行結果
+```text:Union.hs（標準入力: alice）
 name?
 Hello, alice! 0
+```
+
+```text:Logger.hs（標準入力: alice）
+name?
+Hello, alice! 0
+got alice
+tick 0
 ```
 
 ## 確認したこと
@@ -56,13 +65,14 @@ Hello, alice! 0
     `freer-simple` は型族 `FindElem` で位置を計算してこれを避けていた。
   - 名前も `effectful` に合わせて `Member` ではなく `:>` にしてある
     （`e :> es` は「効果 `e` がリスト `es` に含まれる」）。
-- **スマートコンストラクターには型注釈が要る。** `putLine s = send (PutLine s)` のように
-  型を書かないと、`:>` 制約が一般化されず「type variable would escape its scope」になる。
-- **空のリストのハンドラー**は `run :: Eff '[] a -> a` として書ける。
-  `Union '[] a` にはコンストラクターが無いので `case u of {}` で済む
-  （`EmptyCase` は GHC2021 に含まれるので pragma 不要。別途確認済み）。
-  `Union.hs` は最後を `IO` のハンドラーで閉じているため `There _ -> error "impossible"` に
-  なっている。**本文でどちらの形を採るかは要検討**（18-PLAN の TODO）。
+- **引数を取らないスマートコンストラクターには型注釈が要る**（2026-08-09 に再検証）。
+  `getLine' = send GetLine` は単相性制限で `es` が一般化されず「Ambiguous type variable」に
+  なる。`putLine s = send (PutLine s)` のように引数があるものは型注釈が無くても推論が通るが、
+  掲載コードでは揃えて全部に型を書いてある。
+- **`Union '[] a` にはコンストラクターが無いので `case u of {}` で潰せる**
+  （`EmptyCase` は GHC2021 に含まれるので pragma 不要）。`Union.hs` は最後を `IO` の
+  ハンドラー `runTeletype :: Eff '[Teletype] a -> IO a` で閉じており、その `There` の枝を
+  `error "impossible"` ではなくこの形にしてある。**本文もこの形を採用した。**
 
 ## 必要な言語拡張
 

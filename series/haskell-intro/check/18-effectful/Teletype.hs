@@ -1,4 +1,6 @@
-{-# LANGUAGE DataKinds, GADTs, TypeFamilies #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE TypeFamilies #-}
 import Effectful
 import Effectful.Dispatch.Dynamic
 import Effectful.State.Static.Local

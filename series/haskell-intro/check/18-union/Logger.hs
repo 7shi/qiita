@@ -1,3 +1,4 @@
+-- 練習【問1】の解答例
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -38,6 +39,9 @@ data Teletype a where
 data Counter a where
     Tick :: Counter Int
 
+data Logger a where
+    Log :: String -> Logger ()
+
 putLine :: Teletype :> es => String -> Eff es ()
 putLine s = send (PutLine s)
 
@@ -47,12 +51,25 @@ getLine' = send GetLine
 tick :: Counter :> es => Eff es Int
 tick = send Tick
 
-greet :: (Teletype :> es, Counter :> es) => Eff es ()
+logMsg :: Logger :> es => String -> Eff es ()
+logMsg s = send (Log s)
+
+greet :: (Teletype :> es, Counter :> es, Logger :> es) => Eff es ()
 greet = do
     putLine "name?"
     name <- getLine'
+    logMsg ("got " ++ name)
     n <- tick
+    logMsg ("tick " ++ show n)
     putLine ("Hello, " ++ name ++ "! " ++ show n)
+
+runLogger :: Eff (Logger ': es) a -> Eff es (a, [String])
+runLogger (Return a) = Return (a, [])
+runLogger (u :>>= k) = case u of
+    Here (Log s) -> do
+        (a, ls) <- runLogger (k ())
+        return (a, s : ls)
+    There u'     -> u' :>>= (runLogger . k)
 
 runCounter :: Int -> Eff (Counter ': es) a -> Eff es a
 runCounter _ (Return a) = Return a
@@ -67,4 +84,6 @@ runTeletype (u :>>= k) = case u of
     Here GetLine     -> getLine >>= runTeletype . k
     There u'         -> case u' of {}
 
-main = runTeletype (runCounter 0 greet)
+main = do
+    ((), logs) <- runTeletype (runCounter 0 (runLogger greet))
+    mapM_ putStrLn logs

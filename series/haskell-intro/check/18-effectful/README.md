@@ -1,12 +1,13 @@
 # check/18-effectful
 
-18 回の `effectful` パッケージの検証（2026-08-09）。構成案 5・6 に対応する。
+18 回の `# effectful パッケージ`・`# モナド変換子との比較` の掲載コード（2026-08-09）。
 
 |ファイル|内容|
 |---|---|
 |`Teletype.hs`|17 回の `TeletypeI` を効果にし、`State` と `IO` を混ぜる|
 |`StateWriter.hs`|`State` と `Writer` を混ぜ、**ハンドラーの適用順を入れ替えて結果を比べる**|
 |`Sum.hs`|**10 回（モナド変換子）の `sum'` を `Eff` で書き直したもの**|
+|`SumWriter.hs`|**練習【問2】の解答例。** `Sum.hs` に `Writer` を足し、`IO` を使わない形にする|
 
 ## 実行方法
 
@@ -17,6 +18,7 @@
 echo alice | stack script --resolver lts-24.53 --package effectful Teletype.hs
 stack script --resolver lts-24.53 --package effectful StateWriter.hs
 stack script --resolver lts-24.53 --package effectful Sum.hs
+stack script --resolver lts-24.53 --package effectful SumWriter.hs
 ```
 
 ⚠ この環境の stack は次の警告を出す。**動作には影響しない。**
@@ -39,7 +41,7 @@ Hello, alice! (0)
 (((),["n = 0"]),1)
 ```
 
-```text:Sum.hs
+```text:Sum.hs・SumWriter.hs（両者とも同じ）
 +1 -> 1
 +2 -> 3
 +3 -> 6

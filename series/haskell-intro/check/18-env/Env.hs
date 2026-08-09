@@ -1,4 +1,8 @@
-{-# LANGUAGE DataKinds, GADTs, RankNTypes, FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 import Data.IORef
 
 -- 手順書ではなく、ハンドラーの環境を受け取る関数
@@ -36,12 +40,12 @@ interpret f (Eff m) = Eff $ \env -> m (ECons (\op -> unEff (f op) env) env)
 run :: Eff '[] a -> IO a
 run (Eff m) = m ENil
 
--- 命令（18-union と同じ）
-data Teletype r where
+-- 効果（18-union と同じ）
+data Teletype a where
     PutLine :: String -> Teletype ()
     GetLine ::           Teletype String
 
-data Counter r where
+data Counter a where
     Tick :: Counter Int
 
 putLine :: Teletype :> es => String -> Eff es ()
@@ -60,6 +64,11 @@ greet = do
     n <- tick
     putLine ("Hello, " ++ name ++ "! " ++ show n)
 
+runTeletype :: Eff (Teletype ': es) a -> Eff es a
+runTeletype = interpret $ \op -> Eff $ \_ -> case op of
+    PutLine s -> putStrLn s
+    GetLine   -> getLine
+
 runCounter :: Int -> Eff (Counter ': es) a -> Eff es a
 runCounter n0 m = do
     r <- Eff $ \_ -> newIORef n0
@@ -67,10 +76,5 @@ runCounter n0 m = do
         n <- readIORef r
         writeIORef r (n + 1)
         return n) m
-
-runTeletype :: Eff (Teletype ': es) a -> Eff es a
-runTeletype = interpret $ \op -> Eff $ \_ -> case op of
-    PutLine s -> putStrLn s
-    GetLine   -> getLine
 
 main = run (runTeletype (runCounter 0 greet))
