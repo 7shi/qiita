@@ -74,6 +74,21 @@ diff <(echo alice | runghc ../18-union/Union.hs) <(echo alice | runghc Env.hs)
 
 ## 必要な言語拡張
 
-`DataKinds`・`GADTs`・`RankNTypes`・`FlexibleInstances`・`MultiParamTypeClasses`。
+**GHC2021 基準（16 回で確定）。pragma は `DataKinds`・`GADTs` の 2 つだけ。**
+どちらも GHC2021 に含まれないため。
 
-`RankNTypes` は `ECons` と `interpret` の `forall x.` のため。`18-union` には無かった。
+`runghc -XHaskell2010` に掛けて洗い出した結果（2026-08-10 に 1 つずつ外して確認）、
+Haskell2010 では次も要る。いずれも GHC2021 に含まれるので pragma は書かない。
+
+|拡張|理由|
+|---|---|
+|`RankNTypes`|`ECons` のフィールドと `interpret`・`handler` の引数の `forall x.`|
+|`TypeOperators`|型に `':`・`:>` を使う|
+|`MultiParamTypeClasses`|`:>` が型変数を 2 つ取る|
+|`FlexibleInstances`|インスタンスの頭が `e ': es`|
+|`FlexibleContexts`|`greet` の制約が `Teletype :> es`|
+
+`RankNTypes` が要るのは `18-union` との違い（あちらは `EmptyCase` が要る）。
+**このシリーズで `forall` を「使う」のではなく「自分で書く」のは 18 回が初めて**
+（09 回の `runST`・17 回の `interpretWithMonad` は利用側なので拡張不要。
+`check/17-package/README.md` の「`forall` の確認」を参照）。

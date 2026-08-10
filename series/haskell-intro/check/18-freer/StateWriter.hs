@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds, FlexibleContexts, GADTs, TypeOperators #-}
+{-# LANGUAGE DataKinds, GADTs #-}
 import Control.Monad.Freer
 import Control.Monad.Freer.State
 import Control.Monad.Freer.Writer

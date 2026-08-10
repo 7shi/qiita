@@ -1,8 +1,6 @@
 -- 練習【問1】の解答例
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
 import Control.Monad (ap, liftM)
 
 data Union es a where

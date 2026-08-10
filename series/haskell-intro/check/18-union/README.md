@@ -76,5 +76,16 @@ tick 0
 
 ## 必要な言語拡張
 
-`DataKinds`・`GADTs`・`FlexibleInstances`・`MultiParamTypeClasses`。
-後ろ 2 つは `:>` を多引数の型クラスとして定義するため。
+**GHC2021 基準（16 回で確定）。pragma は `DataKinds`・`GADTs` の 2 つだけ。**
+どちらも GHC2021 に含まれないため。
+
+`runghc -XHaskell2010` に掛けて洗い出した結果（2026-08-10 に 1 つずつ外して確認）、
+Haskell2010 では次も要る。いずれも GHC2021 に含まれるので pragma は書かない。
+
+|拡張|理由|
+|---|---|
+|`TypeOperators`|型に `':`・`:>` を使う|
+|`MultiParamTypeClasses`|`:>` が型変数を 2 つ取る|
+|`FlexibleInstances`|インスタンスの頭が `e ': es`|
+|`FlexibleContexts`|`greet` の制約が `Teletype :> es`|
+|`EmptyCase`|`case u' of {}`|

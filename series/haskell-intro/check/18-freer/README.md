@@ -105,6 +105,9 @@ Hello, alice! (0)
 
 ## 必要な言語拡張
 
-**`DataKinds` が必須**（型レベルリスト `'[...]` のため）。自作の効果を定義するなら
-`GADTs` も要る。`TypeOperators`・`FlexibleContexts` は GHC2021 に含まれるので不要
-（`Teletype.hs` は `DataKinds` と `GADTs` の 2 つだけで通る）。
+**GHC2021 基準（16 回で確定。[../../README.md](../../README.md) のスタイル節）。
+pragma は `DataKinds`・`GADTs` の 2 つだけ。**
+
+`DataKinds` は型レベルリスト `'[...]` のため、`GADTs` は自作の効果の定義のため。
+`TypeOperators`・`FlexibleContexts` は GHC2021 に含まれるので不要
+（2026-08-10 に `StateWriter.hs` から両方外して実行し、出力が変わらないことを確認）。
