@@ -630,6 +630,14 @@ Hello, alice! 0
 
 `Eff` モナドを提供する代表的な実装として、[effectful](https://hackage.haskell.org/package/effectful) パッケージを使います。名前のとおり効果を扱うライブラリで、[`Effectful`](https://hackage.haskell.org/package/effectful-core/docs/Effectful.html) モジュールが入口です。
 
+:::message
+`effectful` は GHC に同梱されていないため、実行には導入が必要です。[Stack](https://docs.haskellstack.org/) を使う場合は次のように起動できます。
+
+```
+stack script --resolver lts-24.53 --package effectful ファイル名.hs
+```
+:::
+
 `Eff` の型は次のように定義されています。
 
 ```hs
@@ -729,6 +737,10 @@ runCounter n0 = reinterpret_ (evalState n0) $ \Tick -> do
 
 `IO` を使わないため、`runTeletypeIO` と違って `IOE` の制約は付きません。カウンターは `IO` の要らない手順書にも混ぜられます。
 
+:::message
+`n <- get` と書いたとき、`n` の型が決まらないことがあります。`get` の型は `State s :> es => Eff es s` で、`s` はリスト `es` から一意には決まりません。上の `runCounter` では `evalState n0` の `n0 :: Int` から決まりますが、そうでなければ使う側で注釈が要ります。
+:::
+
 ## 全体を動かす
 
 `greet` は自作版のまま書けます。ハンドラーを両方適用して `runEff` で走らせます。
@@ -797,18 +809,10 @@ runEff     :: Eff '[IOE] a -> IO a
 runPureEff :: Eff '[] a -> a
 ```
 
-`IO` を使う手順書は `runEff` で、使わない手順書は `runPureEff` で走らせます。自作版の `run` が `Eff '[] a -> IO a` だったのに対し、`runPureEff` は `IO` が付かない点が違います。実装は `IO` の上で走らせた結果を取り出しているので、型の上で純粋に見せているということです。
+`IO` を使う手順書は `runEff` で、使わない手順書は `runPureEff` で走らせます。自作版の `run` が `Eff '[] a -> IO a` だったのに対し、`runPureEff` は `IO` が付かない点が違います。
 
 :::message
-`n <- get` と書いたとき、`n` の型が決まらないことがあります。`get` の型は `State s :> es => Eff es s` で、`s` はリスト `es` から一意には決まりません。上の `runCounter` では `evalState n0` の `n0 :: Int` から決まりますが、そうでなければ使う側で注釈が要ります。この後の `sum'` で `show (v :: Int)` と書いてあるのはこのためです。
-:::
-
-:::message
-`effectful` は GHC に同梱されていないため、実行には導入が必要です。[Stack](https://docs.haskellstack.org/) を使う場合は次のように起動できます。
-
-```
-stack script --resolver lts-24.53 --package effectful ファイル名.hs
-```
+実装では `Eff es a` の中身が `IO` を使う関数になっており、`runPureEff` は内部で `unsafeDupablePerformIO` によって `IO` を剥がしています。効果リストが空であることが「`IO` を副作用として使っていない」保証になるため、この操作でも安全に純粋な値として取り出せます。
 :::
 
 ## 簡略化版との違い
@@ -873,6 +877,10 @@ main = print =<< sum' [1..5]
 ```
 
 出力は 1 文字も変わりません。`do` の中身もほぼそのままで、`lift` が `liftIO` になっただけです。
+
+:::message
+`v <- get` だけでは `v` の型が決まりません。`get` の型は `State s :> es => Eff es s` で、`s` はリスト `es` から一意には決まらないためです。`show (v :: Int)` のように、使う側で型注釈が必要です。
+:::
 
 ## 持ち上げの回数が消える
 
