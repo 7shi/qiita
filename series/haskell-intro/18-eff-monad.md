@@ -52,7 +52,7 @@ Eff モナドは、複数の効果を混ぜられるよう命令の型を型レ�
 
 # Free モナドから拡張可能な効果へ
 
-前々回・前回は、命令を並べた手順書をデータとして組み立て、後からインタープリターで解釈するという枠組みを扱ってきました。Free モナドは継続を命令の型の中に持ち、Operational モナドは継続を `>>=` の側に持ちます。👉[Freeモナド](https://zenn.dev/7shi/articles/20260808-haskell-free-monad#%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B) 👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%9A%E3%81%8D%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
+前々回・前回は、命令を並べた手順書をデータとして組み立て、後からインタープリターで解釈するという枠組みを扱ってきました。Free モナドは継続を命令の型の中に持ち、Operational モナドは継続を `>>=` の側に持ちます。👉[Freeモナド](https://zenn.dev/7shi/articles/20260808-haskell-free-monad#%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B) 👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%99%E7%B6%9A%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
 
 どちらも命令の型は 1 つでした。テレタイプの手順書にはテレタイプの命令しか置けません。
 
@@ -71,7 +71,7 @@ Eff モナドは、複数の効果を混ぜられるよう命令の型を型レ�
 
 書誌は最後の参考に挙げます。
 
-2015 年の論文の題にある Freer は、前回の Operational と基本的に同じ方式を指す名前です。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%9A%E3%81%8D%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
+2015 年の論文の題にある Freer は、前回の Operational と基本的に同じ方式を指す名前です。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%99%E7%B6%9A%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
 
 `Program instr a` における `instr` を複数に拡張することで、拡張可能な効果（extensible effects）にたどり着きます。
 
@@ -89,7 +89,7 @@ Eff モナドは、複数の効果を混ぜられるよう命令の型を型レ�
 
 ## 混ぜられない手順書
 
-前回の `Program instr a` の `instr` は 1 つの型しか受け取れないため、複数の効果を混ぜることはできません。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%9A%E3%81%8D%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
+前回の `Program instr a` の `instr` は 1 つの型しか受け取れないため、複数の効果を混ぜることはできません。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%99%E7%B6%9A%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
 
 前回のテレタイプ（`Teletype`）を使って確かめます。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E3%81%BE%E3%81%A8%E3%82%81)
 
@@ -189,7 +189,7 @@ class e :> es where
     inj :: e a -> Union es a
 ```
 
-`class e :> es where` は中置（infix）のクラス宣言で、`class (:>) e es where` の糖衣構文です。`:>` がクラス名で、`e` と `es` が型変数にあたります。前回 `:>>=` のところで見たように、演算子を名前にするときは `:` で始める決まりがあります。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%9A%E3%81%8D%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
+`class e :> es where` は中置（infix）のクラス宣言で、`class (:>) e es where` の糖衣構文です。`:>` がクラス名で、`e` と `es` が型変数にあたります。前回 `:>>=` のところで見たように、演算子を名前にするときは `:` で始める決まりがあります。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%99%E7%B6%9A%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
 
 中置のクラス宣言には `TypeOperators`、型変数を 2 つ取るには `MultiParamTypeClasses` という拡張が要りますが、どちらも GHC2021 に含まれているのでプラグマは不要です。標準の型クラスは型変数 1 つに限られる、というのが後者の事情です。
 
@@ -226,7 +226,7 @@ data Eff es a where
 (:>>=) :: Union es b -> (b -> Eff es a)        -> Eff es a         -- 今回
 ```
 
-3 段のインスタンスも前回のままです。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%9A%E3%81%8D%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
+3 段のインスタンスも前回のままです。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%99%E7%B6%9A%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
 
 ```hs
 import Control.Monad (ap, liftM)
@@ -930,7 +930,7 @@ sum' xs = runPureEff $ runWriter @[String] $ execState (0 :: Int) $
 
 一方で `polysemy` だけは型名が `Sem` で、`Eff` ではありません。名前でグループ分けはできない、ということです。
 
-Freer という語も紛らわしいところです。`freer-simple` はモジュール名が `Control.Monad.Freer` ですが、そこから出てくる型は `Eff` だけで、`Freer` という名前の型はありません。前回 Operational の別名として出てきた Freer は、論文とモジュール名に残る呼び名であって、コードには現れなくなっています。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%9A%E3%81%8D%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
+Freer という語も紛らわしいところです。`freer-simple` はモジュール名が `Control.Monad.Freer` ですが、そこから出てくる型は `Eff` だけで、`Freer` という名前の型はありません。前回 Operational の別名として出てきた Freer は、論文とモジュール名に残る呼び名であって、コードには現れなくなっています。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%99%E7%B6%9A%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
 
 ## 実装の方式で分かれる
 
