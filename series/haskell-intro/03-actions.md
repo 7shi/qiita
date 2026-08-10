@@ -13,7 +13,7 @@ tags:
 - name: Haskell
   versions: []
 title: Haskell アクション 超入門
-updated_at: '2026-08-09T00:10:58+09:00'
+updated_at: '2026-08-11T03:16:52+09:00'
 url: https://qiita.com/7shi/items/85afd7bbd5d6c4115ad6
 slide: false
 ---
@@ -236,7 +236,7 @@ main = do
 "END"
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/623fd55b8b68398becdc#%E3%83%A9%E3%83%B3%E3%83%80%E3%83%A0%E8%A1%A8%E7%A4%BA)
+⇒ [解答例](http://qiita.com/7shi/items/623fd55b8b68398becdc#ランダム表示)
 
 # return
 
@@ -355,13 +355,13 @@ main = do
 
 ヒント: `fact 0 = return 1`
 
-⇒ [解答例](http://qiita.com/7shi/items/623fd55b8b68398becdc#%E9%9A%8E%E4%B9%97)
+⇒ [解答例](http://qiita.com/7shi/items/623fd55b8b68398becdc#階乗)
 
 # IO
 
 今回出て来るアクションはすべてIOと呼ばれる型で、型名は`IO＋型`で表記されます。
 
-※ IO以外にもアクションはありますが、今回は分かりやすさを優先してIOアクションを単にアクションとして扱います。IO以外のアクションは続編で取り上げます。👉[状態系モナド](https://qiita.com/7shi/items/2e9bff5d88302de1a9e9#%E7%8A%B6%E6%85%8B%E7%B3%BB%E3%83%A2%E3%83%8A%E3%83%89)
+※ IO以外にもアクションはありますが、今回は分かりやすさを優先してIOアクションを単にアクションとして扱います。IO以外のアクションは続編で取り上げます。👉[状態系モナド](https://qiita.com/7shi/items/2e9bff5d88302de1a9e9#状態系モナド)
 
 とりあえず実用的には以下のように認識すれば使えます。
 
@@ -442,7 +442,7 @@ main = do
 [3,5,4,9,2,7,8,6,1]
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/623fd55b8b68398becdc#%E3%82%B7%E3%83%A3%E3%83%83%E3%83%95%E3%83%AB)
+⇒ [解答例](http://qiita.com/7shi/items/623fd55b8b68398becdc#シャッフル)
 
 【問4】[ボゴソート](http://ja.wikipedia.org/wiki/%E3%83%9C%E3%82%B4%E3%82%BD%E3%83%BC%E3%83%88)を実装してください。
 
@@ -461,7 +461,7 @@ main = do
 
 ヒント: ソート済みかを`True`/`False`で返す関数`isSorted`を実装します。
 
-⇒ [解答例](http://qiita.com/7shi/items/623fd55b8b68398becdc#%E3%83%9C%E3%82%B4%E3%82%BD%E3%83%BC%E3%83%88)
+⇒ [解答例](http://qiita.com/7shi/items/623fd55b8b68398becdc#ボゴソート)
 
 # unit
 
@@ -639,7 +639,7 @@ main = do
 6
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/623fd55b8b68398becdc#%E6%9A%97%E9%BB%99%E3%81%AE%E5%8F%96%E3%82%8A%E5%87%BA%E3%81%97)
+⇒ [解答例](http://qiita.com/7shi/items/623fd55b8b68398becdc#暗黙の取り出し)
 
 # bind
 
@@ -753,7 +753,7 @@ main = do
 
 ヒント: 演算子の関数化`(+)`
 
-⇒ [解答例](http://qiita.com/7shi/items/623fd55b8b68398becdc#applicative%E3%82%B9%E3%82%BF%E3%82%A4%E3%83%AB)
+⇒ [解答例](http://qiita.com/7shi/items/623fd55b8b68398becdc#applicativeスタイル)
 
 # デバッグ
 
@@ -865,7 +865,7 @@ main = do
     traceIO $ show $ qsort [4, 6, 9, 8, 3, 5, 1, 7, 2]
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/623fd55b8b68398becdc#%E3%82%AF%E3%82%A4%E3%83%83%E3%82%AF%E3%82%BD%E3%83%BC%E3%83%88)
+⇒ [解答例](http://qiita.com/7shi/items/623fd55b8b68398becdc#クイックソート)
 
 # IORef
 
@@ -914,7 +914,7 @@ console.log(f());
 
 ヒント: `return $ do`
 
-⇒ [解答例](http://qiita.com/7shi/items/623fd55b8b68398becdc#%E3%82%AB%E3%82%A6%E3%83%B3%E3%82%BF%E3%83%BC)
+⇒ [解答例](http://qiita.com/7shi/items/623fd55b8b68398becdc#カウンター)
 
 # ループ
 
@@ -985,13 +985,13 @@ console.log(s);
 
 【問10】問9のコードから`IORef`を排除してください。`sum`は使わないでください。
 
-⇒ [解答例](http://qiita.com/7shi/items/623fd55b8b68398becdc#%E3%83%AB%E3%83%BC%E3%83%97)
+⇒ [解答例](http://qiita.com/7shi/items/623fd55b8b68398becdc#ループ)
 
 # IOUArray
 
 IORefの配列版です。パッケージarrayが必要です。[Leksah](http://qiita.com/7shi/items/d1e5a0c22be6cf61d286)ではdependenciesに追加します。
 
-※ `U`はアンボックス化を意味しています。詳細は続編で説明します。👉[IOモナド](https://qiita.com/7shi/items/d3d3492ddd90d47160f2#%E3%82%A2%E3%83%B3%E3%83%9C%E3%83%83%E3%82%AF%E3%82%B9%E5%8C%96%E3%82%BF%E3%83%97%E3%83%AB)
+※ `U`はアンボックス化を意味しています。詳細は続編で説明します。👉[IOモナド](https://qiita.com/7shi/items/d3d3492ddd90d47160f2#アンボックス化タプル)
 
 ```hs
 import Data.Array.IO
@@ -1171,7 +1171,7 @@ fact 5 = 5 * fact 4 = 5 * 24 = 120
 120
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/623fd55b8b68398becdc#%E3%83%88%E3%83%AC%E3%83%BC%E3%82%B9)
+⇒ [解答例](http://qiita.com/7shi/items/623fd55b8b68398becdc#トレース)
 
 # 参考
 

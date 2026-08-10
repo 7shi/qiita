@@ -13,7 +13,7 @@ tags:
 - name: Haskell
   versions: []
 title: Haskell ラムダ 超入門
-updated_at: '2026-08-09T00:11:05+09:00'
+updated_at: '2026-08-11T03:16:59+09:00'
 url: https://qiita.com/7shi/items/1345bf32003faff435cb
 slide: false
 ---
@@ -94,7 +94,7 @@ main = do
     print $ fact 5
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/bfa4c282c504c24578d2#%E9%9A%8E%E4%B9%97)
+⇒ [解答例](http://qiita.com/7shi/items/bfa4c282c504c24578d2#階乗)
 
 # 型注釈
 
@@ -123,7 +123,7 @@ main = do
     print $ add 2 3
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/bfa4c282c504c24578d2#%E8%A4%87%E6%95%B0%E3%81%AE%E5%BC%95%E6%95%B0)
+⇒ [解答例](http://qiita.com/7shi/items/bfa4c282c504c24578d2#複数の引数)
 
 # 無名関数
 
@@ -173,7 +173,7 @@ main = do
     print $ add 2 3
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/bfa4c282c504c24578d2#%E7%84%A1%E5%90%8D%E9%96%A2%E6%95%B0)
+⇒ [解答例](http://qiita.com/7shi/items/bfa4c282c504c24578d2#無名関数)
 
 # 高階関数
 
@@ -245,7 +245,7 @@ main = do
     print $ f add
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/bfa4c282c504c24578d2#%E5%BC%95%E6%95%B0)
+⇒ [解答例](http://qiita.com/7shi/items/bfa4c282c504c24578d2#引数)
 
 【問5】次に示す関数`add`を定義せずに、呼び出し側で無名関数にインライン展開してください。
 
@@ -256,7 +256,7 @@ main = do
     print $ add 1 2
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/bfa4c282c504c24578d2#%E6%88%BB%E3%82%8A%E5%80%A4)
+⇒ [解答例](http://qiita.com/7shi/items/bfa4c282c504c24578d2#戻り値)
 
 # カリー化
 
@@ -329,7 +329,7 @@ main = do
     print $ combine 'a' 'b' 'c'
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/bfa4c282c504c24578d2#%E3%82%AB%E3%83%AA%E3%83%BC%E5%8C%96)
+⇒ [解答例](http://qiita.com/7shi/items/bfa4c282c504c24578d2#カリー化)
 
 【問7】次のコードから関数`double`を除去してください。ラムダ式は使わないでください。
 
@@ -343,7 +343,7 @@ main = do
 
 ヒント: 演算子の関数化`(*)`
 
-⇒ [解答例](http://qiita.com/7shi/items/bfa4c282c504c24578d2#%E9%83%A8%E5%88%86%E9%81%A9%E7%94%A8)
+⇒ [解答例](http://qiita.com/7shi/items/bfa4c282c504c24578d2#部分適用)
 
 # 演算子
 
@@ -430,7 +430,7 @@ main = do
     print $ f2 $ \x y -> x + y
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/bfa4c282c504c24578d2#%E6%BC%94%E7%AE%97%E5%AD%90)
+⇒ [解答例](http://qiita.com/7shi/items/bfa4c282c504c24578d2#演算子)
 
 # 色々な関数
 
@@ -440,7 +440,7 @@ Prelude（標準ライブラリ）で定義されている高階関数をいく�
 
 リストの要素すべてに同じ処理を施した別のリストを作成します。
 
-同じことができるリスト内包表記と対比します。👉[超入門](https://qiita.com/7shi/items/145f1234f8ec2af923ef#%E3%83%AA%E3%82%B9%E3%83%88%E5%86%85%E5%8C%85%E8%A1%A8%E8%A8%98)
+同じことができるリスト内包表記と対比します。👉[超入門](https://qiita.com/7shi/items/145f1234f8ec2af923ef#リスト内包表記)
 
 ```hs
 main = do
@@ -458,7 +458,7 @@ main = do
 
 リストから要素を取り出す際に条件を指定できます。
 
-同じことができるリスト内包表記と対比します。👉[超入門](https://qiita.com/7shi/items/145f1234f8ec2af923ef#%E6%9D%A1%E4%BB%B6)
+同じことができるリスト内包表記と対比します。👉[超入門](https://qiita.com/7shi/items/145f1234f8ec2af923ef#条件)
 
 ```hs
 main = do
@@ -587,7 +587,7 @@ main = do
 3
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/bfa4c282c504c24578d2#%E5%86%8D%E5%B8%B0)
+⇒ [解答例](http://qiita.com/7shi/items/bfa4c282c504c24578d2#再帰)
 
 【問10】`foldl`で`reverse`と`maximum`と`minimum`を再実装してください。関数名には`'`を付けてください。
 
@@ -621,7 +621,7 @@ main = do
     print $ qsort [4, 6, 9, 8, 3, 5, 1, 7, 2]
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/bfa4c282c504c24578d2#%E3%82%AF%E3%82%A4%E3%83%83%E3%82%AF%E3%82%BD%E3%83%BC%E3%83%88)
+⇒ [解答例](http://qiita.com/7shi/items/bfa4c282c504c24578d2#クイックソート)
 
 【問12】次に示す関数`bswap`を`foldr`で書き替えてください。
 
@@ -642,7 +642,7 @@ main = do
 [1,4,3,2,5]
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/bfa4c282c504c24578d2#%E3%83%90%E3%83%96%E3%83%AB)
+⇒ [解答例](http://qiita.com/7shi/items/bfa4c282c504c24578d2#バブル)
 
 この問題は次の記事を参考にしました。
 
@@ -686,7 +686,7 @@ Yコンビネータは次の記事を参考にしました。
 
 【問13】Yコンビネータを使って10番目のフィボナッチ数を計算してください。
 
-⇒ [解答例](http://qiita.com/7shi/items/bfa4c282c504c24578d2#%E3%83%95%E3%82%A3%E3%83%9C%E3%83%8A%E3%83%83%E3%83%81%E6%95%B0)
+⇒ [解答例](http://qiita.com/7shi/items/bfa4c282c504c24578d2#フィボナッチ数)
 
 # 関数合成
 
@@ -746,7 +746,7 @@ main = do
 
 # ポイントフリースタイル
 
-部分適用を利用すれば、別の関数に渡すだけの引数を省略できます。これを**ポイントフリースタイル**と呼びます。👉[アクションとラムダ](https://qiita.com/7shi/items/4a8a2807bb5186576c61#%E3%83%9D%E3%82%A4%E3%83%B3%E3%83%88%E3%83%95%E3%83%AA%E3%83%BC%E3%82%B9%E3%82%BF%E3%82%A4%E3%83%AB)
+部分適用を利用すれば、別の関数に渡すだけの引数を省略できます。これを**ポイントフリースタイル**と呼びます。👉[アクションとラムダ](https://qiita.com/7shi/items/4a8a2807bb5186576c61#ポイントフリースタイル)
 
 簡単な例を示します。
 

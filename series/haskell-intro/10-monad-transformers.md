@@ -11,7 +11,7 @@ tags:
 - name: Haskell
   versions: []
 title: Haskell モナド変換子 超入門
-updated_at: '2026-08-09T00:11:40+09:00'
+updated_at: '2026-08-11T03:17:34+09:00'
 url: https://qiita.com/7shi/items/4408b76624067c17e933
 slide: false
 ---
@@ -354,7 +354,7 @@ main = do
 (1,())
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/79fe0e4c77427368ae2d#state%E3%83%A2%E3%83%8A%E3%83%89)
+⇒ [解答例](http://qiita.com/7shi/items/79fe0e4c77427368ae2d#stateモナド)
 
 # 持ち上げ
 
@@ -542,11 +542,11 @@ main = fact 5 >>= print
 ()
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/79fe0e4c77427368ae2d#%E5%86%8D%E5%AE%9F%E8%A3%85)
+⇒ [解答例](http://qiita.com/7shi/items/79fe0e4c77427368ae2d#再実装)
 
 【問3】問2の`fact`を`do`と`<-`で書き直してください。問2で再実装した関数は使わないでください。
 
-⇒ [解答例](http://qiita.com/7shi/items/79fe0e4c77427368ae2d#%E6%9B%B8%E3%81%8D%E7%9B%B4%E3%81%97)
+⇒ [解答例](http://qiita.com/7shi/items/79fe0e4c77427368ae2d#書き直し)
 
 # Maybeモナドとの合成
 
@@ -673,7 +673,7 @@ Nothing
 
 ![StateT-Maybe-2.png](https://qiita-image-store.s3.amazonaws.com/0/32057/36f0c6f5-2cdf-2297-9836-6023fb2eebf4.png)
 
-※ ここで取り上げたサンプルに少し手を加えたものを続編でも説明します。👉[例外処理](https://qiita.com/7shi/items/73e534c47bbebc71b37e#%E3%83%A2%E3%83%8A%E3%83%89%E5%A4%89%E6%8F%9B%E5%AD%90%E3%81%A7%E5%90%88%E6%88%90)
+※ ここで取り上げたサンプルに少し手を加えたものを続編でも説明します。👉[例外処理](https://qiita.com/7shi/items/73e534c47bbebc71b37e#モナド変換子で合成)
 
 ## 練習
 
@@ -699,11 +699,11 @@ main = do
 Main.hs:3:1-30: Non-exhaustive patterns in function getch
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/79fe0e4c77427368ae2d#maybe%E3%83%A2%E3%83%8A%E3%83%89)
+⇒ [解答例](http://qiita.com/7shi/items/79fe0e4c77427368ae2d#maybeモナド)
 
 【問5】問4の解答をStateTモナド変換子を使って書き直してください。
 
-⇒ [解答例](http://qiita.com/7shi/items/79fe0e4c77427368ae2d#statet%E3%83%A2%E3%83%8A%E3%83%89%E5%A4%89%E6%8F%9B%E5%AD%90-1)
+⇒ [解答例](http://qiita.com/7shi/items/79fe0e4c77427368ae2d#statetモナド変換子-1)
 
 # 他のモナド変換子
 
@@ -746,7 +746,7 @@ main = do
 [1]
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/79fe0e4c77427368ae2d#%E4%BB%96%E3%81%AE%E3%83%A2%E3%83%8A%E3%83%89%E5%A4%89%E6%8F%9B%E5%AD%90)
+⇒ [解答例](http://qiita.com/7shi/items/79fe0e4c77427368ae2d#他のモナド変換子)
 
 # 多重持ち上げ
 
@@ -944,7 +944,7 @@ main = print $ liftM2 (+) [1] [1]
 
 ## Applicativeスタイル
 
-関数の持ち上げは前編で取り上げたApplicativeスタイルと同じです。👉[アクション](https://qiita.com/7shi/items/85afd7bbd5d6c4115ad6#applicative%E3%82%B9%E3%82%BF%E3%82%A4%E3%83%AB)
+関数の持ち上げは前編で取り上げたApplicativeスタイルと同じです。👉[アクション](https://qiita.com/7shi/items/85afd7bbd5d6c4115ad6#applicativeスタイル)
 
 ※ そこでは「値の取り出し」という観点で統一するため、敢えて「持ち上げ」とは言わずに別の説明をしています。結果は同じなので、解釈で何かが変わるわけではありません。
 

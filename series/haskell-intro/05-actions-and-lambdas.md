@@ -11,7 +11,7 @@ tags:
 - name: Haskell
   versions: []
 title: Haskell アクションとラムダ 超入門
-updated_at: '2026-08-09T00:11:11+09:00'
+updated_at: '2026-08-11T03:17:05+09:00'
 url: https://qiita.com/7shi/items/4a8a2807bb5186576c61
 slide: false
 ---
@@ -191,7 +191,7 @@ main = do
     print xs
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/cb99bb70ee103408bf51#%E3%82%B7%E3%83%A3%E3%83%83%E3%83%95%E3%83%AB)
+⇒ [解答例](http://qiita.com/7shi/items/cb99bb70ee103408bf51#シャッフル)
 
 # ここまでのまとめ
 
@@ -203,7 +203,7 @@ main = do
 
 # IORef
 
-アクション超入門で紹介した`IORef`ですが、ラムダ超入門の知識があれば便利になります。👉[アクション](https://qiita.com/7shi/items/85afd7bbd5d6c4115ad6#ioref) 👉[ラムダ](https://qiita.com/7shi/items/1345bf32003faff435cb#%E3%83%A9%E3%83%A0%E3%83%80%E5%BC%8F)
+アクション超入門で紹介した`IORef`ですが、ラムダ超入門の知識があれば便利になります。👉[アクション](https://qiita.com/7shi/items/85afd7bbd5d6c4115ad6#ioref) 👉[ラムダ](https://qiita.com/7shi/items/1345bf32003faff435cb#ラムダ式)
 
 まず比較として、今までの知識で`IORef`の値に1を足してみます。
 
@@ -252,7 +252,7 @@ main = do
 [0,5,0]
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/cb99bb70ee103408bf51#%E9%85%8D%E5%88%97%E3%81%AE%E6%9B%B4%E6%96%B0)
+⇒ [解答例](http://qiita.com/7shi/items/cb99bb70ee103408bf51#配列の更新)
 
 # 色々な関数や演算子
 
@@ -477,7 +477,7 @@ main = do
         unless' (r == 6) f
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/cb99bb70ee103408bf51#%E5%86%8D%E5%AE%9F%E8%A3%85)
+⇒ [解答例](http://qiita.com/7shi/items/cb99bb70ee103408bf51#再実装)
 
 【問4】0.0～1.0までのDouble型の乱数を12個足したものを四捨五入して6を引いた整数値について、100回の分布を求めてください。四捨五入には[round](http://hackage.haskell.org/package/base-4.7.0.1/docs/Prelude.html#v:round)ではなく、切り捨て関数[truncate](http://hackage.haskell.org/package/base-4.7.0.1/docs/Prelude.html#v:truncate)を工夫して使用してください。
 
@@ -493,4 +493,4 @@ main = do
  3: *
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/cb99bb70ee103408bf51#%E6%AD%A3%E8%A6%8F%E4%B9%B1%E6%95%B0)
+⇒ [解答例](http://qiita.com/7shi/items/cb99bb70ee103408bf51#正規乱数)

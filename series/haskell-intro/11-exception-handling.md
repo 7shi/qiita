@@ -13,7 +13,7 @@ tags:
 - name: Haskell
   versions: []
 title: Haskell 例外処理 超入門
-updated_at: '2026-08-09T00:11:46+09:00'
+updated_at: '2026-08-11T03:17:41+09:00'
 url: https://qiita.com/7shi/items/73e534c47bbebc71b37e
 slide: false
 ---
@@ -52,7 +52,7 @@ Haskellでは失敗を処理するのにモナドと例外の2つの方法があ
 Either a b
 ```
 
-成功時だけでなく、失敗時にも値が返せるモナドです。Maybeモナドの機能強化版のような失敗系モナドです。👉[構文解析](https://qiita.com/7shi/items/b8c741e78a96ea2c10fe#either%E3%83%A2%E3%83%8A%E3%83%89)
+成功時だけでなく、失敗時にも値が返せるモナドです。Maybeモナドの機能強化版のような失敗系モナドです。👉[構文解析](https://qiita.com/7shi/items/b8c741e78a96ea2c10fe#eitherモナド)
 
 Maybeモナドと比較します。型変数の`a`と`b`を配置位置から左右と呼んでいます。
 
@@ -232,7 +232,7 @@ main = do
     print $ test "Aaa"
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/f825dc54a5f6fb2a72dc#%E3%82%A8%E3%83%A9%E3%83%BC%E3%81%AE%E7%90%86%E7%94%B1)
+⇒ [解答例](http://qiita.com/7shi/items/f825dc54a5f6fb2a72dc#エラーの理由)
 
 【問2】次のJavaScriptのコードを移植してください。Eitherモナドを使ってなるべく同じ構造にしてください。
 
@@ -404,7 +404,7 @@ main =
 3
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/f825dc54a5f6fb2a72dc#%E4%BE%8B%E5%A4%96)
+⇒ [解答例](http://qiita.com/7shi/items/f825dc54a5f6fb2a72dc#例外)
 
 # 参照透過な関数
 
@@ -496,7 +496,7 @@ main = do
 
 IO以外のモナドで失敗を扱うには、モナド変換子でEitherモナドを合成すれば例外が避けられます。
 
-復習を兼ねて前編で出した例を書き替えます。MaybeモナドをEitherモナドにすることで、エラーの理由が返せるようになります。👉[モナド変換子](https://qiita.com/7shi/items/4408b76624067c17e933#%E3%83%A2%E3%83%8A%E3%83%89%E5%A4%89%E6%8F%9B%E5%AD%90%E3%81%A7%E5%90%88%E6%88%90)
+復習を兼ねて前編で出した例を書き替えます。MaybeモナドをEitherモナドにすることで、エラーの理由が返せるようになります。👉[モナド変換子](https://qiita.com/7shi/items/4408b76624067c17e933#モナド変換子で合成)
 
 次の手順でサンプルを書き換える過程を示します。
 
@@ -625,7 +625,7 @@ test = evalStateT $ do
     return [ch0, ch1, ch2]
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/f825dc54a5f6fb2a72dc#%E3%83%A2%E3%83%8A%E3%83%89%E5%A4%89%E6%8F%9B%E5%AD%90)
+⇒ [解答例](http://qiita.com/7shi/items/f825dc54a5f6fb2a72dc#モナド変換子)
 
 # 参考
 

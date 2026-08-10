@@ -13,7 +13,7 @@ tags:
 - name: Haskell
   versions: []
 title: Haskell 代数的データ型 超入門
-updated_at: '2026-08-09T00:10:53+09:00'
+updated_at: '2026-08-11T03:16:46+09:00'
 url: https://qiita.com/7shi/items/1ce76bde464b4a55c143
 slide: false
 ---
@@ -128,7 +128,7 @@ main = do
 Blue
 ```
 
-`deriving`により自分で定義した型に機能が追加できます。機能を表す部分（`Show`）は**型クラス**と呼ばれます。標準で指定できる型クラスは6種類ですが、後で`Bool`の定義とともに掲載します。👉[型クラス](https://zenn.dev/7shi/articles/20260805-haskell-type-classes#class-%E3%81%A8-instance)
+`deriving`により自分で定義した型に機能が追加できます。機能を表す部分（`Show`）は**型クラス**と呼ばれます。標準で指定できる型クラスは6種類ですが、後で`Bool`の定義とともに掲載します。👉[型クラス](https://zenn.dev/7shi/articles/20260805-haskell-type-classes#class-と-instance)
 
 ## Enum
 
@@ -192,7 +192,7 @@ data Bool = False | True deriving (Eq, Ord, Enum, Read, Show, Bounded)
 
 ヒント: `mix Blue Red = Magenta`, その他の色 `Green | Cyan | Yellow | White`
 
-⇒ [解答例](http://qiita.com/7shi/items/0bed757ed0b51944a669#%E5%88%97%E6%8C%99%E5%9E%8B)
+⇒ [解答例](http://qiita.com/7shi/items/0bed757ed0b51944a669#列挙型)
 
 # 直積型
 
@@ -273,7 +273,7 @@ True
 False
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/0bed757ed0b51944a669#%E7%9B%B4%E7%A9%8D%E5%9E%8B)
+⇒ [解答例](http://qiita.com/7shi/items/0bed757ed0b51944a669#直積型)
 
 # 直和型
 
@@ -451,7 +451,7 @@ True
 False
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/0bed757ed0b51944a669#%E7%9B%B4%E5%92%8C%E5%9E%8B)
+⇒ [解答例](http://qiita.com/7shi/items/0bed757ed0b51944a669#直和型)
 
 # レコード構文
 
@@ -543,7 +543,7 @@ Foo {bar = 2, baz = "a"}
 
 【問4】問2の解答をレコード構文で書き直してください。
 
-⇒ [解答例](http://qiita.com/7shi/items/0bed757ed0b51944a669#%E3%83%AC%E3%82%B3%E3%83%BC%E3%83%89%E6%A7%8B%E6%96%87)
+⇒ [解答例](http://qiita.com/7shi/items/0bed757ed0b51944a669#レコード構文)
 
 # 参考
 

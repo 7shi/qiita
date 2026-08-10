@@ -11,7 +11,7 @@ tags:
 - name: Haskell
   versions: []
 title: Haskell IOモナド 超入門
-updated_at: '2026-08-09T00:11:16+09:00'
+updated_at: '2026-08-11T03:17:11+09:00'
 url: https://qiita.com/7shi/items/d3d3492ddd90d47160f2
 slide: false
 ---
@@ -154,7 +154,7 @@ hello1 = unIO $ return 1
 hello2 = IO hello1
 ```
 
-※ `IO`はコンストラクタ（構築子）です。今回の範囲では型を構築する特殊な関数だと捉えれば十分です。👉[代数的データ型](https://qiita.com/7shi/items/1ce76bde464b4a55c143#%E5%88%97%E6%8C%99%E5%9E%8B)
+※ `IO`はコンストラクタ（構築子）です。今回の範囲では型を構築する特殊な関数だと捉えれば十分です。👉[代数的データ型](https://qiita.com/7shi/items/1ce76bde464b4a55c143#列挙型)
 
 ## 関数と値
 
@@ -437,7 +437,7 @@ main = do
     print xs
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/dfc114f133580ee85686#%E3%82%B7%E3%83%A3%E3%83%83%E3%83%95%E3%83%AB)
+⇒ [解答例](http://qiita.com/7shi/items/dfc114f133580ee85686#シャッフル)
 
 # bind
 
@@ -523,7 +523,7 @@ main = return' "hello" `bind` putStr `bind` print
 hello()
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/dfc114f133580ee85686#%E5%86%8D%E5%AE%9F%E8%A3%85)
+⇒ [解答例](http://qiita.com/7shi/items/dfc114f133580ee85686#再実装)
 
 # 参考
 

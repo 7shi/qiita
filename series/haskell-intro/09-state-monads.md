@@ -13,7 +13,7 @@ tags:
 - name: Haskell
   versions: []
 title: Haskell 状態系モナド 超入門
-updated_at: '2026-08-09T00:11:34+09:00'
+updated_at: '2026-08-11T03:17:28+09:00'
 url: https://qiita.com/7shi/items/2e9bff5d88302de1a9e9
 slide: false
 ---
@@ -64,11 +64,11 @@ IOモナドは内部に隠された関数で状態を受け渡しています。
 
 今回取り上げる状態系モナドは次の5つです。
 
-* [STモナド](#st%E3%83%A2%E3%83%8A%E3%83%89)
-* [Stateモナド](#state%E3%83%A2%E3%83%8A%E3%83%89)
-* [Readerモナド](#reader%E3%83%A2%E3%83%8A%E3%83%89)
-* [Writerモナド](#writer%E3%83%A2%E3%83%8A%E3%83%89)
-* [関数モナド](#%E9%96%A2%E6%95%B0%E3%83%A2%E3%83%8A%E3%83%89)
+* [STモナド](#stモナド)
+* [Stateモナド](#stateモナド)
+* [Readerモナド](#readerモナド)
+* [Writerモナド](#writerモナド)
+* [関数モナド](#関数モナド)
 
 ※ 厳密な分類ではないため、人によって別の分類に含めるモナドもあります。
 
@@ -363,7 +363,7 @@ console.log(jmp);
 [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0 ]
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/fe978f1bd2d52760419d#brainfck%E3%81%AE%E5%89%8D%E5%87%A6%E7%90%86)
+⇒ [解答例](http://qiita.com/7shi/items/fe978f1bd2d52760419d#brainfckの前処理)
 
 【問2】STモナドを扱う`bind`と`return'`を実装してください。
 
@@ -380,7 +380,7 @@ main = do
 2
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/fe978f1bd2d52760419d#%E5%86%8D%E5%AE%9F%E8%A3%85)
+⇒ [解答例](http://qiita.com/7shi/items/fe978f1bd2d52760419d#再実装)
 
 # Stateモナド
 
@@ -493,7 +493,7 @@ s -> (a, s)
 
 `runState`に状態を渡さずに部分適用したものが内部関数です。
 
-※ 実際の内部関数はIdentityという別のモナドの中に入っています。詳細は続編で説明します。👉[モナド変換子](https://qiita.com/7shi/items/4408b76624067c17e933#identity%E3%83%A2%E3%83%8A%E3%83%89)
+※ 実際の内部関数はIdentityという別のモナドの中に入っています。詳細は続編で説明します。👉[モナド変換子](https://qiita.com/7shi/items/4408b76624067c17e933#identityモナド)
 
 ```hs
 import Control.Monad.State
@@ -635,7 +635,7 @@ main = do
 "abc"
 ```
 
-※ 文字が足りないとエラーになります。エラー処理は今回の範囲を超えるため、詳細は続編で説明します。👉[モナド変換子](https://qiita.com/7shi/items/4408b76624067c17e933#%E3%83%A2%E3%83%8A%E3%83%89%E3%82%B9%E3%82%BF%E3%83%83%E3%82%AF) 👉[例外処理](https://qiita.com/7shi/items/73e534c47bbebc71b37e#either%E3%83%A2%E3%83%8A%E3%83%89)
+※ 文字が足りないとエラーになります。エラー処理は今回の範囲を超えるため、詳細は続編で説明します。👉[モナド変換子](https://qiita.com/7shi/items/4408b76624067c17e933#モナドスタック) 👉[例外処理](https://qiita.com/7shi/items/73e534c47bbebc71b37e#eitherモナド)
 
 ### モナドなしと比較
 
@@ -703,11 +703,11 @@ main = do
 55
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/fe978f1bd2d52760419d#%E5%86%8D%E5%AE%9F%E8%A3%85-1)
+⇒ [解答例](http://qiita.com/7shi/items/fe978f1bd2d52760419d#再実装-1)
 
 【問4】問3の`fib`を`do`と`<-`で書き直してください。問3で再実装した関数は使わないでください。
 
-⇒ [解答例](http://qiita.com/7shi/items/fe978f1bd2d52760419d#%E6%9B%B8%E3%81%8D%E7%9B%B4%E3%81%97)
+⇒ [解答例](http://qiita.com/7shi/items/fe978f1bd2d52760419d#書き直し)
 
 # Readerモナド
 
@@ -830,11 +830,11 @@ main = print $ test 1
 (1,2,1)
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/fe978f1bd2d52760419d#%E5%86%8D%E5%AE%9F%E8%A3%85-2)
+⇒ [解答例](http://qiita.com/7shi/items/fe978f1bd2d52760419d#再実装-2)
 
 【問6】問5の`test`を`do`と`<-`で書き直してください。問5で再実装した関数は使わないでください。
 
-⇒ [解答例](http://qiita.com/7shi/items/fe978f1bd2d52760419d#%E6%9B%B8%E3%81%8D%E7%9B%B4%E3%81%97-1)
+⇒ [解答例](http://qiita.com/7shi/items/fe978f1bd2d52760419d#書き直し-1)
 
 # Writerモナド
 
@@ -934,7 +934,7 @@ fact 5 = 5 * fact 4 = 5 * 24 = 120
 120
 ```
 
-比較としてIOモナドによるデバッグを再掲します。👉[アクション](https://qiita.com/7shi/items/85afd7bbd5d6c4115ad6#%E3%83%87%E3%83%90%E3%83%83%E3%82%B0)
+比較としてIOモナドによるデバッグを再掲します。👉[アクション](https://qiita.com/7shi/items/85afd7bbd5d6c4115ad6#デバッグ)
 
 ```hs
 fact 0 = do
@@ -998,11 +998,11 @@ main = print test
 "Hello, World!!"
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/fe978f1bd2d52760419d#%E5%86%8D%E5%AE%9F%E8%A3%85-3)
+⇒ [解答例](http://qiita.com/7shi/items/fe978f1bd2d52760419d#再実装-3)
 
 【問8】問7の`test`を`do`と`<-`で書き直してください。問7で再実装した関数は使わないでください。
 
-⇒ [解答例](http://qiita.com/7shi/items/fe978f1bd2d52760419d#%E6%9B%B8%E3%81%8D%E7%9B%B4%E3%81%97-2)
+⇒ [解答例](http://qiita.com/7shi/items/fe978f1bd2d52760419d#書き直し-2)
 
 # 関数モナド
 
@@ -1031,7 +1031,7 @@ main = do
 
 【問9】先ほどの例の`test`を通常の関数として書き直してください。
 
-⇒ [解答例](http://qiita.com/7shi/items/fe978f1bd2d52760419d#%E9%96%A2%E6%95%B0%E3%83%A2%E3%83%8A%E3%83%89)
+⇒ [解答例](http://qiita.com/7shi/items/fe978f1bd2d52760419d#関数モナド)
 
 # まとめ
 

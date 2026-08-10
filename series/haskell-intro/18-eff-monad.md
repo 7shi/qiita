@@ -52,7 +52,7 @@ Eff モナドは、複数の効果を混ぜられるよう命令の型を型レ�
 
 # Free モナドから拡張可能な効果へ
 
-前々回・前回は、命令を並べた手順書をデータとして組み立て、後からインタープリターで解釈するという枠組みを扱ってきました。Free モナドは継続を命令の型の中に持ち、Operational モナドは継続を `>>=` の側に持ちます。👉[Freeモナド](https://zenn.dev/7shi/articles/20260808-haskell-free-monad#%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B) 👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%99%E7%B6%9A%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
+前々回・前回は、命令を並べた手順書をデータとして組み立て、後からインタープリターで解釈するという枠組みを扱ってきました。Free モナドは継続を命令の型の中に持ち、Operational モナドは継続を `>>=` の側に持ちます。👉[Freeモナド](https://zenn.dev/7shi/articles/20260808-haskell-free-monad#命令の型) 👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#継続を命令の型から外す)
 
 どちらも命令の型は 1 つでした。テレタイプの手順書にはテレタイプの命令しか置けません。
 
@@ -71,15 +71,15 @@ Eff モナドは、複数の効果を混ぜられるよう命令の型を型レ�
 
 書誌は最後の参考に挙げます。
 
-2015 年の論文の題にある Freer は、前回の Operational と基本的に同じ方式を指す名前です。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%99%E7%B6%9A%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
+2015 年の論文の題にある Freer は、前回の Operational と基本的に同じ方式を指す名前です。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#継続を命令の型から外す)
 
 `Program instr a` における `instr` を複数に拡張することで、拡張可能な効果（extensible effects）にたどり着きます。
 
 ## モナド変換子への対案
 
-従来、別種のモナドを組み合わせる手段としては、モナド変換子が用いられてきました。👉[モナド変換子](https://qiita.com/7shi/items/4408b76624067c17e933#%E3%83%A2%E3%83%8A%E3%83%89%E5%A4%89%E6%8F%9B%E5%AD%90)
+従来、別種のモナドを組み合わせる手段としては、モナド変換子が用いられてきました。👉[モナド変換子](https://qiita.com/7shi/items/4408b76624067c17e933#モナド変換子)
 
-`State` と `IO` を一緒に使いたければ `StateT Int IO` のように型を積み、内側のアクションは `lift` で持ち上げます。積んだ型のことをモナドスタックと呼びました。👉[モナド変換子](https://qiita.com/7shi/items/4408b76624067c17e933#%E3%83%A2%E3%83%8A%E3%83%89%E3%82%B9%E3%82%BF%E3%83%83%E3%82%AF)
+`State` と `IO` を一緒に使いたければ `StateT Int IO` のように型を積み、内側のアクションは `lift` で持ち上げます。積んだ型のことをモナドスタックと呼びました。👉[モナド変換子](https://qiita.com/7shi/items/4408b76624067c17e933#モナドスタック)
 
 前々回・前回は「組み立てと解釈の分離」という観点で Free と Operational を見てきましたが、Free モナドから始まった発展の系譜は、モナドスタックの置き換えに向かっていたわけです。
 
@@ -89,9 +89,9 @@ Eff モナドは、複数の効果を混ぜられるよう命令の型を型レ�
 
 ## 型の異なる手順書
 
-前回の `Program instr a` の `instr` は 1 つの型しか受け取れないため、複数の効果を混ぜることはできません。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%99%E7%B6%9A%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
+前回の `Program instr a` の `instr` は 1 つの型しか受け取れないため、複数の効果を混ぜることはできません。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#継続を命令の型から外す)
 
-前回のテレタイプ（`Teletype`）を使って確かめます。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E3%81%BE%E3%81%A8%E3%82%81)
+前回のテレタイプ（`Teletype`）を使って確かめます。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#まとめ)
 
 これに加えて、通し番号を返す命令（`Counter`）を新たに用意します。命令は手順書を構成するデータなので、Counter 自体に副作用はありません。
 
@@ -137,7 +137,7 @@ greet = do
 Teletype ': '[Counter]  -- '[Teletype, Counter] と同じ
 ```
 
-GHCi では `:set` で言語拡張を有効にできます。種を確認します。👉[Freeモナド](https://zenn.dev/7shi/articles/20260808-haskell-free-monad#%E7%A8%AE)
+GHCi では `:set` で言語拡張を有効にできます。種を確認します。👉[Freeモナド](https://zenn.dev/7shi/articles/20260808-haskell-free-monad#種)
 
 ```text:GHCi
 ghci> :set -XDataKinds
@@ -173,7 +173,7 @@ data Union es a where
     There :: Union es a -> Union (e ': es) a
 ```
 
-GADT で書いています。前回と同じく、コンストラクターごとに戻り値の型を宣言する構文です。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%82%92-gadt-%E3%81%A7%E4%B8%A6%E3%81%B9%E3%82%8B)
+GADT で書いています。前回と同じく、コンストラクターごとに戻り値の型を宣言する構文です。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#命令の型を-gadt-で並べる)
 
 - `Here` はリストの先頭の型 `e` の命令をそのまま包みます。
 - `There` は先頭以外のどこかにある命令を包みます。中身は 1 つ短いリストのユニオンです。
@@ -189,7 +189,7 @@ class e :> es where
     inj :: e a -> Union es a
 ```
 
-`class e :> es where` は中置（infix）のクラス宣言で、`class (:>) e es where` の糖衣構文です。`:>` がクラス名で、`e` と `es` が型変数にあたります。前回 `:>>=` のところで見たように、演算子を名前にするときは `:` で始める決まりがあります。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%99%E7%B6%9A%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
+`class e :> es where` は中置（infix）のクラス宣言で、`class (:>) e es where` の糖衣構文です。`:>` がクラス名で、`e` と `es` が型変数にあたります。前回 `:>>=` のところで見たように、演算子を名前にするときは `:` で始める決まりがあります。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#継続を命令の型から外す)
 
 中置のクラス宣言には `TypeOperators`、型変数を 2 つ取るには `MultiParamTypeClasses` という拡張が要りますが、どちらも GHC2021 に含まれているのでプラグマは不要です。標準の型クラスは型変数 1 つに限られる、というのが後者の事情です。
 
@@ -226,7 +226,7 @@ data Eff es a where
 (:>>=) :: Union es b -> (b -> Eff es a)        -> Eff es a         -- 今回
 ```
 
-3 段のインスタンスも前回のままです。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%99%E7%B6%9A%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
+3 段のインスタンスも前回のままです。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#継続を命令の型から外す)
 
 ```hs
 import Control.Monad (ap, liftM)
@@ -443,7 +443,7 @@ data Env es where
 
 `Env es` が、リストの各効果に対応するハンドラーを並べたものです。`ECons` の第 1 引数がハンドラー 1 つで、命令を受け取って `IO` を返す関数になっています。
 
-`forall x.` が付いているのは、1 つのハンドラーが `PutLine :: Teletype ()` と `GetLine :: Teletype String` の両方に使えなければならないからです。前回 `interpretWithMonad` の型で出てきたのと同じ事情です。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#operational-%E3%83%91%E3%83%83%E3%82%B1%E3%83%BC%E3%82%B8)
+`forall x.` が付いているのは、1 つのハンドラーが `PutLine :: Teletype ()` と `GetLine :: Teletype String` の両方に使えなければならないからです。前回 `interpretWithMonad` の型で出てきたのと同じ事情です。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#operational-パッケージ)
 
 :::message
 これまで `forall` は `runST` や `interpretWithMonad` のように、ライブラリ側の型に付いているものを使うだけでした。その場合は拡張が要りません。今回は初めて自分で書く側に回ります。引数や `data` のフィールドに `forall` を書くには `RankNTypes` という拡張が要りますが、GHC2021 に含まれているのでプラグマは不要です。Haskell2010 では明示的に有効にします。
@@ -576,7 +576,7 @@ runTeletype = interpret $ \op -> Eff $ \_ -> case op of
 
 テレタイプのように命令を `IO` に写すだけなら、これで済みます。それに対してカウンターのように状態を持つ場合は、もう一工夫が必要になります。
 
-カウンターの状態は、`interpret` に渡す関数（命令を処理する関数）の中に置くことはできません。その関数は命令のたびに呼ばれるので、中で作った値は毎回作り直しになってしまいます。そこで、ハンドラーを積むのは 1 回きりという仕様に基づいて、`interpret` の外側で `IORef` を作ってキャプチャします。👉[状態系モナド](https://qiita.com/7shi/items/2e9bff5d88302de1a9e9#%E7%A0%B4%E5%A3%8A%E7%9A%84%E4%BB%A3%E5%85%A5)
+カウンターの状態は、`interpret` に渡す関数（命令を処理する関数）の中に置くことはできません。その関数は命令のたびに呼ばれるので、中で作った値は毎回作り直しになってしまいます。そこで、ハンドラーを積むのは 1 回きりという仕様に基づいて、`interpret` の外側で `IORef` を作ってキャプチャします。👉[状態系モナド](https://qiita.com/7shi/items/2e9bff5d88302de1a9e9#破壊的代入)
 
 ```hs
 import Data.IORef
@@ -640,7 +640,7 @@ newtype Eff (es :: [Effect]) a = Eff (Env es -> IO a)
 
 前節で自作したものと同じ形です。`Env` の中身は効率のために可変配列になっていますが、「効果のリストと同じ長さのハンドラーの列を受け取る関数」という骨格は変わりません。
 
-効果は自作するだけでなく、`State`・`Writer`・`Reader`・`Error` といったおなじみの顔ぶれが最初から用意されています。`get`・`put`・`modify`・`tell`・`ask` といった関数の名前も同じなので、書き味はほとんど変わりません。👉[状態系モナド](https://qiita.com/7shi/items/2e9bff5d88302de1a9e9#%E7%8A%B6%E6%85%8B%E7%B3%BB%E3%83%A2%E3%83%8A%E3%83%89)
+効果は自作するだけでなく、`State`・`Writer`・`Reader`・`Error` といったおなじみの顔ぶれが最初から用意されています。`get`・`put`・`modify`・`tell`・`ask` といった関数の名前も同じなので、書き味はほとんど変わりません。👉[状態系モナド](https://qiita.com/7shi/items/2e9bff5d88302de1a9e9#状態系モナド)
 
 既製の効果はモジュール名が分岐しています。`State` なら `Effectful.State.Static.Local`・`Effectful.State.Static.Shared`・`Effectful.State.Dynamic` があり、状態をスレッドごとに持つか共有するか、ハンドラーを差し替え可能にするかで選びます。
 
@@ -880,7 +880,7 @@ main = print =<< sum' [1..5]
 
 この書き換えで効いているのは、`lift` の回数という概念が消えたことです。
 
-モナド変換子では、`lift` はモナドスタックを 1 段だけ登ります。`StateT` の中でさらに `ReaderT` を使えば `lift . lift` が要るし、その部分を関数に切り出して単独で呼ぶと段数が合わなくなってエラーになりました。👉[モナド変換子](https://qiita.com/7shi/items/4408b76624067c17e933#%E5%A4%9A%E9%87%8D%E6%8C%81%E3%81%A1%E4%B8%8A%E3%81%92)
+モナド変換子では、`lift` はモナドスタックを 1 段だけ登ります。`StateT` の中でさらに `ReaderT` を使えば `lift . lift` が要るし、その部分を関数に切り出して単独で呼ぶと段数が合わなくなってエラーになりました。👉[モナド変換子](https://qiita.com/7shi/items/4408b76624067c17e933#多重持ち上げ)
 
 `Eff` にはスタックがないので、この問題自体が起きません。効果はリストに入っているかいないかだけで、深さがありません。`liftIO` も、モナド変換子のときは「深さに関係なく一気に持ち上げる `IO` 専用の関数」でしたが、`Eff` では単に `IOE` の効果を呼ぶ関数です。
 
@@ -931,7 +931,7 @@ main = do
 
 `mtl` に代表されるモナド変換子は、今も広く使われています。Eff 系がそれを過去のものにしたわけではありません。`effectful` の README も、モナド変換子スタックの置き換えを目指すと述べる一方で、モナド変換子を無用にするつもりはない、と明記しています。
 
-Free から Operational へ進んだときも、優劣ではなく用途の違いでした。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#free-%E3%81%A8-operational-%E3%81%AE%E4%BD%BF%E3%81%84%E5%88%86%E3%81%91)
+Free から Operational へ進んだときも、優劣ではなく用途の違いでした。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#free-と-operational-の使い分け)
 
 ここも同じで、別種の効果を組み合わせるという同じ課題に対する、別の解き方が 2 つある、という見方が実情に合っています。
 
@@ -988,7 +988,7 @@ sum' xs = runPureEff $ runWriter @[String] $ execState (0 :: Int) $
 
 一方で `polysemy` だけは型名が `Sem` で、`Eff` ではありません。名前でグループ分けはできない、ということです。
 
-Freer という語も紛らわしいところです。`freer-simple` はモジュール名が `Control.Monad.Freer` ですが、そこから出てくる型は `Eff` だけで、`Freer` という名前の型はありません。前回 Operational の別名として出てきた Freer は、論文とモジュール名に残る呼び名であって、コードには現れなくなっています。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%99%E7%B6%9A%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
+Freer という語も紛らわしいところです。`freer-simple` はモジュール名が `Control.Monad.Freer` ですが、そこから出てくる型は `Eff` だけで、`Freer` という名前の型はありません。前回 Operational の別名として出てきた Freer は、論文とモジュール名に残る呼び名であって、コードには現れなくなっています。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#継続を命令の型から外す)
 
 ## 実装の方式で分かれる
 

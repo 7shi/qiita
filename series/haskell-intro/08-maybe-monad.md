@@ -16,7 +16,7 @@ tags:
   versions:
   - '6'
 title: Haskell Maybeモナド 超入門
-updated_at: '2026-08-09T00:11:28+09:00'
+updated_at: '2026-08-11T03:17:22+09:00'
 url: https://qiita.com/7shi/items/c7d7eec066af0fe0688d
 slide: false
 ---
@@ -113,7 +113,7 @@ main = do
 
 ## 関数で失敗を返す
 
-Haskell 超入門で取り上げた階乗の実装では、マイナスの引数はガードで弾いてエラーにしていました。👉[超入門](https://qiita.com/7shi/items/145f1234f8ec2af923ef#%E4%BD%B5%E7%94%A8)
+Haskell 超入門で取り上げた階乗の実装では、マイナスの引数はガードで弾いてエラーにしていました。👉[超入門](https://qiita.com/7shi/items/145f1234f8ec2af923ef#併用)
 
 ```hs
 fact 0 = 1
@@ -160,7 +160,7 @@ main = do
     print $ fib 6
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/5a8b25d8db772bc27a71#%E3%83%95%E3%82%A3%E3%83%9C%E3%83%8A%E3%83%83%E3%83%81%E6%95%B0)
+⇒ [解答例](http://qiita.com/7shi/items/5a8b25d8db772bc27a71#フィボナッチ数)
 
 # bind
 
@@ -426,7 +426,7 @@ main = do
 
 【問3】`mapMaybe`を再帰で再実装して、先ほどのサンプルで検証してください。
 
-⇒ [解答例](http://qiita.com/7shi/items/5a8b25d8db772bc27a71#%E5%86%8D%E5%B8%B0)
+⇒ [解答例](http://qiita.com/7shi/items/5a8b25d8db772bc27a71#再帰)
 
 【問4】問3の解答を`foldr`で書き換えてください。
 
@@ -555,11 +555,11 @@ main = do
     print $ numUpper 3 2 "12ABC"
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/5a8b25d8db772bc27a71#%E6%96%87%E5%AD%97%E5%88%97%E3%83%81%E3%82%A7%E3%83%83%E3%82%AF)
+⇒ [解答例](http://qiita.com/7shi/items/5a8b25d8db772bc27a71#文字列チェック)
 
 # Alternative
 
-MonadPlus（値を持たないことが可能なモナド）だけで使えるApplicativeスタイルの一種です。評価に失敗したとき、別の評価を試せます。Alternative（オルタナティブ）は**代替・二者択一**という意味です。👉[構文解析](https://qiita.com/7shi/items/b8c741e78a96ea2c10fe#%E9%81%B8%E6%8A%9E)
+MonadPlus（値を持たないことが可能なモナド）だけで使えるApplicativeスタイルの一種です。評価に失敗したとき、別の評価を試せます。Alternative（オルタナティブ）は**代替・二者択一**という意味です。👉[構文解析](https://qiita.com/7shi/items/b8c741e78a96ea2c10fe#選択)
 
 ※ この説明は色々と妥協しています。正確にはMonoidの知識が必要ですが、今回の範囲を超えるため詳細は省略します。興味がある方は次の記事を参照してください。
 

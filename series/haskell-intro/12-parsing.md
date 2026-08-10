@@ -13,7 +13,7 @@ tags:
 - name: parsec
   versions: []
 title: Haskell 構文解析 超入門
-updated_at: '2026-08-09T00:11:51+09:00'
+updated_at: '2026-08-11T03:17:47+09:00'
 url: https://qiita.com/7shi/items/b8c741e78a96ea2c10fe
 slide: false
 ---
@@ -429,13 +429,13 @@ Main.hs:10:1-32: Non-exhaustive patterns in function satisfy
 
 ## Stateモナド
 
-解析対象の文字列を状態と見なせばStateモナドが使えます。👉[状態系モナド](https://qiita.com/7shi/items/2e9bff5d88302de1a9e9#state%E3%83%A2%E3%83%8A%E3%83%89)
+解析対象の文字列を状態と見なせばStateモナドが使えます。👉[状態系モナド](https://qiita.com/7shi/items/2e9bff5d88302de1a9e9#stateモナド)
 
 ### 練習
 
 【問1】モナドなしのまとめのコードをStateモナドを使って書き換えてください。
 
-⇒ [解答例](http://qiita.com/7shi/items/f65814b1e91d48ec8d12#state%E3%83%A2%E3%83%8A%E3%83%89)
+⇒ [解答例](http://qiita.com/7shi/items/f65814b1e91d48ec8d12#stateモナド)
 
 引数が減ってコードが短くなります。元の`test1`などにあった `xs0` → `xs1` → `xs2` という状態の受け渡しが省略されたことで、変数名の管理も簡単になります。
 
@@ -495,17 +495,17 @@ Main.hs:17:5-34: Non-exhaustive patterns in function satisfy
 
 ## Maybeモナド
 
-Maybeモナドを使えば例外を使わずに失敗が扱えます。👉[Maybeモナド](https://qiita.com/7shi/items/c7d7eec066af0fe0688d#maybe%E3%83%A2%E3%83%8A%E3%83%89)
+Maybeモナドを使えば例外を使わずに失敗が扱えます。👉[Maybeモナド](https://qiita.com/7shi/items/c7d7eec066af0fe0688d#maybeモナド)
 
 ### 練習
 
 【問2】モナドなしのまとめのコードをMaybeモナドを使って書き換えてください。
 
-⇒ [解答例](http://qiita.com/7shi/items/f65814b1e91d48ec8d12#maybe%E3%83%A2%E3%83%8A%E3%83%89)
+⇒ [解答例](http://qiita.com/7shi/items/f65814b1e91d48ec8d12#maybeモナド)
 
 ## Eitherモナド
 
-Maybeモナドにより例外処理をなくしても、失敗はすべて`Nothing`のため理由がよく分かりません。👉[例外処理](https://qiita.com/7shi/items/73e534c47bbebc71b37e#either%E3%83%A2%E3%83%8A%E3%83%89)
+Maybeモナドにより例外処理をなくしても、失敗はすべて`Nothing`のため理由がよく分かりません。👉[例外処理](https://qiita.com/7shi/items/73e534c47bbebc71b37e#eitherモナド)
 
 Eitherモナドを使って、失敗した理由を`Left`で返します。Either用の`<|>`を独自に定義します。
 
@@ -927,7 +927,7 @@ main = do
 ["ac"] not char 'b': 'c'
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/f65814b1e91d48ec8d12#%E3%82%A8%E3%83%A9%E3%83%BC%E3%83%81%E3%82%A7%E3%83%83%E3%82%AF)
+⇒ [解答例](http://qiita.com/7shi/items/f65814b1e91d48ec8d12#エラーチェック)
 
 ## バックトラック
 
@@ -1060,7 +1060,7 @@ main = do
 "ac"
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/f65814b1e91d48ec8d12#%E3%83%90%E3%83%83%E3%82%AF%E3%83%88%E3%83%A9%E3%83%83%E3%82%AF)
+⇒ [解答例](http://qiita.com/7shi/items/f65814b1e91d48ec8d12#バックトラック)
 
 # 四則演算器
 
@@ -1514,7 +1514,7 @@ main = do
 
 ヒント: `factor = ("(", expr, ")") | number`
 
-⇒ [解答例](http://qiita.com/7shi/items/f65814b1e91d48ec8d12#%E6%8B%AC%E5%BC%A7)
+⇒ [解答例](http://qiita.com/7shi/items/f65814b1e91d48ec8d12#括弧)
 
 【問7】スペースを無視してください。
 
@@ -1546,7 +1546,7 @@ main = do
 
 ヒント: [spaces](https://hackage.haskell.org/package/parsec-3.1.9/docs/Text-Parsec-Char.html#v:spaces)
 
-⇒ [解答例](http://qiita.com/7shi/items/f65814b1e91d48ec8d12#%E3%82%B9%E3%83%9A%E3%83%BC%E3%82%B9)
+⇒ [解答例](http://qiita.com/7shi/items/f65814b1e91d48ec8d12#スペース)
 
 【問8】問7の解答を、Parsecを使わずに問5の解答の自前実装に足りない関数を補って動かしてください。ただし次のように演算子の優先順位を指定する必要があります。
 
@@ -1556,7 +1556,7 @@ infixr 1 <|>
 
 ヒント: `spaces = skipMany space`
 
-⇒ [解答例](http://qiita.com/7shi/items/f65814b1e91d48ec8d12#%E8%87%AA%E5%89%8D%E5%AE%9F%E8%A3%85)
+⇒ [解答例](http://qiita.com/7shi/items/f65814b1e91d48ec8d12#自前実装)
 
 # リファレンス
 

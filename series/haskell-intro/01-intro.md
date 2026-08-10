@@ -11,7 +11,7 @@ tags:
 - name: Haskell
   versions: []
 title: Haskell 超入門
-updated_at: '2026-08-09T00:10:46+09:00'
+updated_at: '2026-08-11T03:16:40+09:00'
 url: https://qiita.com/7shi/items/145f1234f8ec2af923ef
 slide: false
 ---
@@ -124,7 +124,7 @@ main = do
 "World!"
 ```
 
-`do`を理解するにはアクションの知識が必要です。詳細は続編で説明するため、現段階では簡単な説明で先送りとします。👉[アクション](https://qiita.com/7shi/items/85afd7bbd5d6c4115ad6#%E3%82%A2%E3%82%AF%E3%82%B7%E3%83%A7%E3%83%B3)
+`do`を理解するにはアクションの知識が必要です。詳細は続編で説明するため、現段階では簡単な説明で先送りとします。👉[アクション](https://qiita.com/7shi/items/85afd7bbd5d6c4115ad6#アクション)
 
 * `main`では何度も文字が出力できるように`do`を付けた方が無難。
 
@@ -530,7 +530,7 @@ fact n = n * fact (n - 1)
 
 ヒント: 基底部は1つとは限りません。
 
-⇒ [解答例](http://qiita.com/7shi/items/0ece8c3394e1328267ed#%E3%83%91%E3%82%BF%E3%83%BC%E3%83%B3%E3%83%9E%E3%83%83%E3%83%81)
+⇒ [解答例](http://qiita.com/7shi/items/0ece8c3394e1328267ed#パターンマッチ)
 
 # ガード
 
@@ -566,7 +566,7 @@ fact n | n == 0 = 1
 
 【問2】問1で実装した関数をガードで書き直してください。
 
-⇒ [解答例](http://qiita.com/7shi/items/0ece8c3394e1328267ed#%E3%82%AC%E3%83%BC%E3%83%89)
+⇒ [解答例](http://qiita.com/7shi/items/0ece8c3394e1328267ed#ガード)
 
 # 使い分け
 
@@ -869,11 +869,11 @@ main = do
 
 ヒント: リストを再帰で処理するパターンは`f (x:xs) = x ... f xs`です。
 
-⇒ [解答例](http://qiita.com/7shi/items/0ece8c3394e1328267ed#%E5%86%8D%E5%AE%9F%E8%A3%85)
+⇒ [解答例](http://qiita.com/7shi/items/0ece8c3394e1328267ed#再実装)
 
 【問5】`product`を使って`fact`（階乗）を実装してください。
 
-⇒ [解答例](http://qiita.com/7shi/items/0ece8c3394e1328267ed#%E9%9A%8E%E4%B9%97)
+⇒ [解答例](http://qiita.com/7shi/items/0ece8c3394e1328267ed#階乗)
 
 # タプル
 
@@ -956,7 +956,7 @@ main = do
 
 ヒント: $ax + by = c$ の傾きは $-\frac{a}{b}$ です。直交する直線の傾きとの積が $-1$ となることから、垂線は $bx - ay = d$ と表せます。連立方程式を解けば交点が求まります。
 
-⇒ [解答例](http://qiita.com/7shi/items/0ece8c3394e1328267ed#%E5%9E%82%E7%B7%9A%E3%81%AE%E4%BA%A4%E7%82%B9)
+⇒ [解答例](http://qiita.com/7shi/items/0ece8c3394e1328267ed#垂線の交点)
 
 # import
 
@@ -1156,11 +1156,11 @@ insert 4 [1,2,3,5,6,7,8,9] = [1,2,3,4,5,6,7,8,9]
 
 ヒント: 交換する関数とソートする関数を分離して実装します。
 
-⇒ [詳細説明](http://qiita.com/7shi/items/1e2a66bf8e8c7f0bd70f), [解答例](http://qiita.com/7shi/items/0ece8c3394e1328267ed#%E3%83%90%E3%83%96%E3%83%AB%E3%82%BD%E3%83%BC%E3%83%88)
+⇒ [詳細説明](http://qiita.com/7shi/items/1e2a66bf8e8c7f0bd70f), [解答例](http://qiita.com/7shi/items/0ece8c3394e1328267ed#バブルソート)
 
 【問9】[マージソート](http://www.ics.kagoshima-u.ac.jp/~fuchida/edu/algorithm/sort-algorithm/merge-sort.html)を実装してください。
 
-⇒ [解答例](http://qiita.com/7shi/items/0ece8c3394e1328267ed#%E3%83%9E%E3%83%BC%E3%82%B8%E3%82%BD%E3%83%BC%E3%83%88)
+⇒ [解答例](http://qiita.com/7shi/items/0ece8c3394e1328267ed#マージソート)
 
 # リスト内包表記
 
@@ -1221,7 +1221,7 @@ main = do
 
 【問10】処理の流れを説明してください。
 
-⇒ [解答例](http://qiita.com/7shi/items/0ece8c3394e1328267ed#%E3%82%AF%E3%82%A4%E3%83%83%E3%82%AF%E3%82%BD%E3%83%BC%E3%83%88)
+⇒ [解答例](http://qiita.com/7shi/items/0ece8c3394e1328267ed#クイックソート)
 
 ## 組み合わせ
 
@@ -1241,4 +1241,4 @@ main = do
 
 ヒント: 直角三角形の成立条件は三平方（ピタゴラス）の定理です。
 
-⇒ [解答例](http://qiita.com/7shi/items/0ece8c3394e1328267ed#%E7%9B%B4%E8%A7%92%E4%B8%89%E8%A7%92%E5%BD%A2%E3%81%AE%E4%B8%89%E8%BE%BA)
+⇒ [解答例](http://qiita.com/7shi/items/0ece8c3394e1328267ed#直角三角形の三辺)

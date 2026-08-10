@@ -14,7 +14,7 @@ tags:
   versions:
   - '2015'
 title: Haskell リストモナド 超入門
-updated_at: '2026-08-09T00:11:22+09:00'
+updated_at: '2026-08-11T03:17:17+09:00'
 url: https://qiita.com/7shi/items/deb19c4cba933590ffbf
 slide: false
 ---
@@ -61,7 +61,7 @@ bind（`>>=`）と`return`で操作できる対象をモナドと呼びます。
 
 ## IOモナド
 
-IOモナドはモナドの一種で、次のような性質を持っています。👉[IOモナド](https://qiita.com/7shi/items/d3d3492ddd90d47160f2#io%E3%83%A2%E3%83%8A%E3%83%89)
+IOモナドはモナドの一種で、次のような性質を持っています。👉[IOモナド](https://qiita.com/7shi/items/d3d3492ddd90d47160f2#ioモナド)
 
 ![iomonad.png](https://qiita-image-store.s3.amazonaws.com/0/32057/20ef9c29-6282-e929-1d91-20d770d668b8.png)
 
@@ -139,7 +139,7 @@ main = do
 
 【問1】`[`と`]`は使わないで、`return`を使って`[1, 2, 3]`を作ってください。
 
-⇒ [解答例](http://qiita.com/7shi/items/4a24fd9395f5a60d811d#%E3%83%AA%E3%82%B9%E3%83%88%E3%81%AE%E4%BD%9C%E6%88%90)
+⇒ [解答例](http://qiita.com/7shi/items/4a24fd9395f5a60d811d#リストの作成)
 
 # bind
 
@@ -216,7 +216,7 @@ main = do
 
 ## 型クラス制約
 
-`IO Int`の`IO`の部分を型変数化する場合、型変数に対してそれがモナドであることを指定する必要があります。これを**型クラス制約**と呼びます。👉[型クラス](https://zenn.dev/7shi/articles/20260805-haskell-type-classes#%E5%9E%8B%E3%82%AF%E3%83%A9%E3%82%B9%E5%88%B6%E7%B4%84)
+`IO Int`の`IO`の部分を型変数化する場合、型変数に対してそれがモナドであることを指定する必要があります。これを**型クラス制約**と呼びます。👉[型クラス](https://zenn.dev/7shi/articles/20260805-haskell-type-classes#型クラス制約)
 
 ```hs
 inc :: Monad m => Int -> m Int
@@ -241,7 +241,7 @@ c :: Monad m => m  Int
 
 ## Applicativeスタイル
 
-Applicativeスタイルでは関数に渡されるのはモナドではないため、型クラス制約は意識する必要がありません。👉[アクション](https://qiita.com/7shi/items/85afd7bbd5d6c4115ad6#applicative%E3%82%B9%E3%82%BF%E3%82%A4%E3%83%AB)
+Applicativeスタイルでは関数に渡されるのはモナドではないため、型クラス制約は意識する必要がありません。👉[アクション](https://qiita.com/7shi/items/85afd7bbd5d6c4115ad6#applicativeスタイル)
 
 ```hs
 import Control.Applicative
@@ -268,7 +268,7 @@ main = do
 join :: Monad m => m (m a) -> m a
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/4a24fd9395f5a60d811d#%E5%9E%8B%E3%82%AF%E3%83%A9%E3%82%B9%E5%88%B6%E7%B4%84)
+⇒ [解答例](http://qiita.com/7shi/items/4a24fd9395f5a60d811d#型クラス制約)
 
 # do
 
@@ -487,7 +487,7 @@ main = do
         return (x, y)
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/4a24fd9395f5a60d811d#%E3%83%AB%E3%83%BC%E3%83%97)
+⇒ [解答例](http://qiita.com/7shi/items/4a24fd9395f5a60d811d#ループ)
 
 【問4】リストモナドを扱う`bind`と`return'`を実装してください。`bind`には`foldr`を使ってください。
 
@@ -501,7 +501,7 @@ main = do
 [(1,'a'),(1,'b'),(1,'c'),(2,'a'),(2,'b'),(2,'c'),(3,'a'),(3,'b'),(3,'c')]
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/4a24fd9395f5a60d811d#%E5%86%8D%E5%AE%9F%E8%A3%85)
+⇒ [解答例](http://qiita.com/7shi/items/4a24fd9395f5a60d811d#再実装)
 
 # リスト内包表記
 
@@ -538,11 +538,11 @@ main = do
     print [(x, y) | x <- [1..5], y <- [1..5], x + y == 6]
 ```
 
-⇒ [解答例](http://qiita.com/7shi/items/4a24fd9395f5a60d811d#%E6%9B%B8%E3%81%8D%E6%8F%9B%E3%81%88)
+⇒ [解答例](http://qiita.com/7shi/items/4a24fd9395f5a60d811d#書き換え)
 
 【問6】問5のコードを問4で実装した`bind`と`return'`に対応させてテストしてください。
 
-⇒ [解答例](http://qiita.com/7shi/items/4a24fd9395f5a60d811d#%E3%83%86%E3%82%B9%E3%83%88)
+⇒ [解答例](http://qiita.com/7shi/items/4a24fd9395f5a60d811d#テスト)
 
 # まとめ
 
