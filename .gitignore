@@ -12,6 +12,7 @@ wheels/
 # Haskell-generated files
 *.o
 *.hi
+*.imports
 
 # Generated files
 data/
