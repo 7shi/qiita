@@ -9,7 +9,8 @@
 |`CounterState.hs`|**掲載コード（`## 状態を持つ効果`・`## 全体を動かす`）。** `Teletype` に加えて `Counter` も効果にし、ハンドラーは `reinterpret_` + 既製の `State`|
 |`StateWriter.hs`|`State` と `Writer` を混ぜ、**ハンドラーの適用順を入れ替えて結果を比べる**|
 |`Sum.hs`|**10 回（モナド変換子）の `sum'` を `Eff` で書き直したもの**|
-|`SumWriter.hs`|**練習【問2】の解答例。** `Sum.hs` に `Writer` を足し、`IO` を使わない形にする|
+|`Logger.hs`|**練習【問3】の解答例。** `Logger` 効果を `reinterpret_` + 既製の `Writer` で実装（`18-union`・`18-env` の `Logger.hs` と同じ問題）|
+|`SumWriter.hs`|**練習【問4】の解答例。** `Sum.hs` に `Writer` を足し、`IO` を使わない形にする|
 
 ## 実行方法
 
@@ -20,6 +21,7 @@
 echo alice | stack script --resolver lts-24.53 --package effectful Teletype.hs
 echo alice | stack script --resolver lts-24.53 --package effectful Counter.hs
 echo alice | stack script --resolver lts-24.53 --package effectful CounterState.hs
+echo alice | stack script --resolver lts-24.53 --package effectful Logger.hs
 stack script --resolver lts-24.53 --package effectful StateWriter.hs
 stack script --resolver lts-24.53 --package effectful Sum.hs
 stack script --resolver lts-24.53 --package effectful SumWriter.hs
@@ -43,6 +45,13 @@ Hello, alice! (0)
 ```text:Counter.hs・CounterState.hs（標準入力: alice。両者とも同じ）
 name?
 Hello, alice! 0
+```
+
+```text:Logger.hs（標準入力: alice）
+name?
+Hello, alice! 0
+got alice
+tick 0
 ```
 
 ```text:StateWriter.hs
@@ -95,6 +104,17 @@ Hello, alice! 0
     `Eff $ \_ -> ...` が `liftIO` に変わるだけ）。`IO` を使うので `IOE :> es` が付く。
   - `reinterpret_ (evalState n0)` で既製の `State` に委ねる。`reinterpret_` は剥がした効果を
     別の効果で実装するための関数で、`IOE` が不要になる。`greet` の型は両者で変わらない。
+- **結果の型を変えるハンドラーは `reinterpret_` の第 1 引数に任せられる**（`Logger.hs`）。
+  `runWriter :: Eff (Writer w : es) a -> Eff es (a, w)` がそのまま `runLogger` の結果になるので、
+  `check/18-env` で `IORef` に溜めて後から読み出していた部分が消える。
+
+  ```hs
+  runLogger :: Eff (Logger : es) a -> Eff es (a, [String])
+  runLogger = reinterpret_ runWriter $ \(Log s) -> tell [s]
+  ```
+
+  - **`runWriter @[String]` の型適用は要らない**（2026-08-11 確認）。`StateWriter.hs` と違い、
+    `w` が `runLogger` の型注釈から決まるため。
 - **ハンドラーの適用順はどちらでも通る**（`runEff $ runTeletypeIO $ runCounter 0 greet` と
   `runEff $ runCounter 0 $ runTeletypeIO greet` の両方を確認）。記事は自作版の
   `run (runTeletype (runCounter 0 greet))` に合わせて前者にした。

@@ -624,7 +624,63 @@ Hello, alice! 0
 
 `run` の型が `Eff '[] a -> IO a` で、効果を全部剥がしても `IO` が残るのは、この実装が `IO` の上に載っているからです。
 
-この 2 つ目の実装が、次に使うパッケージの骨格になっています。
+この 2 つ目の実装が、次に紹介する effectful パッケージの骨格になっています。
+
+## 練習
+
+【問2】問1の `Logger` を、この実装で書き直してください。効果の定義とスマートコンストラクターはそのまま使えます。`interpret` で書くハンドラーは `Eff (e ': es) a -> Eff es a` の形にしかならないので、結果の型を変える `runLogger` は `runCounter` と同じ方法を使います。
+
+```hs
+data Logger a where
+    Log :: String -> Logger ()
+
+logMsg :: Logger :> es => String -> Eff es ()
+logMsg = undefined     -- ここを書く
+
+runLogger :: Eff (Logger ': es) a -> Eff es (a, [String])
+runLogger = undefined  -- ここを書く
+
+greet :: (Teletype :> es, Counter :> es, Logger :> es) => Eff es ()
+greet = do
+    putLine "name?"
+    name <- getLine'
+    logMsg ("got " ++ name)
+    n <- tick
+    logMsg ("tick " ++ show n)
+    putLine ("Hello, " ++ name ++ "! " ++ show n)
+
+main = do
+    ((), logs) <- run (runTeletype (runCounter 0 (runLogger greet)))
+    mapM_ putStrLn logs
+```
+```text:実行結果（標準入力: alice）
+name?
+Hello, alice! 0
+got alice
+tick 0
+```
+
+記録は `runCounter` と同じく `IORef` に溜めます。`interpret` が返すのは `Eff es a` なので、`[String]` は `interpret` を適用した後で `IORef` から読み出して組にします。
+
+:::details 解答例
+```hs
+logMsg :: Logger :> es => String -> Eff es ()
+logMsg s = send (Log s)
+
+runLogger :: Eff (Logger ': es) a -> Eff es (a, [String])
+runLogger m = do
+    r <- Eff $ \_ -> newIORef []
+    a <- interpret (\(Log s) -> Eff $ \_ -> modifyIORef r (s :)) m
+    ls <- Eff $ \_ -> readIORef r
+    return (a, reverse ls)
+```
+
+`logMsg` は問1と同じです。書き換わるのは `runLogger` だけで、記録を溜める `IORef` を `interpret` の外で作り、命令のたびに呼ばれる関数がそこへ書き足します。状態を持つハンドラーという点で `runCounter` と同じ形です。
+
+結果の型が違う分だけ、`runCounter` より 1 手増えます。`interpret` が返すのは `Eff es a` で `[String]` を含められないので、`interpret` を適用した後で `IORef` を読み出し、`(a, [String])` に組み直しています。`modifyIORef r (s :)` は先頭に足しているので、最後に `reverse` します。
+
+問1では、手順書を辿りながら継続の結果にリストを継ぎ足していました。辿るデータが無いこちらでは、ハンドラーが溜めた結果を後から回収する形になります。
+:::
 
 # effectful パッケージ
 
@@ -830,6 +886,57 @@ runPureEff :: Eff '[] a -> a
 
 高階効果はハンドラーが `Eff` の計算そのものを受け取る効果で、`m` 引数と `interpret` の `LocalEnv` はそのために用意されています。簡略化版が省いたのは主にこの部分です。効果を自作して使う分には、ここまで見てきたとおり簡略化版と同じ感覚で書けます。
 
+## 練習
+
+【問3】問1・問2と同じ `Logger` を `effectful` で実装してください。カウンターの状態を `State` に預けたのと同じように、記録は既製の `Writer` 効果に預けられます。`Effectful.Writer.Static.Local` の `tell` と `runWriter` を使います。
+
+```hs
+data Logger :: Effect where
+    Log :: String -> Logger m ()
+
+type instance DispatchOf Logger = Dynamic
+
+logMsg :: Logger :> es => String -> Eff es ()
+logMsg = undefined     -- ここを書く
+
+runLogger :: Eff (Logger : es) a -> Eff es (a, [String])
+runLogger = undefined  -- ここを書く
+
+greet :: (Teletype :> es, Counter :> es, Logger :> es) => Eff es ()
+greet = do
+    putLine "name?"
+    name <- getLine'
+    logMsg ("got " ++ name)
+    n <- tick
+    logMsg ("tick " ++ show n)
+    putLine ("Hello, " ++ name ++ "! " ++ show n)
+
+main :: IO ()
+main = do
+    ((), logs) <- runEff $ runTeletypeIO $ runCounter 0 $ runLogger greet
+    mapM_ putStrLn logs
+```
+```text:実行結果（標準入力: alice）
+name?
+Hello, alice! 0
+got alice
+tick 0
+```
+
+:::details 解答例
+```hs
+logMsg :: Logger :> es => String -> Eff es ()
+logMsg = send . Log
+
+runLogger :: Eff (Logger : es) a -> Eff es (a, [String])
+runLogger = reinterpret_ runWriter $ \(Log s) -> tell [s]
+```
+
+`runCounter` と同じ形です。`reinterpret_` の第 1 引数を `evalState n0` から `runWriter` に替え、命令の処理を `tell` にしただけです。
+
+`runWriter` の型は `Eff (Writer w : es) a -> Eff es (a, w)` で、結果に `w` が付きます。`reinterpret_` はこれをそのまま `runLogger` の結果にするので、自作版で `IORef` に溜めて後から読み出した部分が丸ごと不要になります。`w` が `[String]` であることは `runLogger` の型から決まります。
+:::
+
 # モナド変換子との比較
 
 冒頭で触れたとおり、この枠組みはモナド変換子と比較される形で発展してきました。実際に書き比べます。
@@ -941,9 +1048,13 @@ Free から Operational へ進んだときも、優劣ではなく用途の違�
 
 モナド変換子とエフェクトシステムも同じで、別種の効果を組み合わせるという同じ課題に対して、別の解き方が 2 つある、という見方が実情に合っています。
 
+効果が 2〜3 個で固定なら、モナド変換子で十分です。GHC に同梱の `transformers`・`mtl` だけで済み、追加の依存が要りません。周辺ライブラリが `MonadState` のような mtl の制約を前提にしていることも多く、そのまま噛み合います。
+
+効果の種類が増えていく場合や、独自の効果を足したい場合は、エフェクトシステムが向いています。モナド変換子で効果を自作するには変換子とインスタンス群を書くことになりますが、エフェクトシステムでは命令の型を 1 つ書いてハンドラーを与えるだけです。テスト用にハンドラーを差し替えられるのも、Free から続く利点です。
+
 ## 練習
 
-【問2】上の `sum'` に `Writer` を足して、途中経過を表示する代わりに記録してください。`IO` を使わなくなるので、`runEff` は `runPureEff` に変わります。
+【問4】上の `sum'` に `Writer` を足して、途中経過を表示する代わりに記録してください。`IO` を使わなくなるので、`runEff` は `runPureEff` に変わります。
 
 ```hs
 sum' :: [Int] -> (Int, [String])

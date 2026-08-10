@@ -9,6 +9,7 @@
 |ファイル|内容|
 |---|---|
 |`Env.hs`|`Eff`・`Env`（`ENil`/`ECons`）・`:>`・`send`・`interpret`・`run` と、2 つの効果（`Teletype`・`Counter`）|
+|`Logger.hs`|**練習【問2】の解答例。** `18-union/Logger.hs`（問1）と同じ `Logger` をこの実装で書き直したもの|
 
 ## 実行方法
 
@@ -16,17 +17,26 @@
 
 ```
 echo alice | runghc Env.hs
+echo alice | runghc Logger.hs
 ```
 
-```text:実行結果
+```text:Env.hs（標準入力: alice）
 name?
 Hello, alice! 0
 ```
 
-**`check/18-union/Union.hs` と出力が完全に一致する。**
+```text:Logger.hs（標準入力: alice）
+name?
+Hello, alice! 0
+got alice
+tick 0
+```
+
+**`check/18-union/` の対応するファイルと出力が完全に一致する。**
 
 ```
-diff <(echo alice | runghc ../18-union/Union.hs) <(echo alice | runghc Env.hs)
+diff <(echo alice | runghc ../18-union/Union.hs)  <(echo alice | runghc Env.hs)
+diff <(echo alice | runghc ../18-union/Logger.hs) <(echo alice | runghc Logger.hs)
 ```
 
 ## 確認したこと
@@ -67,6 +77,22 @@ diff <(echo alice | runghc ../18-union/Union.hs) <(echo alice | runghc Env.hs)
 - **状態は `IORef` で持つ。** `runCounter` はカウンターを `IORef` に置き、ハンドラーが
   読み書きする。`18-union` ではインタープリターの引数として持ち回っていた。
   `effectful` の `State` も同じく `IORef` 方式（`Static.Local` はスレッドローカル）。
+- **結果の型を変えるハンドラー（`runLogger`）は `interpret` の外側で組み立てる。**
+  `interpret` が返せるのは `Eff es a` だけなので、`IORef` に記録を溜めて
+  `interpret` の適用後に読み出し、`(a, [String])` に組み直す。
+  `18-union` では手順書を辿りながら継続の結果にリストを継ぎ足していた部分。
+
+  ```hs
+  runLogger :: Eff (Logger ': es) a -> Eff es (a, [String])
+  runLogger m = do
+      r <- Eff $ \_ -> newIORef []
+      a <- interpret (\(Log s) -> Eff $ \_ -> modifyIORef r (s :)) m
+      ls <- Eff $ \_ -> readIORef r
+      return (a, reverse ls)
+  ```
+
+  - `modifyIORef r (s :)` は先頭に足すので、最後に `reverse` する。
+  - 命令が 1 つなので `\(Log s) -> ...` と直接パターンマッチできる（`runCounter` の `\Tick` と同じ）。
 - **`run :: Eff '[] a -> IO a`。** 空の環境 `ENil` を渡すだけ。
   `18-union` の `run :: Eff '[] a -> a` と違って `IO` が出るのは、この実装が
   `IO` の上に載っているため。`effectful` の `runPureEff` は
@@ -87,6 +113,8 @@ Haskell2010 では次も要る。いずれも GHC2021 に含まれるので prag
 |`MultiParamTypeClasses`|`:>` が型変数を 2 つ取る|
 |`FlexibleInstances`|インスタンスの頭が `e ': es`|
 |`FlexibleContexts`|`greet` の制約が `Teletype :> es`|
+
+`Logger.hs` も同じ拡張で通る（2026-08-11 に確認）。`EmptyCase` は要らない。
 
 `RankNTypes` が要るのは `18-union` との違い（あちらは `EmptyCase` が要る）。
 **このシリーズで `forall` を「使う」のではなく「自分で書く」のは 18 回が初めて**
