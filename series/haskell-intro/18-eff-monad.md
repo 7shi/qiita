@@ -18,7 +18,7 @@ tags:
   versions: []
 title: Haskell Effモナド 超入門
 updated_at: ''
-url: ''
+url: 'https://zenn.dev/7shi/articles/20260811-haskell-eff-monad'
 slide: false
 ---
 

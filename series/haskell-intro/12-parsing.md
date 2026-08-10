@@ -13,7 +13,7 @@ tags:
 - name: parsec
   versions: []
 title: Haskell 構文解析 超入門
-updated_at: '2026-08-11T03:17:47+09:00'
+updated_at: '2026-08-11T05:24:24+09:00'
 url: https://qiita.com/7shi/items/b8c741e78a96ea2c10fe
 slide: false
 ---
@@ -39,7 +39,7 @@ Haskellではモナドと呼ばれる部品を組み合わせて構文解析を�
 1. [Haskell モナドとゆかいな仲間たち](https://zenn.dev/7shi/articles/20260807-haskell-monads-and-friends)
 1. [Haskell Freeモナド 超入門](https://zenn.dev/7shi/articles/20260808-haskell-free-monad)
 1. [Haskell Operationalモナド 超入門](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad)
-1. 【予定】Haskell Effモナド 超入門
+1. [Haskell Effモナド 超入門](https://zenn.dev/7shi/articles/20260811-haskell-eff-monad)
 1. 【予定】Haskell アロー 超入門
 
 練習の解答例は別記事に掲載します。

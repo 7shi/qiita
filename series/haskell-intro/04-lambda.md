@@ -13,7 +13,7 @@ tags:
 - name: Haskell
   versions: []
 title: Haskell ラムダ 超入門
-updated_at: '2026-08-11T03:16:59+09:00'
+updated_at: '2026-08-11T05:23:37+09:00'
 url: https://qiita.com/7shi/items/1345bf32003faff435cb
 slide: false
 ---
@@ -39,7 +39,7 @@ Haskellの文法に慣れて来た方を対象に、ラムダ式や高階関数�
 1. [Haskell モナドとゆかいな仲間たち](https://zenn.dev/7shi/articles/20260807-haskell-monads-and-friends)
 1. [Haskell Freeモナド 超入門](https://zenn.dev/7shi/articles/20260808-haskell-free-monad)
 1. [Haskell Operationalモナド 超入門](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad)
-1. 【予定】Haskell Effモナド 超入門
+1. [Haskell Effモナド 超入門](https://zenn.dev/7shi/articles/20260811-haskell-eff-monad)
 1. 【予定】Haskell アロー 超入門
 
 練習の解答例は別記事に掲載します。
