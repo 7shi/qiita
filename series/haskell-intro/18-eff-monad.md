@@ -87,7 +87,7 @@ Eff モナドは、複数の効果を混ぜられるよう命令の型を型レ�
 
 ここからは実装に入り、複数の効果を混ぜるための仕組みを組み立てていきます。
 
-## 混ぜられない手順書
+## 型の異なる手順書
 
 前回の `Program instr a` の `instr` は 1 つの型しか受け取れないため、複数の効果を混ぜることはできません。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#%E7%B6%99%E7%B6%9A%E3%82%92%E5%91%BD%E4%BB%A4%E3%81%AE%E5%9E%8B%E3%81%8B%E3%82%89%E5%A4%96%E3%81%99)
 
@@ -427,7 +427,7 @@ runLogger (u :>>= k) = case u of
 
 後で紹介する `effectful` パッケージの `Eff` は、この形をしていません。中身はデータではなく関数です。手順書の書き方は変わりませんが、それはデータとして組み上がるのではなく、ハンドラーを呼ぶ処理そのものになります。書き換わるのはハンドラーの中身と、それを呼び出す仕組みです。エフェクトシステムのライブラリはこの中身の違いで系統が分かれます。
 
-この形の `Eff` を書いて動かしてみます。
+この形の `Eff` を書いて動かしてみます。骨格をたどるための簡略化版で、`effectful` そのものではありません。実際のパッケージとの違いは、後で使うときに触れます。
 
 ## Eff の中身を関数にする
 
@@ -640,6 +640,18 @@ newtype Eff (es :: [Effect]) a = Eff (Env es -> IO a)
 
 前節で自作したものと同じ形です。`Env` の中身は効率のために可変配列になっていますが、「効果のリストと同じ長さのハンドラーの列を受け取る関数」という骨格は変わりません。
 
+効果は自作するだけでなく、`State`・`Writer`・`Reader`・`Error` といったおなじみの顔ぶれが最初から用意されています。`get`・`put`・`modify`・`tell`・`ask` といった関数の名前も同じなので、書き味はほとんど変わりません。👉[状態系モナド](https://qiita.com/7shi/items/2e9bff5d88302de1a9e9#%E7%8A%B6%E6%85%8B%E7%B3%BB%E3%83%A2%E3%83%8A%E3%83%89)
+
+既製の効果はモジュール名が分岐しています。`State` なら `Effectful.State.Static.Local`・`Effectful.State.Static.Shared`・`Effectful.State.Dynamic` があり、状態をスレッドごとに持つか共有するか、ハンドラーを差し替え可能にするかで選びます。
+
+:::message
+これらは `mtl` の `State`・`Writer` をそのまま持ち込んだものではなく、`Eff` の効果として定義し直した互換の実装です。名前と使い勝手を揃えてあるだけで、`Effectful.State.Static.Local` などの `State` は `Control.Monad.State` の `StateT` とは別の型です。関数名も重なるので、両方を `import` すると衝突します。
+
+`Control.Monad.State` の `modify` を `Eff` の中でそのまま使うこともできません。`mtl` のクラス（`MonadState` など）に合わせるための仕組みは別に用意されていますが、本記事では使用しません。
+:::
+
+本記事では `Effectful.*.Static.Local` を使います。`Static` は解釈が固定されていることを、`Local` はスレッドローカルであることを表します。
+
 ## 効果を定義する
 
 自作してきた `Teletype` を、`effectful` の効果に直します。足すのは 2 点だけです。
@@ -691,19 +703,37 @@ runTeletypeIO = interpret_ $ \op -> case op of
 `interpret_` の末尾のアンダースコアは、高階効果向けの引数を省いた版であることを表します。`interpret` の方はハンドラーの第 1 引数に `LocalEnv` を取りますが、今回のような効果では使わないので `interpret_` が便利です。
 :::
 
-## 既製の効果
+## 状態を持つ効果
 
-`State`・`Writer`・`Reader`・`Error` といったおなじみの顔ぶれが、効果として用意されています。👉[状態系モナド](https://qiita.com/7shi/items/2e9bff5d88302de1a9e9#%E7%8A%B6%E6%85%8B%E7%B3%BB%E3%83%A2%E3%83%8A%E3%83%89)
+カウンターも同じ手順で定義できます。命令が 1 つだけなので、書くことはさらに少なくなります。
 
-`get`・`put`・`modify`・`tell`・`ask` といった関数の名前も同じなので、書き味はほとんど変わりません。
+```hs
+data Counter :: Effect where
+    Tick :: Counter m Int
 
-:::message
-既製の効果はモジュール名が分岐しています。`State` なら `Effectful.State.Static.Local`・`Effectful.State.Static.Shared`・`Effectful.State.Dynamic` があり、状態をスレッドごとに持つか共有するか、ハンドラーを差し替え可能にするかで選びます。
+type instance DispatchOf Counter = Dynamic
 
-本記事では `Effectful.State.Static.Local` を使います。`Static` は解釈が固定されていることを、`Local` はスレッドローカルであることを表します。
-:::
+tick :: Counter :> es => Eff es Int
+tick = send Tick
+```
 
-`Teletype` と `State` を混ぜた例です。
+ハンドラーには状態が必要です。自作版では `IORef` を手で用意しましたが、ここでは既製の `State` 効果に預けます。使うのは `reinterpret_` で、剥がした効果を別の効果で実装するための関数です。
+
+```hs
+runCounter :: Int -> Eff (Counter : es) a -> Eff es a
+runCounter n0 = reinterpret_ (evalState n0) $ \Tick -> do
+    n <- get
+    put (n + 1)
+    return n
+```
+
+`evalState n0` が、`Counter` を剥がした先で `State Int` を処理するハンドラーです。カウンターの状態はここに預けてあるので、命令の処理は `get`・`put` を呼ぶだけで済みます。`Counter` の命令は `Tick` 1 つだけなので、`\Tick -> ...` と場合分けなしで直接パターンマッチしています。
+
+`IO` を使わないため、`runTeletypeIO` と違って `IOE` の制約は付きません。カウンターは `IO` の要らない手順書にも混ぜられます。
+
+## 全体を動かす
+
+`greet` は自作版のまま書けます。ハンドラーを両方適用して `runEff` で走らせます。
 
 ```hs
 {-# LANGUAGE DataKinds #-}
@@ -717,7 +747,11 @@ data Teletype :: Effect where
     PutLine :: String -> Teletype m ()
     GetLine ::           Teletype m String
 
+data Counter :: Effect where
+    Tick :: Counter m Int
+
 type instance DispatchOf Teletype = Dynamic
+type instance DispatchOf Counter  = Dynamic
 
 putLine :: Teletype :> es => String -> Eff es ()
 putLine = send . PutLine
@@ -725,31 +759,38 @@ putLine = send . PutLine
 getLine' :: Teletype :> es => Eff es String
 getLine' = send GetLine
 
+tick :: Counter :> es => Eff es Int
+tick = send Tick
+
 runTeletypeIO :: IOE :> es => Eff (Teletype : es) a -> Eff es a
 runTeletypeIO = interpret_ $ \op -> case op of
     PutLine s -> liftIO $ putStrLn s
     GetLine   -> liftIO getLine
 
-greet :: (Teletype :> es, State Int :> es) => Eff es ()
+runCounter :: Int -> Eff (Counter : es) a -> Eff es a
+runCounter n0 = reinterpret_ (evalState n0) $ \Tick -> do
+    n <- get
+    put (n + 1)
+    return n
+
+greet :: (Teletype :> es, Counter :> es) => Eff es ()
 greet = do
     putLine "name?"
     name <- getLine'
-    n <- get
-    putLine ("Hello, " ++ name ++ "! (" ++ show (n :: Int) ++ ")")
-    put (n + 1)
+    n <- tick
+    putLine ("Hello, " ++ name ++ "! " ++ show n)
 
 main :: IO ()
-main = do
-    ((), s) <- runEff $ runState (0 :: Int) $ runTeletypeIO greet
-    print s
+main = runEff $ runTeletypeIO $ runCounter 0 greet
 ```
 ```text:実行結果（標準入力: alice）
 name?
-Hello, alice! (0)
-1
+Hello, alice! 0
 ```
 
-`type instance` を書くので `TypeFamilies` が要ります。型レベルのリストは `DataKinds` のままです。なお `Eff (Teletype : es)` のようにリストの途中では、クォートを省いても型として解釈されるので `':` と書かなくても通ります。
+自作した 2 つの実装と同じ出力です。効果の定義・スマートコンストラクター・`greet` のどれもが、`m` 引数とディスパッチの宣言を足しただけで、ほぼそのまま移ります。ハンドラーだけは `State` に預ける形に変わりましたが、`greet` の型は `(Teletype :> es, Counter :> es) => Eff es ()` のままです。状態をどう持つかはハンドラーの中の話なので、手順書の側は書き換えずに済みます。
+
+`type instance` を書くので `TypeFamilies` が必要です。型レベルのリストは `DataKinds` のままです。なお `Eff (Teletype : es)` のようにリストの途中では、クォートを省いても型として解釈されるので `':` と書かなくても通ります。
 
 最後に走らせる関数は 2 つあります。
 
@@ -761,7 +802,7 @@ runPureEff :: Eff '[] a -> a
 `IO` を使う手順書は `runEff` で、使わない手順書は `runPureEff` で走らせます。自作版の `run` が `Eff '[] a -> IO a` だったのに対し、`runPureEff` は `IO` が付かない点が違います。実装は `IO` の上で走らせた結果を取り出しているので、型の上で純粋に見せているということです。
 
 :::message
-`n <- get` と書いたとき、`n` の型が決まらないことがあります。`get` の型は `State s :> es => Eff es s` で、`s` はリスト `es` から一意には決まりません。上の例で `show (n :: Int)` と書いてあるのはこのためです。使う側で型が決まらなければ、注釈が要ります。
+`n <- get` と書いたとき、`n` の型が決まらないことがあります。`get` の型は `State s :> es => Eff es s` で、`s` はリスト `es` から一意には決まりません。上の `runCounter` では `evalState n0` の `n0 :: Int` から決まりますが、そうでなければ使う側で注釈が要ります。この後の `sum'` で `show (v :: Int)` と書いてあるのはこのためです。
 :::
 
 :::message
@@ -771,6 +812,21 @@ runPureEff :: Eff '[] a -> a
 stack script --resolver lts-24.53 --package effectful ファイル名.hs
 ```
 :::
+
+## 簡略化版との違い
+
+自作した簡略化版とパッケージの違いを整理します。`Eff es a`・`e :> es`・`send`・ハンドラーで効果を 1 つずつ剥がすという骨格は共通で、違うのは作り込みの部分です。
+
+|項目|簡略化版|`effectful`|
+|---|---|---|
+|環境|`ENil`・`ECons` のリスト|可変配列|
+|効果の種|`* -> *`|`Effect`（`m` 引数が増える）|
+|ディスパッチ|後から与える一択|`DispatchOf` で `Dynamic`・`Static` を選ぶ|
+|ハンドラー|`interpret`|`interpret_`（高階効果には `interpret`）|
+|走らせる|`run :: Eff '[] a -> IO a`|`runEff`・`runPureEff`|
+|効果|自作のみ|`State`・`Writer`・`Reader`・`Error` などが付属|
+
+高階効果はハンドラーが `Eff` の計算そのものを受け取る効果で、`m` 引数と `interpret` の `LocalEnv` はそのために用意されています。簡略化版が省いたのは主にこの部分です。効果を自作して使う分には、ここまで見てきたとおり簡略化版と同じ感覚で書けます。
 
 # モナド変換子との比較
 
@@ -878,6 +934,8 @@ main = do
 Free から Operational へ進んだときも、優劣ではなく用途の違いでした。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#free-%E3%81%A8-operational-%E3%81%AE%E4%BD%BF%E3%81%84%E5%88%86%E3%81%91)
 
 ここも同じで、別種の効果を組み合わせるという同じ課題に対する、別の解き方が 2 つある、という見方が実情に合っています。
+
+選ぶときに効いてくるのが、前提知識の重さです。モナド変換子は仕組みを知らなくても、型を積んで `lift` すれば書き始められます。`Eff` の側は、型エラーが効果のリストと `:>` の言葉で出るうえ、効果を自作するのが本来の使い方なので、ここまで見てきた原理を通っていないと詰まります。裏を返せば、この記事で組み立てた模型がそのまま読むための道具になります。
 
 ## 練習
 
