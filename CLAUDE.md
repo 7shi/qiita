@@ -111,6 +111,12 @@ make sync
 新しい方の本文を古い方へ上書きする。フロントマターはそれぞれの形式のまま保持される。
 Qiita 側を書き換えた場合は `updated_at` を空にする（前述の同期状態のルール）。
 
+オプションは `ARGS` で `scripts/sync_zenn.py` へ渡す。
+
+```
+make sync ARGS=-n
+```
+
 - `-n`（`--dry-run`）で更新内容の確認のみ。
 - Zenn リポジトリの位置は `--zenn-root` で変更できる（既定は `~/repos/zenn`）。
 

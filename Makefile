@@ -8,6 +8,7 @@ help:
 	@echo "  extract      - Extract items from json to md"
 	@echo "  articles     - Aggregate articles from the articles/ directory"
 	@echo "  sync         - Sync article bodies with the Zenn repository (ZENN.tsv)"
+	@echo "                 Pass options via ARGS (e.g. make sync ARGS=-n for a dry run)"
 	@echo "  status       - List articles not yet reflected on Qiita"
 	@echo "  update       - Update all articles not yet reflected on Qiita"
 
@@ -23,7 +24,7 @@ articles:
 	uv run scripts/aggregate_articles.py
 
 sync:
-	uv run scripts/sync_zenn.py
+	uv run scripts/sync_zenn.py $(ARGS)
 
 status:
 	uv run scripts/update_article.py
