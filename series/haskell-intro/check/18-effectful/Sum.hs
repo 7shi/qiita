@@ -1,13 +1,16 @@
 {-# LANGUAGE DataKinds #-}
 import Control.Monad
 import Effectful
+import Effectful.Reader.Static
 import Effectful.State.Static.Local
+import Effectful.Writer.Static.Local
 
-sum' :: [Int] -> IO Int
-sum' xs = runEff $ execState (0 :: Int) $
+sum' :: Int -> [Int] -> (Int, [Int])
+sum' limit xs = runPureEff $ runWriter $ runReader limit $ execState (0 :: Int) $
     forM_ xs $ \i -> do
         modify (+ i)
         v <- get
-        liftIO $ putStrLn $ "+" ++ show i ++ " -> " ++ show (v :: Int)
+        lim <- ask
+        when (v > lim) $ tell [v :: Int]
 
-main = print =<< sum' [1..5]
+main = print $ sum' 5 [1..5]
