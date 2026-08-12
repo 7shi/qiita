@@ -31,6 +31,7 @@
 17. [Haskell Operationalモナド 超入門](17-operational-monad.md)（Zenn で公開）
 18. [Haskell Effモナド 超入門](18-eff-monad.md)（Zenn で公開）
 19. [Haskell アロー 超入門](19-arrow.md)（Zenn で公開）
+20. [Haskell 圏論 超入門](20-category-theory.md)（Zenn で公開）
 
 各回の導入文（前書き）は [PREFACES.md](PREFACES.md) にまとめてある。新しい回を書くときの文体合わせに使う。
 

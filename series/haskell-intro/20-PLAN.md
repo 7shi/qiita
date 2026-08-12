@@ -3,24 +3,58 @@
 記事番号は 20、ファイル名は `20-category-theory.md`（予定）。13〜18 回は `-monad`、
 19 回は `-arrow` と、扱う概念の名前をそのまま取ってきた。今回も同じ。
 
-**状態: 構想中（2026-08-13）。本文未着手。**
+**状態: 検証コード完了（2026-08-13）。本文執筆中。**
 
 **20 回をシリーズの完結とする。** 末尾に補遺（扱えなかった話題の整理）と
 全 20 回の総括を置く。19 回決定事項 3（締めくくりを置かない）はここで解除する。
 
 16〜19 回と同じく、決着した判断は「決定事項」に置く。
-**執筆・推敲時の判断で覆した点は「執筆時の変更点」に追記していく**（現時点では空）。
+**執筆・推敲時の判断で覆した点は「執筆時の変更点」に追記していく。**
 
 ## 次にやること（セッション再開時の入口）
 
-1. **検証コードを書く**（下記「検証項目」）。19 回と同じく、本文を書く前に
-   実際に動かして事実を確定させる。特に言語拡張の要否は記憶で判断しない。
-2. 過去記事の該当箇所を読み直す（下記「前提知識」の表。特に 15 回 `## ファンクター則`・
+1. ~~検証コードを書く~~ **完了**（`check/20-*/` の 7 ディレクトリ、9 ファイル）。
+2. ~~過去記事の該当箇所を読み直す~~ **主要箇所は確認済み**（15 回 `## ファンクター則`・
    `### >=> で書き直す`、16 回 `# 「自由」とは何か`、17 回 `## 継続を命令の型から外す`、
    19 回 `## Category`・`## Kleisli`）。
-3. 番外編 `monad-laws.md`・`monad-laws-2.md` を読み、重複と接続を確認する。
-4. 未決事項（下記）を潰す。
-5. 初稿を書く。
+3. ~~番外編の重複確認~~ **完了**（下記「既存記事との関係」）。
+4. ~~参考文献の裏取り~~ **完了**（下記「参考文献」）。
+5. **初稿を書く** ← いまここ。
+
+## 執筆時の変更点
+
+1. **1 節の自作 `Category` インスタンスを、関係の圏から一点圏（モノイド）へ変更**
+   （2026-08-13。決定事項 12 を覆す）。
+   関係の圏 `newtype Rel a b = Rel (a -> b -> Bool)` は **`Category` のインスタンスに
+   できない。** `id = Rel (==)` に `Eq a`、合成の全探索に `Bounded b`・`Enum b` が
+   必要になるが、`Category` のメソッドには型クラス制約を足せないため。
+   検証で GHC のエラーを確認済み（`check/20-category/README.md`）。
+
+   代わりにモノイドを「対象が 1 つの圏」とみなす。
+
+   ```hs
+   newtype Mon m a b = Mon m deriving (Show, Eq)
+
+   instance Monoid m => Category (Mon m) where
+       id = Mon mempty
+       Mon g . Mon f = Mon (f <> g)
+   ```
+
+   - **射がモノイドの要素で、関数ですらない。** 「`id` は恒等関数ではなく単位元」という
+     19 回 `### 単位元` の指摘が、関係の圏より一段はっきりする。
+   - **14 回の `Monoid` と直結し、5 節「モナドはモノイド対象」への布石になる。**
+     1 節で「モノイドは圏の特別な場合」を見せ、5 節で「モナドは圏のモノイド」を見せる
+     という往復ができる。
+   - ⚠ **対象が 1 つであることは型では強制できない。** `a`・`b` は使われない型引数
+     （phantom）なので、`Mon [String] () ()` のように `()` へ固定して「そう見なす」
+     という約束になる。**本文でこの点を明示する。**
+   - 節名は `## 関係の圏` から `## 一点圏` へ。
+2. **4 節の具体例を `step n = [n + 1, n * 2]` に確定**（決定事項 13 の未決部分）。
+   1 手で「1 を足す」か「2 倍する」の非決定性計算。開始値は `3`（`1` だと
+   `1 + 1` と `1 * 2` が衝突して `[2,2]` になり、分岐が見えないため）。
+3. **6 節の `foldFree` の解釈先に `((,) [String])` を使う**（決定事項 10）。
+   base に `Monoid w => Monad ((,) w)` があるので、Writer を自作せずにログを集められる。
+   `IO` 版と並べて「解釈が 2 つ選べる」ことを見せる。
 
 ## 記事の狙い
 
@@ -173,20 +207,25 @@ Haskell の道具立ての側から理論の概念を眺める、**逆向きの�
     単位元であること」と説明済み。**ここが最大の足場。**
 - **公理は 2 つだけ**（結合律・単位律）。19 回で `id >>> f = f`・`f >>> id = f` を書いた。
   結合律 `(f >>> g) >>> h = f >>> (g >>> h)` を足す。
-- **`## 関係の圏`**: 新規コードとして `instance Category` を 1 つ自作する
-  （決定事項 12。19 回は静的パーサー `P` なので別題材）。
+- **`## 一点圏`**: 新規コードとして `instance Category` を 1 つ自作する
+  （「執筆時の変更点」1 で決定事項 12 を差し替え。19 回は静的パーサー `P` なので別題材）。
 
   ```hs
-  newtype Rel a b = Rel (a -> b -> Bool)
+  newtype Mon m a b = Mon m deriving (Show, Eq)
+
+  instance Monoid m => Category (Mon m) where
+      id = Mon mempty
+      Mon g . Mon f = Mon (f <> g)
   ```
 
-  - **合成**は中間の要素を全探索する（`a` から `b` への関係と `b` から `c` への
-    関係をつないで、間に立つ `b` が 1 つでもあれば真）。**単位元は等しさの判定**。
+  - **モノイドを「対象が 1 つの圏」とみなす。** 射はモノイドの要素、合成は `<>`、
+    単位元は `mempty`。
   - **射が関数でない例**になるのが選んだ理由。19 回 `### 単位元` の
     「`id` に求められているのは恒等関数であることではなく単位元であること」が
     ここで一段はっきりする。
-  - 有限の型（`Bounded`・`Enum` を導出した小さな列挙型）に絞れば `runghc` で
-    実行結果まで出せる。→ 具体的な題材の中身は検証時に決める。
+  - **5 節への布石。** 1 節で「モノイドは圏の特別な場合」、5 節で「モナドは圏のモノイド」。
+  - ⚠ 対象が 1 つであることは phantom 型では強制できないので、`()` に固定して
+    「そう見なす」約束であることを本文で断る。
 - **`## Hask 圏`**: 型を対象、関数を射とみなす圏。`instance Category (->)` がそれ。
 - **`## bottom`**（決定事項 7）: すべての型が `undefined`・非停止を要素に持つので、
   Hask を厳密に圏として扱うと壊れる。`seq` があるとファンクター則・自然性が破れる。
@@ -545,81 +584,132 @@ README.md の「網羅性の穴」「未定のアイデア」がそのまま材�
 
 ## 検証項目
 
-**執筆前に実際に動かして確定させる**（19 回と同じ手順）。環境は `runghc` のみ、
-外部パッケージなし（決定事項 3）。結果は各 `check/20-*/README.md` に表で残す。
+**2026-08-13 に完了。** 環境は `runghc`（GHC 9.6.6）のみ、外部パッケージなし
+（決定事項 3）。結果は各 `check/20-*/README.md` に表で残した。
 
-### 言語拡張
+### 置き場所（確定）
 
-- [ ] `type f ~> g = forall a. f a -> g a` に必要な拡張
-      （`RankNTypes`・`TypeOperators` の要否。GHC2021 に含まれるか）
-- [ ] `data Coyoneda f a = forall b. Coyoneda (f b) (b -> a)` に必要な拡張
-      （`ExistentialQuantification` か `GADTs` か。GHC2021 に含まれるか）
-- [ ] `newtype Yoneda f a = Yoneda (forall b. (a -> b) -> f b)` に必要な拡張
-- [ ] **各ファイルを `runghc -XHaskell2010` に掛け、拡張を 1 つずつ外して必要性を洗い出す**
+|ディレクトリ|ファイル|節|
+|---|---|---|
+|`20-category`|`Mon.hs`・`Bottom.hs`|1|
+|`20-functor`|`Functor.hs`|2|
+|`20-natural`|`Natural.hs`|3|
+|`20-kleisli`|`Kleisli.hs`|4|
+|`20-monoid`|`Join.hs`・`Laws.hs`|5|
+|`20-free`|`Free.hs`|6|
+|`20-yoneda`|`Coyoneda.hs`・`Yoneda.hs`|7|
 
-### コード
+### 言語拡張（結果）
 
-- [ ] 1 節の関係の圏 `newtype Rel a b = Rel (a -> b -> Bool)`（決定事項 12）。
-      合成・単位元の実装と、有限型での実行結果
-- [ ] 4 節のリスト（`a -> [b]` の `>=>` 合成）で結合律・単位律を評価（決定事項 13）
-- [ ] `seq` でファンクター則を破る具体例（bottom の節の裏付け）
-- [ ] 自然性条件 `fmap h . alpha == alpha . fmap h` を `listToMaybe` などで両辺評価
-- [ ] `join` ↔ `>>=` の相互定義が一致すること
-- [ ] μ・η のモノイド則（`join . join == join . fmap join` ほか）を実際に評価
-- [ ] 16 回の `foldFree` を再実装し、`foldMap` と並べた形が成立すること
-- [ ] `Coyoneda` の `Functor` インスタンスが `f` に制約を要求しないこと、
-      `lowerCoyoneda` にだけ `Functor f` が必要になること
-- [ ] `Yoneda` の往復（`liftYoneda`／`lowerYoneda`）が元に戻ること
+|対象|必要な拡張|GHC2021|プラグマ|
+|---|---|---|---|
+|`type f ~> g = forall a. f a -> g a`|`RankNTypes` ＋ `TypeOperators`|含む|**不要**|
+|`data Coyoneda f a = forall b. Coyoneda (f b) (b -> a)`|`ExistentialQuantification`（`GADTs` でも可）|含む|**不要**|
+|`newtype Yoneda f a = Yoneda (forall b. (a -> b) -> f b)`|`RankNTypes`|含む|**不要**|
+|上記以外の 6 ファイル|なし|—|**不要**|
 
-### 記法
+- **9 ファイルすべてプラグマなしで `runghc` に通る。** 16 回と同じく `LANGUAGE` は 0 個。
+- `runghc -XHaskell2010` に掛け、拡張を 1 つずつ外して最小集合を確認した。
+  `~>` は `RankNTypes` と `TypeOperators` の**両方**が必要で、片方だけでは通らない。
+- 17 回で必要だった `GADTs` は、GADT 構文を使わず `forall` を直接書くため今回は不要。
 
-- [ ] **Zenn の KaTeX で `\begin{CD} ... \end{CD}` が描画されるか**（上記「描画手段」）。
-      Zenn 側 `NOTATIONS.md` は KaTeX のバージョンを常に最新としか書いておらず、
-      `CD` 環境の可否は**記憶で判断せず実際に確かめる。**
-      不可なら可換図式は mermaid に統一する
-- [ ] `\dashv`・`\Rightarrow`・`\mathbf{Hask}`・`\mathrm{Nat}` が KaTeX で通るか
-- [ ] mermaid で四角形の可換図式が読める形に描けるか（辺のラベルの付き方）
+### コード（結果）
 
-### 置き場所
+すべて期待どおり動いた。詳細と実行結果は各 `README.md`。
 
-`check/20-*/` に分けて置き、各ディレクトリに `README.md`（CLAUDE.md「検証コード」）。
-案: `20-category`・`20-functor`・`20-natural`・`20-kleisli`・`20-monoid`・
-`20-free`・`20-yoneda`。**節の構成が固まってから確定する。**
+- 1 節: **関係の圏は `Category` にできないことが判明**（上記「執筆時の変更点」1）。
+  一点圏 `Mon` に差し替えて確認。
+- 1 節: `seq` で `fmap id == id` が `(->)` で破れる（`fmap id bot` は `id . bot` で
+  ラムダなので WHNF、`id bot` は bottom）。
+- 3 節: 自然性条件が `listToMaybe`・`maybeToList` で両辺一致（空の場合も含む）。
+- 4 節: `step n = [n + 1, n * 2]` で結合律・単位律がすべて `True`。
+- 5 節: `>>=` ↔ `join` の相互定義が一致。`join . join == join . fmap join` ほかも `True`。
+- 6 節: `foldFree` は `Functor f` を要求しない（`phi` で `m` に移してから `>>=` でつなぐため）。
+  解釈先を `IO` と `((,) [String])` の 2 つで動かせた。
+- 7 節: `Coyoneda` の `Functor` インスタンスは `f` に無制約、`lowerCoyoneda` だけ `Functor f` が必要。
+  `Yoneda` の往復は `[]`・`Maybe`・`Either` で元に戻る。
+
+### 記法（結果）
+
+- **`\begin{CD} ... \end{CD}` は KaTeX で使える。** ただし**ディスプレイモード限定**で、
+  インライン（`$ ... $`）では `{CD} can be used only in display mode.` になる。
+  Zenn の `$$` ブロックはディスプレイモードなので問題ない。
+  KaTeX 0.18.4 で `npx katex -d` に掛けて確認した。
+- `\dashv`・`\Rightarrow`・`\mathbf`・`\mathrm`・`\cong`・`\circ`・`\mapsto` は
+  いずれも KaTeX のサポート表にある。
+- ⚠ **Zenn 上での実表示は未確認。** KaTeX 自体が対応していることまでの確認で、
+  Zenn へ複製した後に実際の表示を目視する。**崩れたら mermaid に切り替える。**
 
 ## 参考文献
 
 **書誌の確認状況を明記する**（17〜19 回の方針）。
-⚠ **記憶で書かない。確認できたものだけ載せ、確認できなければ記述ごと落とす。**
+**2026-08-13 に全 6 項目を確認済み。**
 
 |文献|状態|
 |---|---|
-|Mac Lane, *Categories for the Working Mathematician*, Springer|⚠ **未確認**（版・年・該当章）|
-|Awodey, *Category Theory*, Oxford University Press|⚠ **未確認**（版・年）|
-|Bartosz Milewski, *Category Theory for Programmers*|⚠ **未確認**（オンライン版の URL・書籍版の書誌）|
-|Moggi, "Notions of Computation and Monads" (1991)|⚠ **未確認**（掲載誌・巻号・ページ）|
-|「モナドは自己関手の圏におけるモノイド対象」の出典と流布の経緯|⚠ **未確認。** James Iry のブログ記事が広めたとされるが**記憶ベース。** 元の一文が Mac Lane のどこにあたるかも含めて要裏取り|
-|kan-extensions パッケージ（`Data.Functor.Coyoneda`・`Data.Functor.Yoneda`）|⚠ **未確認**（Hackage の現況・lts-24 系での収録）|
+|Saunders Mac Lane, *Categories for the Working Mathematician*, 2nd ed., Springer, Graduate Texts in Mathematics 5, 1998|**確認済み**（目次を実物で確認）|
+|Steve Awodey, *Category Theory*, 2nd ed., Oxford University Press, Oxford Logic Guides 52, 2010|**確認済み**（ISBN 978-0-19-923718-0）|
+|Bartosz Milewski, *Category Theory for Programmers*|**確認済み**（2014-10-28 開始のブログ連載。無料 PDF は https://github.com/hmemcpy/milewski-ctfp-pdf/ ）|
+|Eugenio Moggi, "Notions of computation and monads", *Information and Computation*, vol. 93, no. 1, 1991, pp. 55–92|**確認済み**（DOI: 10.1016/0890-5401(91)90052-4）|
+|「モナドは自己関手の圏におけるモノイド対象」の出典|**確認済み**（下記）|
+|kan-extensions（`Data.Functor.Coyoneda`・`Data.Functor.Yoneda`）|**確認済み**（Hackage の最新は 5.2.8。両モジュールを収録）|
+
+### Mac Lane の該当箇所（実物で確認）
+
+第 2 版の目次より。
+
+|章・節|ページ|20 回での対応|
+|---|---|---|
+|III.2 The Yoneda Lemma|59|7 節|
+|IV.1 Adjunctions|79|6 節|
+|VI.1 Monads in a Category|137|5 節|
+|VII Monoids（VII.1 Monoidal Categories）|161|5 節|
+
+**「モナドは自己関手の圏におけるモノイド対象」の原文は VI.1（p.137〜139）にある。**
+モナドの定義の直後、単位律・結合律を可換図式で示した後の一文。
+
+> All told, a monad in X is just a monoid in the category of endofunctors
+> of X, with product × replaced by composition of endofunctors and unit
+> set by the identity endofunctor.
+
+- ⚠ **Mac Lane 自身がこの一文を「モナドの定義はモノイドの定義に似ている」という
+  説明の締めくくりとして書いている。** 唐突な宣言ではなく、直前で
+  「集合 $M$ を自己関手 $T$ に、直積 $\times$ を関手の合成に、二項演算 $\cdot$ を
+  $\mu$ に、単位元を $\eta$ に置き換える」と対応表そのものを述べている。
+  **20 回の 5 節はこの対応表をなぞる形になる**（決定事項 1 の逆向き構成とも合う）。
+- **流布の経緯**: James Iry, "A Brief, Incomplete, and Mostly Wrong History of
+  Programming Languages"（One Div Zero、2009-05-07）の 1990 年の項で、
+  Haskell の説明の中に "a monad is a monoid in the category of endofunctors,
+  what's the problem?" として登場する。**Wadler の発言という設定はこの記事の
+  ジョークで、実際に Wadler が言ったわけではない。**
+  - ⚠ 決定事項（ジョークとして消費しない）との兼ね合いで、**この経緯に触れるかは
+    執筆時に判断する。** 触れるなら「有名な一文の出所」を 1 文添える程度に留め、
+    ネタとして引き延ばさない。
 
 - 16 回・17 回・19 回の `# 参考` に既に載せた文献（Swierstra "Data types à la carte"、
-  Kiselyov ほか、Hughes、Paterson）と重複しないよう確認する。
+  Kiselyov ほか、Hughes、Paterson）と重複しないよう確認する。→ **重複なし。**
 
 ## 未決事項・TODO
 
-**2026-08-13 に 7 件を解消**（決定事項 10〜15 と 2）。残りは下記。
+**2026-08-13 に 7 件を解消**（決定事項 10〜15 と 2）。
+**さらに検証で 3 件を解消**（1 節の題材・4 節の具体例・描画手段）。残りは下記。
 
-- [ ] 関係の圏の具体的な題材（どの有限型で何を関係づけるか。決定事項 12）。検証時に決める
-- [ ] 4 節のリストの具体例（どの `a -> [b]` を 2〜3 本つなぐか。決定事項 13）。検証時に決める
+- [x] ~~関係の圏の具体的な題材~~ → **一点圏へ変更**（上記「執筆時の変更点」1）
+- [x] ~~4 節のリストの具体例~~ → `step n = [n + 1, n * 2]`（同 2）
+- [x] ~~可換図式の描画手段~~ → **KaTeX の `CD` 環境が使える**（検証項目「記法」）。
+      数式との統一が取れるのでこちらを既定にする。Zenn 上での実表示は複製後に目視確認し、
+      崩れたら mermaid へ切り替える
 - [ ] 可換図式をどこまで増やすか（決定事項 2・上記「可換図式を使う箇所」の候補 3 件）。
       執筆時に、その箇所が図なしで伝わるかを見て判断する
-- [ ] 可換図式の描画手段（mermaid か KaTeX の `CD` 環境か）。**先に検証項目「記法」を通す**
 - [ ] 数式と図の役割が重ならないか（3 節・5 節は両方使う）。
       **同じことを式と図で 2 度言う形になっていないか執筆時に確認する**
 - [ ] **校正時**に何を落とすか（上記「分量リスク」）。初稿は分量を気にせず書く（決定事項 18）
 - [ ] 「圏論には言及しない」方針の解除をどう書くか（冒頭の言い回し）。
       **総括で回収する伏線になるので、冒頭と総括を対にして書く**
-- [ ] 番外編 `monad-laws.md`・`monad-laws-2.md` を読み、重複と接続を確認する。
-      総括や補遺から番外編・応用編へ言及するかも決める
-- [ ] 検証コードを書いて `check/20-*/` に整理する（上記「検証項目」）
+- [x] ~~番外編 `monad-laws.md`・`monad-laws-2.md` の重複と接続を確認~~ **完了**
+      （下記「既存記事との関係」）。総括や補遺から言及するかは執筆時に判断
+- [x] ~~検証コードを書いて `check/20-*/` に整理する~~ **完了**（上記「検証項目」）
+- [x] ~~参考文献の裏取り~~ **完了**（下記「参考文献」。全 6 項目を確認）
 - [ ] 本文の初稿を書く
 - [ ] `README.md` の目次・`PREFACES.md`・`ARTICLES.tsv` を更新する
 - [ ] **完結に伴う `README.md` の書き直し**（下記「完結に伴う作業」）
@@ -664,9 +754,18 @@ README.md の「網羅性の穴」「未定のアイデア」がそのまま材�
 ## 既存記事との関係
 
 - **番外編 [モナド則の絵を描いてみた](monad-laws.md)・
-  [モナド則がちょっと分かった？](monad-laws-2.md)** が近い題材。
-  **執筆前に読んで重複と接続を確認する**（TODO）。
-  総括や補遺から言及するかも合わせて判断する。
+  [モナド則がちょっと分かった？](monad-laws-2.md)**（2026-08-13 確認済み）。
+  - `monad-laws.md` は 33 行で、モナド則 3 本の図が並ぶだけ。重複しない。
+  - **`monad-laws-2.md` には `## モノイド対象` 節が既にある**（`# 補足` の中）。
+    内容はモナド則を `>=>` に書き直してモノイドの形を出すところまでで、
+    **15 回 `### >=> で書き直す` と同じ筋。** 20 回の 4 節（Kleisli 圏）が
+    この延長にあたる。
+  - ⚠ **20 回の 5 節は `join`・`return` を μ・η として読む側なので重複しない。**
+    番外編は `>=>` の側（Kleisli 圏のモノイド）、20 回 5 節は `join` の側
+    （自己関手の圏のモノイド対象）。**同じ一文の 2 通りの読み方**になっている。
+    5 節でこの対応に一言触れると、番外編への自然な接続になる。
+  - `monad-laws-2.md` の `## 行列との比較` と `# 参考`（String diagram の記事など）は
+    20 回では扱わない。総括か補遺から番外編へリンクするかは執筆時に判断する。
 - 16 回 `# 「自由」とは何か` の末尾 `:::message` は**既に随伴に踏み込んでいる。**
   6 節はそこを本編に引き上げる形になるので、**16 回の記述と矛盾しないか確認する。**
 - 19 回 `## Category`・`## Kleisli` の `### 単位元` は

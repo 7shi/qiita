@@ -253,6 +253,7 @@ f65814b1e91d48ec8d12	2015-07-31	series/haskell-intro	12a-parsing	【解答例】
 	2026-08-08	series/haskell-intro	17-operational-monad	Haskell Operationalモナド 超入門
 	2026-08-09	series/haskell-intro	18-eff-monad	Haskell Effモナド 超入門
 	2026-08-11	series/haskell-intro	19-arrow	Haskell アロー 超入門
+	2026-08-13	series/haskell-intro	20-category-theory	Haskell 圏論 超入門
 026839b2bc193dbfb0cb	2014-08-31	series/haskell-intro	8086-disassembler	Haskellによる8086逆アセンブラ開発入門
 6d228b6fc4734f48a33e	2014-08-31	series/haskell-intro	8086-disassembler-answer	【解答例】Haskellによる8086逆アセンブラ開発入門
 c62858d22a565095f791	2014-09-19	series/haskell-intro	algebraic-calculation	【解答例】Haskellによる代数計算入門
