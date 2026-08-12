@@ -569,7 +569,31 @@ string s = foldr (>>>) id (map char s)
 
 # 分岐
 
-順につなぐだけでなく、分かれ道も書きたくなります。proc 記法の中で `if` を使ってみると、`ArrowChoice` のインスタンスが必要だと言われます。
+順につなぐだけでなく、分岐も書いてみます。
+
+```hs
+ab :: P Bool String
+ab = proc flag -> if flag then char 'a' -< "" else char 'b' -< ""
+```
+
+しかしこのままではコンパイルできません。
+
+```text
+    • No instance for ‘ArrowChoice P’ arising from a proc expression
+    • In the expression:
+        proc flag -> if flag then char 'a' -< "" else char 'b' -< ""
+```
+
+`if` は内部で、条件の結果を `Either` に詰め替えたうえで `(|||)` に渡す形に展開されます。`ab` は次のコードと同じ意味です。
+
+```hs
+ab' :: P Bool String
+ab' = arr (\flag -> if flag then Left "" else Right "") >>> (char 'a' ||| char 'b')
+```
+
+`flag` が `True` なら `Left`、`False` なら `Right` を作り、`(|||)` がそれぞれ対応するアロー（`char 'a'` か `char 'b'`）だけを走らせます。`arr` で `Bool` を `Either` に変換する手間を、`proc` の記法が裏で肩代わりしています。
+
+`(|||)` は `ArrowChoice` 型クラスのメソッドです。
 
 ```hs
 class Arrow a => ArrowChoice a where
@@ -578,7 +602,13 @@ class Arrow a => ArrowChoice a where
     (+++) :: a b c -> a b' c' -> a (Either b b') (Either c c')
 ```
 
-`Arrow` がタプルで 2 本の線を並べていたのに対して、`ArrowChoice` は `Either` でどちらか一方を選びます。定義が必要なのは `left` だけです。
+`Arrow` がタプルで 2 本の線を並べていたのに対して、`ArrowChoice` は `Either` でどちらか一方を選びます。定義が必要なのは `left` だけです（`right`・`(+++)`・`(|||)` はデフォルト実装で賄われます）。
+
+`left` は `Either` の片方 `Left b` だけをパーサー `f` に通し、もう片方 `Right d` はそのまま素通りさせます。`Right` 側は解析に関与しないので、静的な情報 `t` は元のままです。
+
+:::message
+`first` がタプルの片方 `b` だけをアロー `f` に通し、もう片方 `d` は素通りさせたのと同じ発想です。
+:::
 
 ```hs
 instance ArrowChoice P where
@@ -587,23 +617,19 @@ instance ArrowChoice P where
         Right d -> Just (Right d, s))
 ```
 
-`Left` なら中のパーサーに通し、`Right` ならそのまま素通しします。静的な情報は元のままです。
+`Left b` のとき `f s b` でパーサーを走らせ、結果の `Maybe (c, String)` を `fmap` で包み直して `Maybe (Either c d, String)` に合わせています（`c` を `Left c` にラップするだけで、`Nothing` ならそのまま `Nothing` が伝わります）。`Right d` のときはパーサーを一切呼ばず、入力の状態 `s` をそのまま `Just (Right d, s)` として返します。
 
-これで proc の中に `if` が書けます。
+`(|||)` のデフォルト実装は `left`・`right` を `>>>` で組み合わせるだけなので、静的な情報も普通に連結されます。これだと `char 'a' ||| char 'b'` の `expects` が `"ab"` になり、`char 'a' >>> char 'b'` と区別が付きません。実際には「`a` か `b` のどちらか 1 文字」なので、`(|||)` だけ同じ `instance` に追記して明示的に上書きし、選択だとわかる形にします。
 
-```hs
-ab :: P Bool String
-ab = proc flag -> if flag then char 'a' -< "" else char 'b' -< ""
+```hs:instance ArrowChoice P の続き
+    P (t1, f) ||| P (t2, g) = P ("(" ++ t1 ++ "|" ++ t2 ++ ")", \s e -> case e of
+        Left  b -> f s b
+        Right c -> g s c)
 ```
 
-`proc` を使わず同じ型で書くと、`if` の分岐を先に `Either` へ詰め替える手間が要ります。
+静的な情報を `(` `|` `)` で囲み、「`t1` か `t2` のどちらか」だと分かる見た目にします。`t1`・`t2` は 1 文字とは限らない（`char 'a' ||| string "bc"` のような場合もある）ので、文字クラスではなく選言の形にしています。実際の関数は `Left` なら `f`、`Right` なら `g` に振り分けるだけで、`left`・`fmap` の詰め替えは不要です（`f`・`g` の結果の型がどちらもそのまま `d` になるため）。
 
-```hs
-ab' :: P Bool String
-ab' = arr (\flag -> if flag then Left "" else Right "") >>> (char 'a' ||| char 'b')
-```
-
-`ab` の `if` はそのまま `Bool` を見て分岐できますが、`ab'` は `|||` が `Either` しか受け取らないので、`arr` で `Bool` を `Either` に変換する行が余分に必要です。線が増えるほど、この変換の積み重ねが読みにくさに直結します。`proc` の記法はこの変換を裏で肩代わりしています。
+これで `ab` がコンパイルできるようになりました。
 
 `|||` を使って直接書くこともできます。分岐の条件を `Either` として外から受け取る形です。
 
@@ -625,17 +651,17 @@ main = do
     print $ runP ab2 "ba" (Right "")
 ```
 ```text:実行結果
-"ab"
+"(a|b)"
 Just ("a","b")
 Nothing
-"ab"
+"(a|b)"
 Just ("a","b")
 Just ("b","a")
 ```
 
-1 行目に注目してください。`expects ab` が `"ab"` を返しています。分岐しても静的な情報は取れます。 両方の枝の和になるので、`flag` の値がどちらに転んでも、起こりうることの全体は事前に分かります。
+1 行目に注目してください。`expects ab` が `"(a|b)"` を返しています。分岐しても静的な情報は取れます。`(` `|` `)` で囲んだのは両方の枝の和だからで、`flag` の値がどちらに転んでも、起こりうることの全体は事前に分かります。
 
-`flag` が実際に決まるのは実行時ですが、そのとき何が選ばれうるかは組み立てた時点で確定しているわけです。
+`flag` が実際に決まるのは実行時ですが、そのとき何が選ばれる可能性があるかは組み立てた時点で確定しているわけです。
 
 # モナドにはできない
 
