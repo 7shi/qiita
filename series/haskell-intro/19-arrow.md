@@ -327,6 +327,72 @@ main = print $ mean [1, 2, 3, 4]
 
 入力のリストを `&&&` で 2 方向に分け、片方で合計、片方で個数を求めて、タプルを `uncurry (/)` で割り算に渡しています。引数の名前が 1 つも出てきません。
 
+## 純粋な関数を混ぜる
+
+`Kleisli` の動作確認では `Kleisli` 同士をつなぎましたが、実際のパイプラインには効果のある処理と純粋な処理が混ざります。その純粋な部分を同じアローに持ち上げるのにも `arr` が使えます。
+
+ファイルを読んで、指定した単語の出現回数を表示する例です。👉[Hughes 2004](#参考)
+
+```text:test.txt
+the quick brown fox jumps over the lazy dog
+```
+
+シェルのパイプで書くと次のようになります。
+
+```text:シェル
+$ cat test.txt | tr ' ' '\n' | grep -x the | wc -l
+2
+```
+
+ファイルを読み、単語に分け、目的の単語だけを残し、数を数えて表示します。これをそのままアローに置き換えます。
+
+|シェル|Haskell|
+|---|---|
+|`cat test.txt`|`Kleisli readFile`|
+|`tr ' ' '\n'`|`arr words`|
+|`grep -x the`|`arr (filter (== "the"))`|
+|`wc -l`|`arr (show . length)` と `Kleisli putStrLn`|
+
+```hs
+import Control.Arrow
+
+count :: String -> Kleisli IO FilePath ()
+count w = Kleisli readFile
+      >>> arr words
+      >>> arr (filter (== w))
+      >>> arr (show . length)
+      >>> Kleisli putStrLn
+
+main :: IO ()
+main = runKleisli (count "the") "test.txt"
+```
+```text:実行結果
+2
+```
+
+`readFile`・`putStrLn` は `IO` を返すので `Kleisli` で包み、`words` などの純粋な関数は `arr` で持ち上げます。どちらも `Kleisli IO` になるため、区別なく `>>>` でつながります。
+
+同じものを `>=>` で書くと、純粋な関数に `return .` を付けて `a -> m b` の形に揃える必要があります。
+
+```hs
+count :: String -> FilePath -> IO ()
+count w = readFile
+      >=> return . words
+      >=> return . filter (== w)
+      >=> return . (show . length)
+      >=> putStrLn
+```
+
+`arr` はこの `return .` にあたります。実際、`Kleisli` の `arr` はそのように定義されています。
+
+```hs
+instance Monad m => Arrow (Kleisli m) where
+    arr f = Kleisli (return . f)
+    ...
+```
+
+どちらの書き方でも包む手間は必要ですが、`>=>` では純粋な関数の側を `return .` でモナドに合わせるのに対し、アローでは `arr` と `Kleisli` のどちらで包むかを選ぶだけです。関数そのものには手を入れません。
+
 ## 練習
 
 【問1】`mean` に倣って、リストの最大値と最小値の差を求める `spread` を `&&&` で書いてください。
@@ -897,14 +963,27 @@ opaleye は今回の静的パーサーと同じ発想です。組み立てた計
 
 ただし置き換えられる関係ではありません。手順書を複数のインタープリターで解釈し直すという使い方は Free の側のもので、アローから得られるのは、実行前に静的な情報を取り出せることと、値に依存しない配線を型で保証できることに限られます。
 
+# 関連記事
+
+アローを初めて試した時の記録です。
+
+https://qiita.com/7shi/items/9a6e7e3b8e88bafe4174
+
 # 参考
 
 アローの原論文と、proc 記法の出典です。
 
-- Hughes, J. (2000). Generalising monads to arrows. *Science of Computer Programming*, 37(1–3), 67–111. https://doi.org/10.1016/S0167-6423(99)00023-4
-- Paterson, R. (2001). A new notation for arrows. In *Proceedings of the Sixth ACM SIGPLAN International Conference on Functional Programming* (pp. 229–240). ACM. https://doi.org/10.1145/507635.507664
-- Paterson, R. (2003). Arrows and computation. In J. Gibbons & O. de Moor (Eds.), *The Fun of Programming* (pp. 201–222). Palgrave Macmillan.
+1. Hughes, J. (2000). Generalising monads to arrows. *Science of Computer Programming*, 37(1–3), 67–111. https://doi.org/10.1016/S0167-6423(99)00023-4
+2. Paterson, R. (2001). A new notation for arrows. In *Proceedings of the Sixth ACM SIGPLAN International Conference on Functional Programming* (pp. 229–240). ACM. https://doi.org/10.1145/507635.507664
+3. Paterson, R. (2003). [Arrows and computation](https://www.researchgate.net/publication/277298859_Arrows_and_computation). In J. Gibbons & O. de Moor (Eds.), *The Fun of Programming* (pp. 201–222). Palgrave Macmillan.
+4. Hughes, J. (2004). [Programming with Arrows](https://www.cse.chalmers.se/~rjmh/afp-arrows.pdf). At the Advanced Functional Programming summer school in Tartu, Estonia.
 
 haskell.org にアロー関連の文献表とチュートリアルがまとまっています。
 
 https://www.haskell.org/arrows/
+
+参考にさせて頂いた日本語記事です。
+
+https://tnomura9.exblog.jp/18517156/
+
+https://qiita.com/CyLomw/items/eb543cff8715e4f441a3

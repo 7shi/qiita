@@ -8,6 +8,7 @@
 |`Compose.hs`|`# 関数合成を一般化する`|`.` と `>>>`、`Kleisli` の `>>>` と `>=>` の一致|
 |`Parts.hs`|`# アローの部品`|`arr`・`&&&`・`***`・`first`・`second`|
 |`Mean.hs`|〃・練習【問1】|配線の例（`mean`）と `spread`|
+|`Count.hs`|`## 純粋な関数を混ぜる`|`Kleisli IO` に `arr` で純粋な関数を混ぜる（`test.txt` を読む）|
 |`Kleisli.hs`|練習【問4】|`Kleisli` のパイプラインと `app`|
 
 ## 実行結果
@@ -34,6 +35,11 @@ Nothing
 4
 ```
 
+```text:Count.hs
+2
+2
+```
+
 ```text:Kleisli.hs
 Just 50
 Nothing
@@ -46,6 +52,9 @@ Nothing
 
 - **`Kleisli` の `>>>` は `>=>` と同じ。** `runKleisli (Kleisli parse >>> Kleisli half) "10"` と
   `(parse >=> half) "10"` がどちらも `Just 5`。15 回の `>=>` がそのままアローの合成になる。
+- **`Kleisli` の `arr` は `return .` と同じ。** `Count.hs` の `count`（`arr` 版）と
+  `countM`（`>=> return . ...` 版）が同じ出力になる。純粋な関数を `arr` で持ち上げると
+  `Kleisli IO` の線にそのまま混ざる。
 - **`Kleisli Maybe` は `ArrowApply`。** `Kleisli.hs` の `choose` が `app` で
   値によって次のアローを選んでいる（`-8` → `Just 8` は `half` を通らず `negate` だけ）。
   モナドから作ったアローは動的な側にいる、という主張の裏付け。
@@ -54,4 +63,4 @@ Nothing
 
 ## 言語拡張の確認
 
-4 ファイルとも `runghc -XHaskell2010` で通る。**この節の範囲では言語拡張は 1 つも要らない。**
+5 ファイルとも `runghc -XHaskell2010` で通る。**この節の範囲では言語拡張は 1 つも必要ない。**

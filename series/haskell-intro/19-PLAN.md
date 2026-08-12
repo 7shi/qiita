@@ -17,7 +17,8 @@
 - ✅ **初稿 `19-arrow.md` を書いた。** 構成案 1〜9 をそのまま節にしている。
 - ✅ 掲載コードを確定し、`check/19-*/` を掲載コードと一致させた。**すべて実行して確認済み。**
 - ✅ `README.md` の目次・`PREFACES.md`・`ARTICLES.tsv` を更新した。
-- ⬜ **推敲・校正。** 下記「推敲時の観点」に沿って読み直す。
+- 🔄 **推敲・校正。** 下記「推敲時の観点」に沿って読み直す（2026-08-12・13 に実施分は
+  「執筆時の変更点」8〜13）。
 - ⬜ Zenn への複製（スラッグ確定 → `url` を埋める → 01〜18 回の目次リンク差し替え）。
 
 ### 執筆時の変更点
@@ -81,6 +82,39 @@
     - `char`・`abc`・`string`・`ab`・`ab'`・`ab2`・`choose` とその実行結果、
       および `check/19-parser/`（`Parser.hs`・`Apply.hs`・`Bind.hs`・`README.md`）を
       合わせて更新し、`runghc` で再確認した。
+
+11. **`# アローの部品`（`## 配線`）の後に `## 純粋な関数を混ぜる` を足した**
+    （2026-08-13 の推敲。ユーザーの提案）。`Kleisli IO` のパイプラインに
+    `arr` で純粋な関数を混ぜる例で、題材は 2015 年の記事「アローの取っ掛かり」の
+    「指定した単語を数える」を簡略化したもの（`readFile` → `words` →
+    `filter (== w)` → `show . length` → `putStrLn`）。読む対象は
+    `check/19-basics/test.txt`（`the quick brown fox ...`、`"the"` を数えて `2`）。
+    - **狙いは `arr` の意味を早い段階で示すこと。** それまで `arr` は `(->)` での
+      「何もしない持ち上げ」としてしか出ておらず、`>=>` 版に必要な `return .` と並べると、
+      `arr` が何の代わりなのかが見える。
+    - **`instance Arrow (Kleisli m)` の `arr f = Kleisli (return . f)` は節の末尾に置く**
+      （2026-08-13。ユーザー判断）。先に出すと答えを先に見せることになるので、
+      `arr` 版 → `>=>` 版 → 「`arr` はこの `return .` にあたる」の後に種明かしとして出す。
+    - **練習【問4】の解答例に埋もれていた話を本文に上げた形。** 効果のある処理と
+      純粋な処理が同じアローに揃って `>>>` でつながる、という点は問4 の解説にしか
+      書いていなかった。問4 はそのまま残す（`app` が主題なので重複にならない）。
+    - 検証コードは `check/19-basics/Count.hs`（`arr` 版と `>=>` 版を両方実行して一致を確認）。
+      `runghc` と `runghc -XHaskell2010` の両方で通る。
+    - 本文からは 👉リンクで `# 参考` の Hughes 2004（Programming with Arrows）を指している。
+    - **先にシェルのパイプ（`cat test.txt | tr ' ' '\n' | grep -x the | wc -l`）を示し、
+      シェルと Haskell の対応表を置いてからコードに入る**（2026-08-13。ユーザーの提案）。
+      `>>>` が左から右へ流れることの既知のイメージを先に与える狙い。
+    - ⚠ **「線」という語をパイプラインの意味で使わない。** この記事の「線」は
+      `## 配線` でタプル（並べて流す 2 本）に割り当てた語なので、直列のつながりに
+      使うと衝突する（ユーザー指摘）。直列は「パイプライン」で書く。
+12. **`# 関連記事` を設け、2015 年の記事「アローの取っ掛かり」にリンクした**
+    （2026-08-13。ユーザー判断。下記「既存記事との関係」の要判断だった点の決着）。
+    `# まとめ` と `# 参考` の間に置き、「アローを初めて試した時の記録です」の一文のみ。
+13. **`# 参考` を番号付きリストにし、文献を追加した**（2026-08-13。ユーザー編集）。
+    - Hughes, J. (2004). Programming with Arrows（Tartu の AFP サマースクール）を追加。
+    - 参考にした日本語記事（tnomura のブログ・CyLomw「Arrow を理解する」）を
+      URL 埋め込みで載せた。**構成案では「本文からリンクは張らない」としていたが、
+      参考節に載せる形に変えた。**
 
 ### 書誌調査について（2026-08-11 の判断）
 
@@ -488,7 +522,8 @@ newtype P b c = P (String, String -> b -> Maybe (c, String))
 |---|---|
 |Hughes, "Generalising Monads to Arrows", Science of Computer Programming 37(1–3), pp. 67–111, 2000. DOI 10.1016/S0167-6423(99)00023-4|**確認済み**（haskell.org のアロー文献表・出版社ページ）|
 |Paterson, "A New Notation for Arrows", ICFP 2001, pp. 229–240|**確認済み**（haskell.org のアロー文献表）。proc 記法の出典|
-|Paterson, "Arrows and Computation", *The Fun of Programming*, Palgrave, 2003, pp. 201–222|**確認済み**（同上）|
+|Paterson, "Arrows and Computation", *The Fun of Programming*, Palgrave, 2003, pp. 201–222|**確認済み**（同上）。掲載時に researchgate の PDF をリンク|
+|Hughes, "Programming with Arrows", AFP summer school (Tartu), 2004|**掲載**（2026-08-13 追加。chalmers の PDF をリンク）|
 |Swierstra & Duponcheel のパーサ（アローの動機になったとされる）|⚠ **未確認。** Hughes 論文が動機として挙げているかを含めて要裏取り|
 |Lindley, Wadler, Yallop（`Applicative`・アロー・モナドの比較）|⚠ **未確認。** 出すかどうかも未決|
 
@@ -518,7 +553,8 @@ newtype P b c = P (String, String -> b -> Maybe (c, String))
 - [x] 01・04 回の関数合成の説明を読み直し、入口を 04 回の `.` から始めた。
 - [x] **検証コードを `check/19-*/` に整理し、掲載コードと一致させた**（2026-08-11）。
       - `check/19-basics/` … `Compose.hs`（`.` と `>>>`・`Kleisli` と `>=>`）・
-        `Parts.hs`（部品）・`Mean.hs`（`mean`・問1）・`Kleisli.hs`（問4）
+        `Parts.hs`（部品）・`Mean.hs`（`mean`・問1）・`Kleisli.hs`（問4）・
+        `Count.hs`＋`test.txt`（`arr` で純粋な関数を混ぜる。2026-08-13 追加）
       - `check/19-proc/` … `Proc.hs`（proc 記法・問2・pragma の要否）
       - `check/19-parser/` … `Parser.hs`（静的パーサ・問3・分岐）・`Apply.hs`（`ArrowApply`）・
         **`Bind.hs`（意図的にコンパイルが通らない。型穴で詰まる箇所）**
@@ -557,17 +593,19 @@ newtype P b c = P (String, String -> b -> Maybe (c, String))
     「では何のためにアローを使うのか」に、静的な形という答えを与える。
   - ✅ **題材が重なることは問題にしない**（2026-08-11 ユーザー判断）。
     練習【問4】は `Kleisli` のパイプラインにする（決定事項 11）。
-  - **本文からリンクするかは要判断。** `articles/haskell/haskell-experiments.md`
-    （実験メモの一覧）には 13〜18 回と同じく**追加しない**。
+  - ✅ **本文からリンクした**（2026-08-13。執筆時の変更点 12）。`# 関連記事` 節を
+    `# まとめ` と `# 参考` の間に設けて URL を埋め込んでいる。
+    **`## 純粋な関数を混ぜる` の題材もこの記事から採った**（執筆時の変更点 11）。
+    `articles/haskell/haskell-experiments.md`（実験メモの一覧）には
+    13〜18 回と同じく**追加しない**。
   - ⚠ あの記事は「もっと複雑になって来ればアローが真価を発揮するのでしょう」で終わっている。
     **19 回でそれを引き取る形にすると連続性が出る**が、過去記事の文章を引用はしない
     （README.md「スタイル」）。
 - `articles/haskell/function-composition.md`（番外編「関数合成を機械的に扱う試み」）は
   多引数の関数合成の式変形の話で、アローとは別。**参照しない。**
-- 外部記事の棚卸しは未実施（TODO）。日本語のアロー解説は
-  [Arrow を理解する](https://qiita.com/CyLomw/items/eb543cff8715e4f441a3) など
-  複数あるので、執筆前に立ち位置を確認する。**本文からリンクは張らない**
-  （16〜18 回と同じ方針）。
+- 日本語のアロー解説（tnomura のブログ・[Arrow を理解する](https://qiita.com/CyLomw/items/eb543cff8715e4f441a3)）は
+  ✅ **`# 参考` に「参考にさせて頂いた日本語記事」として載せた**（2026-08-13。
+  執筆時の変更点 13）。当初の「本文からリンクは張らない」から変更している。
 
 ## 推敲時の観点
 
