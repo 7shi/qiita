@@ -11,7 +11,7 @@ tags:
 - name: Haskell
   versions: []
 title: Haskell モナド変換子 超入門
-updated_at: '2026-08-11T05:24:12+09:00'
+updated_at: '2026-08-13T03:02:58+09:00'
 url: https://qiita.com/7shi/items/4408b76624067c17e933
 slide: false
 ---
@@ -38,7 +38,7 @@ Haskellではモナドと呼ばれる部品を組み合わせてプログラム�
 1. [Haskell Freeモナド 超入門](https://zenn.dev/7shi/articles/20260808-haskell-free-monad)
 1. [Haskell Operationalモナド 超入門](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad)
 1. [Haskell Effモナド 超入門](https://zenn.dev/7shi/articles/20260811-haskell-eff-monad)
-1. 【予定】Haskell アロー 超入門
+1. [Haskell アロー 超入門](https://zenn.dev/7shi/articles/20260813-haskell-arrow)
 
 練習の解答例は別記事に掲載します。
 

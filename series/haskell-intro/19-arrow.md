@@ -18,7 +18,7 @@ tags:
   versions: []
 title: Haskell アロー 超入門
 updated_at: ''
-url: ''
+url: https://zenn.dev/7shi/articles/20260813-haskell-arrow
 slide: false
 ---
 

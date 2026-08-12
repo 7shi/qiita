@@ -3,15 +3,15 @@ coediting: false
 comments_count: 3
 created_at: '2014-08-20T15:02:12+09:00'
 id: 145f1234f8ec2af923ef
-likes_count: 1288
+likes_count: 1289
 private: false
 reactions_count: 0
-stocks_count: 1236
+stocks_count: 1237
 tags:
 - name: Haskell
   versions: []
 title: Haskell 超入門
-updated_at: '2026-08-11T05:23:19+09:00'
+updated_at: '2026-08-13T03:02:05+09:00'
 url: https://qiita.com/7shi/items/145f1234f8ec2af923ef
 slide: false
 ---
@@ -38,7 +38,7 @@ Haskellで簡単なプログラムを書くのに最低限必要な基礎文法�
 1. [Haskell Freeモナド 超入門](https://zenn.dev/7shi/articles/20260808-haskell-free-monad)
 1. [Haskell Operationalモナド 超入門](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad)
 1. [Haskell Effモナド 超入門](https://zenn.dev/7shi/articles/20260811-haskell-eff-monad)
-1. 【予定】Haskell アロー 超入門
+1. [Haskell アロー 超入門](https://zenn.dev/7shi/articles/20260813-haskell-arrow)
 
 練習の解答例は別記事に掲載します。
 
