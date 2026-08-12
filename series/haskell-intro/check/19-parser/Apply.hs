@@ -6,7 +6,7 @@ import Control.Arrow
 import Control.Category
 import Prelude hiding ((.), id)
 
-newtype P b c = P ([Char], [Char] -> b -> Maybe (c, [Char]))
+newtype P b c = P (String, String -> b -> Maybe (c, String))
 
 instance Category P where
     id = P ([], \s b -> Just (b, s))
@@ -19,19 +19,19 @@ instance Arrow P where
 instance ArrowApply P where
     app = P ([], \s (P (_, f), b) -> f s b)
 
-char :: Char -> P () ()
-char c = P ([c], \s _ -> case s of
-    (x:xs) | x == c -> Just ((), xs)
+char :: Char -> P String String
+char c = P ([c], \s i -> case s of
+    (x:xs) | x == c -> Just (i ++ [x], xs)
     _               -> Nothing)
 
-expects :: P b c -> [Char]
+expects :: P b c -> String
 expects (P (t, _)) = t
 
-runP :: P b c -> [Char] -> b -> Maybe (c, [Char])
+runP :: P b c -> String -> b -> Maybe (c, String)
 runP (P (_, f)) s b = f s b
 
-choose :: P Bool ()
-choose = arr (\flag -> (if flag then char 'a' else char 'b', ())) >>> app
+choose :: P Bool String
+choose = arr (\flag -> (if flag then char 'a' else char 'b', "")) >>> app
 
 main :: IO ()
 main = do

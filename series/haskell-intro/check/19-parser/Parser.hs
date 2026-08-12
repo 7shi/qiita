@@ -6,7 +6,7 @@ import Control.Arrow
 import Control.Category
 import Prelude hiding ((.), id)
 
-newtype P b c = P ([Char], [Char] -> b -> Maybe (c, [Char]))
+newtype P b c = P (String, String -> b -> Maybe (c, String))
 
 instance Category P where
     id = P ([], \s b -> Just (b, s))
@@ -21,39 +21,39 @@ instance ArrowChoice P where
         Left  b -> fmap (\(c, s') -> (Left c, s')) (f s b)
         Right d -> Just (Right d, s))
 
-char :: Char -> P () ()
-char c = P ([c], \s _ -> case s of
-    (x:xs) | x == c -> Just ((), xs)
+char :: Char -> P String String
+char c = P ([c], \s i -> case s of
+    (x:xs) | x == c -> Just (i ++ [x], xs)
     _               -> Nothing)
 
-expects :: P b c -> [Char]
+expects :: P b c -> String
 expects (P (t, _)) = t
 
-runP :: P b c -> [Char] -> b -> Maybe (c, [Char])
+runP :: P b c -> String -> b -> Maybe (c, String)
 runP (P (_, f)) s b = f s b
 
-abc :: P () ()
+abc :: P String String
 abc = char 'a' >>> char 'b' >>> char 'c'
 
-string :: [Char] -> P () ()
+string :: String -> P String String
 string s = foldr (>>>) id (map char s)
 
-ab :: P Bool ()
-ab = proc flag -> if flag then char 'a' -< () else char 'b' -< ()
+ab :: P Bool String
+ab = proc flag -> if flag then char 'a' -< "" else char 'b' -< ""
 
-ab2 :: P (Either () ()) ()
+ab2 :: P (Either String String) String
 ab2 = char 'a' ||| char 'b'
 
 main :: IO ()
 main = do
     print $ expects abc
-    print $ runP abc "abcd" ()
-    print $ runP abc "abd" ()
+    print $ runP abc "abcd" ""
+    print $ runP abc "abd" ""
     print $ expects (string "abc")
-    print $ runP (string "abc") "abcd" ()
+    print $ runP (string "abc") "abcd" ""
     print $ expects ab
     print $ runP ab "ab" True
     print $ runP ab "ab" False
     print $ expects ab2
-    print $ runP ab2 "ab" (Left ())
-    print $ runP ab2 "ba" (Right ())
+    print $ runP ab2 "ab" (Left "")
+    print $ runP ab2 "ba" (Right "")

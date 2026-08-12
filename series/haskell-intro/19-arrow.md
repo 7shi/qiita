@@ -438,17 +438,17 @@ spread = proc xs -> do
 
 この方式では、組み立てたパーサーが何を受け付けるのかは、実際に文字列を与えてみるまで分かりません。今回作るのは、合成した時点で受け付ける文字が分かるパーサーです。
 
-たとえば `abc = char 'a' >>> char 'b' >>> char 'c'` のように 1 文字ずつ読むパーサーをつなげて `abc` を作ったとします。実装できれば、`expects abc` は 1 文字も解析せずに `"abc"` を返し、`runP abc "abcd" ()` は実際に解析して `Just ((),"d")` を返せるようになります。
+たとえば `abc = char 'a' >>> char 'b' >>> char 'c'` のように 1 文字ずつ読むパーサーをつなげて `abc` を作ったとします。実装できれば、`expects abc` は 1 文字も解析せずに `"abc"` を返し、`runP abc "abcd" ""` は実際に解析して `Just ("abc","d")` を返せるようになります。
 
 パーサーを組み立てた時点で、実際に解析せずに「このパーサーは何を受け付けるか」に答えられるようにするには、解析を実行する関数とは別に、受け付ける文字の情報を静的なデータとして持ち歩く必要があります。`>>>` でつないだときにこの情報どうしも一緒に合成されれば、組み立てが終わった時点で全体が受け付ける文字が分かる、という設計です。
 
 型はタプルで、この 2 つを同時に持ちます。
 
 ```hs
-newtype P b c = P ([Char], [Char] -> b -> Maybe (c, [Char]))
+newtype P b c = P (String, String -> b -> Maybe (c, String))
 ```
 
-タプルの左の `[Char]` が静的な情報で、このパーサーが受け付ける文字を並べたものです。右が実際の解析で、解析対象の文字列 `[Char]` と入力値 `b` を受け取り、成功すれば出力値 `c` と残りの文字列 `[Char]` を返します。失敗は `Nothing` で表します。この 2 つは独立していて、左を見るだけなら右の関数を一切呼び出しません。
+タプルの左の `String` が静的な情報で、このパーサーが受け付ける文字を並べたものです。右が実際の解析で、解析対象の文字列 `String` と入力値 `b` を受け取り、成功すれば出力値 `c` と残りの文字列 `String` を返します。失敗は `Nothing` で表します。この 2 つは独立していて、左を見るだけなら右の関数を一切呼び出しません。
 
 `Category` のインスタンスが要点です。`>>>` でつないだときに、この静的な情報がどう合成されるかを決めるからです。
 
@@ -477,17 +477,19 @@ instance Arrow P where
 指定した 1 文字を読むパーサーと、2 つの取り出し関数を用意します。
 
 ```hs
-char :: Char -> P () ()
-char c = P ([c], \s _ -> case s of
-    (x:xs) | x == c -> Just ((), xs)
+char :: Char -> P String String
+char c = P ([c], \s i -> case s of
+    (x:xs) | x == c -> Just (i ++ [x], xs)
     _               -> Nothing)
 
-expects :: P b c -> [Char]
+expects :: P b c -> String
 expects (P (t, _)) = t
 
-runP :: P b c -> [Char] -> b -> Maybe (c, [Char])
+runP :: P b c -> String -> b -> Maybe (c, String)
 runP (P (_, f)) s b = f s b
 ```
+
+`char` は入力値 `i` を「これまでにマッチした文字列」として受け取り、末尾に読んだ文字を足して返します。`>>>` でつないだとき、`Category` の `.` が前段の結果をそのまま次段の入力に渡すので（`f s b >>= \(x, s') -> g s' x` の `x`）、この累積がリレーされていきます。
 
 `expects` が静的な情報を取り出す関数、`runP` が実際に走らせる関数です。全体をまとめます。
 
@@ -496,7 +498,7 @@ import Control.Arrow
 import Control.Category
 import Prelude hiding ((.), id)
 
-newtype P b c = P ([Char], [Char] -> b -> Maybe (c, [Char]))
+newtype P b c = P (String, String -> b -> Maybe (c, String))
 
 instance Category P where
     id = P ([], \s b -> Just (b, s))
@@ -506,29 +508,29 @@ instance Arrow P where
     arr f = P ([], \s b -> Just (f b, s))
     first (P (t, f)) = P (t, \s (b, d) -> fmap (\(c, s') -> ((c, d), s')) (f s b))
 
-char :: Char -> P () ()
-char c = P ([c], \s _ -> case s of
-    (x:xs) | x == c -> Just ((), xs)
+char :: Char -> P String String
+char c = P ([c], \s i -> case s of
+    (x:xs) | x == c -> Just (i ++ [x], xs)
     _               -> Nothing)
 
-expects :: P b c -> [Char]
+expects :: P b c -> String
 expects (P (t, _)) = t
 
-runP :: P b c -> [Char] -> b -> Maybe (c, [Char])
+runP :: P b c -> String -> b -> Maybe (c, String)
 runP (P (_, f)) s b = f s b
 
-abc :: P () ()
+abc :: P String String
 abc = char 'a' >>> char 'b' >>> char 'c'
 
 main :: IO ()
 main = do
     print $ expects abc
-    print $ runP abc "abcd" ()
-    print $ runP abc "abd" ()
+    print $ runP abc "abcd" ""
+    print $ runP abc "abd" ""
 ```
 ```text:実行結果
 "abc"
-Just ((),"d")
+Just ("abc","d")
 Nothing
 ```
 
@@ -541,21 +543,21 @@ Nothing
 【問3】文字列をそのまま受け付ける `string` を書いてください。`char` を並べてつなぐだけです。
 
 ```hs
-string :: [Char] -> P () ()
+string :: String -> P String String
 
 main :: IO ()
 main = do
     print $ expects (string "abc")
-    print $ runP (string "abc") "abcd" ()
+    print $ runP (string "abc") "abcd" ""
 ```
 ```text:実行結果
 "abc"
-Just ((),"d")
+Just ("abc","d")
 ```
 
 :::details 解答例
 ```hs
-string :: [Char] -> P () ()
+string :: String -> P String String
 string s = foldr (>>>) id (map char s)
 ```
 
@@ -589,15 +591,15 @@ instance ArrowChoice P where
 これで proc の中に `if` が書けます。
 
 ```hs
-ab :: P Bool ()
-ab = proc flag -> if flag then char 'a' -< () else char 'b' -< ()
+ab :: P Bool String
+ab = proc flag -> if flag then char 'a' -< "" else char 'b' -< ""
 ```
 
 `proc` を使わず同じ型で書くと、`if` の分岐を先に `Either` へ詰め替える手間が要ります。
 
 ```hs
-ab' :: P Bool ()
-ab' = arr (\flag -> if flag then Left () else Right ()) >>> (char 'a' ||| char 'b')
+ab' :: P Bool String
+ab' = arr (\flag -> if flag then Left "" else Right "") >>> (char 'a' ||| char 'b')
 ```
 
 `ab` の `if` はそのまま `Bool` を見て分岐できますが、`ab'` は `|||` が `Either` しか受け取らないので、`arr` で `Bool` を `Either` に変換する行が余分に必要です。線が増えるほど、この変換の積み重ねが読みにくさに直結します。`proc` の記法はこの変換を裏で肩代わりしています。
@@ -605,7 +607,7 @@ ab' = arr (\flag -> if flag then Left () else Right ()) >>> (char 'a' ||| char '
 `|||` を使って直接書くこともできます。分岐の条件を `Either` として外から受け取る形です。
 
 ```hs
-ab2 :: P (Either () ()) ()
+ab2 :: P (Either String String) String
 ab2 = char 'a' ||| char 'b'
 ```
 
@@ -618,16 +620,16 @@ main = do
     print $ runP ab "ab" True
     print $ runP ab "ab" False
     print $ expects ab2
-    print $ runP ab2 "ab" (Left ())
-    print $ runP ab2 "ba" (Right ())
+    print $ runP ab2 "ab" (Left "")
+    print $ runP ab2 "ba" (Right "")
 ```
 ```text:実行結果
 "ab"
-Just ((),"b")
+Just ("a","b")
 Nothing
 "ab"
-Just ((),"b")
-Just ((),"a")
+Just ("a","b")
+Just ("b","a")
 ```
 
 1 行目に注目してください。`expects ab` が `"ab"` を返しています。分岐しても静的な情報は取れます。 両方の枝の和になるので、`flag` の値がどちらに転んでも、起こりうることの全体は事前に分かります。
@@ -644,7 +646,7 @@ Just ((),"a")
 bindP :: P b c -> (c -> P b d) -> P b d
 ```
 
-第 2 引数の `k` は、解析結果 `c` を受け取って次のパーサーを返す関数です。結果の `P b d` を作るには、まず静的な情報、つまり `[Char]` の値を用意しなければなりません。
+第 2 引数の `k` は、解析結果 `c` を受け取って次のパーサーを返す関数です。結果の `P b d` を作るには、まず静的な情報、つまり `String` の値を用意しなければなりません。
 
 そこに何を書けばよいでしょうか。1 つ目のパーサーの分は取り出せますが、2 つ目のパーサーは `k` を適用しないと手に入りません。`k` を適用するには引数として `c` が必要です。そして `c` は解析を実行して初めて手に入る値です。
 
@@ -675,8 +677,8 @@ instance ArrowApply P where
 これを使うと、入力の値によって使うパーサーを選べます。
 
 ```hs
-choose :: P Bool ()
-choose = arr (\flag -> (if flag then char 'a' else char 'b', ())) >>> app
+choose :: P Bool String
+choose = arr (\flag -> (if flag then char 'a' else char 'b', "")) >>> app
 
 main :: IO ()
 main = do
@@ -686,7 +688,7 @@ main = do
 ```
 ```text:実行結果
 ""
-Just ((),"b")
+Just ("a","b")
 Nothing
 ```
 

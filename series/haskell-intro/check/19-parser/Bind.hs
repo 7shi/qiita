@@ -5,7 +5,7 @@ import Control.Arrow
 import Control.Category
 import Prelude hiding ((.), id)
 
-newtype P b c = P ([Char], [Char] -> b -> Maybe (c, [Char]))
+newtype P b c = P (String, String -> b -> Maybe (c, String))
 
 instance Category P where
     id = P ([], \s b -> Just (b, s))
@@ -15,7 +15,7 @@ instance Arrow P where
     arr f = P ([], \s b -> Just (f b, s))
     first (P (t, f)) = P (t, \s (b, d) -> fmap (\(c, s') -> ((c, d), s')) (f s b))
 
-expects :: P b c -> [Char]
+expects :: P b c -> String
 expects (P (t, _)) = t
 
 -- モナドの >>= にあたるものを書こうとすると、静的な情報が確定できない

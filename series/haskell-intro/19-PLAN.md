@@ -66,6 +66,21 @@
    （README.md「スタイル」）なので、表記差があっても問題にならない。
    12 回本文中の外部記事タイトルの引用（「JSONパーサーを作る」など）は
    固有名詞なので対象外、書き換えない。
+10. **`char` を `P String String` に変え、マッチした文字を累積するようにした**
+    （2026-08-12 の推敲）。当初案は `P () ()` で `runP` の戻り値が常に `((), 残り文字列)`
+    だったが、`i ++ [x]` で「これまでにマッチした文字列」を入力値としてリレーする形に
+    変更し、`runP abc "abcd" ""` が `Just ("abc","d")` を返すようにした。
+    `>>>` でつないだときに `Category` の `.`（`f s b >>= \(x, s') -> g s' x`）が
+    前段の結果をそのまま次段の入力に渡す性質を、`()` より実感しやすい形で見せられる。
+    - **`[Char]` と `String` の表記も `String` に統一した。** 元は
+      `newtype P b c = P ([Char], [Char] -> b -> Maybe (c, [Char]))` のように
+      `[Char]` だけで書かれていたが、`char`・`abc`・`string`・`ab`・`ab2`・`choose` の
+      型（`b`・`c` の実体）に `String` を使ったことで `[Char]` と `String` が混在した。
+      同じ型でも読み手に無用の詮索をさせるため、`newtype P`・`expects`・`runP` を含め
+      記事全体を `String` に揃えた。
+    - `char`・`abc`・`string`・`ab`・`ab'`・`ab2`・`choose` とその実行結果、
+      および `check/19-parser/`（`Parser.hs`・`Apply.hs`・`Bind.hs`・`README.md`）を
+      合わせて更新し、`runghc` で再確認した。
 
 ### 書誌調査について（2026-08-11 の判断）
 
@@ -249,7 +264,7 @@
 静的パーサ `P`。**`runghc` だけで動く**（検証済み）。
 
 ```hs
-newtype P b c = P ([Char], [Char] -> b -> Maybe (c, [Char]))
+newtype P b c = P (String, String -> b -> Maybe (c, String))
 ```
 
 - **タプルの左が静的な情報**（このパーサが受け付ける文字）、右が実際の解析。
@@ -407,7 +422,7 @@ newtype P b c = P ([Char], [Char] -> b -> Maybe (c, [Char]))
 ### 静的パーサ（本文の題材）
 
 ```hs
-newtype P b c = P ([Char], [Char] -> b -> Maybe (c, [Char]))
+newtype P b c = P (String, String -> b -> Maybe (c, String))
 ```
 
 `Category`・`Arrow`・`ArrowChoice` のインスタンスを自作して動作確認済み。
@@ -415,9 +430,9 @@ newtype P b c = P ([Char], [Char] -> b -> Maybe (c, [Char]))
 |確認したこと|結果|
 |---|---|
 |`expects (char 'a' >>> char 'b' >>> char 'c')`|`"abc"`（**実行前に取れる**）|
-|`runP p "abcd" ()`|`Just ((),"d")`|
+|`runP p "abcd" ""`|`Just ("abc","d")`|
 |proc の `if` で分岐した `q` の `expects`|`"ab"`（**両方の枝の和**）|
-|`runP q "ab" True` / `False`|`Just ((),"b")` / `Nothing`|
+|`runP q "ab" True` / `False`|`Just ("a","b")` / `Nothing`|
 
 ### 「モナドにはできない」の裏取り（構成案 6）
 

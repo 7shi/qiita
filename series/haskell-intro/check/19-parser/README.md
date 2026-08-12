@@ -11,7 +11,7 @@
 ## 静的パーサ（`Parser.hs`）
 
 ```hs
-newtype P b c = P ([Char], [Char] -> b -> Maybe (c, [Char]))
+newtype P b c = P (String, String -> b -> Maybe (c, String))
 ```
 
 タプルの左が静的な情報（受け付ける文字）、右が実際の解析。
@@ -20,16 +20,16 @@ newtype P b c = P ([Char], [Char] -> b -> Maybe (c, [Char]))
 
 ```text:Parser.hs
 "abc"
-Just ((),"d")
+Just ("abc","d")
 Nothing
 "abc"
-Just ((),"d")
+Just ("abc","d")
 "ab"
-Just ((),"b")
+Just ("a","b")
 Nothing
 "ab"
-Just ((),"b")
-Just ((),"a")
+Just ("a","b")
+Just ("b","a")
 ```
 
 |行|意味|
@@ -60,13 +60,13 @@ Just ((),"a")
 instance ArrowApply P where
     app = P ([], \s (P (_, f), b) -> f s b)
 
-choose :: P Bool ()
-choose = arr (\flag -> (if flag then char 'a' else char 'b', ())) >>> app
+choose :: P Bool String
+choose = arr (\flag -> (if flag then char 'a' else char 'b', "")) >>> app
 ```
 
 ```text:Apply.hs
 ""
-Just ((),"b")
+Just ("a","b")
 Nothing
 ```
 
