@@ -22,7 +22,7 @@ url: ''
 slide: false
 ---
 
-Haskell ではモナドと呼ばれる部品を組み合わせてプログラムを作りますが、アローは入力から出力への計算そのものを型として扱い、関数合成を一般化した枠組みです。モナドと違って次の計算を値から選べない代わりに、組み立てた時点で計算の形が決まります。実行前に中身を調べられるパーサを作りながら、その違いを説明します。
+アローは入力から出力への計算そのものを型として扱い、関数合成を一般化した枠組みです。モナドと違って次の計算を値から選べない代わりに、組み立てた時点で計算の形が決まります。実行前に中身を調べられるパーサを作りながら、その違いを説明します。
 
 :::message
 本記事の執筆には Claude Code (Opus 5) を利用しました。
@@ -198,7 +198,7 @@ Nothing
 
 ここまでで分かるのは、普通の関数とモナドを返す関数という別種のものが、`>>>` という同じ形でつながるということです。この「つなげる」を型クラスにしたのが `Category` で、その上に部品を足したものがアローです。
 
-# アローの部品
+# Arrow
 
 **アロー**（arrow）は、入力から出力への計算を表す型です。`Arrow` 型クラスのインスタンスとして定義します。`a b c` と書いたとき、`b` が入力の型、`c` が出力の型です。
 
@@ -213,57 +213,102 @@ class Category a => Arrow a where
 
 スーパークラスが `Category` なので、`Arrow` のインスタンスを書くには `Category` のインスタンスも必要です。👉[型クラス](https://zenn.dev/7shi/articles/20260805-haskell-type-classes#スーパークラス)
 
-`arr` はただの関数をアローに持ち上げる関数です。Free モナドの `liftF` や Operational モナドの `singleton` と同じ位置にあります。👉[Freeモナド](https://zenn.dev/7shi/articles/20260808-haskell-free-monad#liftf) 👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#継続を命令の型から外す)
+`arr` はただの関数をアローに持ち上げる関数です。Free モナドの `liftF` や Operational モナドの `singleton` と同じ位置付けです。👉[Freeモナド](https://zenn.dev/7shi/articles/20260808-haskell-free-monad#liftf) 👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#継続を命令の型から外す)
 
 残りの 4 つのうち、インスタンスで実際に定義が必要なのは `first` だけです。`second`・`***`・`&&&` は `arr` と `first` から導けるため、既定の実装が用意されています。
 
 ## 配線
 
-`***`・`&&&`・`first`・`second` の型に共通するのはタプルです。アローではタプルが配線にあたり、2 つの値を並べて流す線を表します。
+関数 `(->)` は `Arrow` のインスタンスなので、そのまま試せます。`arr` を確認します。
 
-```mermaid
-flowchart LR
-    subgraph S1["f &&& g（1 本を 2 本に分ける）"]
-        direction LR
-        a1["b"] --> f1["f"] --> c1["c"]
-        a1 --> g1["g"] --> d1["c'"]
-    end
-    subgraph S2["f *** g（2 本を並べる）"]
-        direction LR
-        a2["b"] --> f2["f"] --> c2["c"]
-        b2["b'"] --> g2["g"] --> d2["c'"]
-    end
-    subgraph S3["first f（片方だけ通す）"]
-        direction LR
-        a3["b"] --> f3["f"] --> c3["c"]
-        b3["d"] --> d3["d"]
-    end
-```
-
-関数 `(->)` は `Arrow` のインスタンスなので、そのまま試せます。
-
-```hs
-import Control.Arrow
-
-main :: IO ()
-main = do
-    print $ ((+ 1) &&& (* 2)) (3 :: Int)
-    print $ ((+ 1) *** show) (3 :: Int, 4 :: Int)
-    print $ first  (+ 1) (1 :: Int, "x")
-    print $ second (+ 1) ("x", 1 :: Int)
-    print $ arr (+ 1) (1 :: Int)
-```
-```text:実行結果
-(4,6)
-(4,"4")
-(2,"x")
-("x",2)
+```text:GHCi
+ghci> import Control.Arrow
+ghci> arr ((+ 1) :: Int -> Int) 1
 2
 ```
 
-`&&&` は同じ入力を 2 方向に流し、結果をタプルにします。`***` は 2 本の線をそれぞれ別の計算に通します。`first`・`second` はタプルの片方だけを通し、もう片方はそのまま素通しします。
+ただ関数を適用しただけです。`arr` はアローの世界に持ち上げるだけで、計算そのものは変えません。
 
-これを使うと、リストの平均が計算の流れとして書けます。
+`first`・`second`・`***`・`&&&` の型に共通するのはタプルです。アローではタプルが配線にあたり、2 つの値を並べて流す線を表します。1 つずつ見ていきます。
+
+`first` はアロー `f` を受け取り、新しいアロー `first f` を返す関数です。
+
+```hs
+first ::  a b    c  -> a (b, d)    (c, d)
+first (f :: b -> c) ::   (b, d) -> (c, d)
+```
+
+`a b c` を `f :: b -> c` とみると `a (b, d) (c, d)` は `first f :: (b, d) -> (c, d)` になります。以下の図では `first f` の配線を示します。
+
+`f` はタプルの 1 本目だけに適用され、2 本目はそのまま素通りします。
+
+```mermaid
+flowchart LR
+    subgraph S1["first f :: (b, d) → (c, d)"]
+        direction LR
+        b["b"] --> f["f"] --> c["c"]
+        d1["d"] --- x["(pass)"] --> d2["d"]
+    end
+    classDef hidden fill:none,stroke:none
+    class x hidden
+```
+
+```text:GHCi
+ghci> first ((+ 1) :: Int -> Int) (1, "x")
+(2,"x")
+```
+
+`second` は逆に 2 本目だけに関数を通し、1 本目をそのまま流します。
+
+```mermaid
+flowchart LR
+    subgraph S2["second f :: (d, b) → (d, c)"]
+        direction LR
+        d1["d"] --- x["(pass)"] --> d2["d"]
+        b["b"] --> f["f"] --> c["c"]
+    end
+    classDef hidden fill:none,stroke:none
+    class x hidden
+```
+
+```text:GHCi
+ghci> second ((+ 1) :: Int -> Int) ("x", 1)
+("x",2)
+```
+
+`***` は 2 本の線をそれぞれ別の関数に通します。1 本目は `f`、2 本目は `g` という具合に、線ごとに違う計算を並べて走らせます。
+
+```mermaid
+flowchart LR
+    subgraph S3["f *** g :: (b, b') → (c, c')"]
+        direction LR
+        b1["b" ] --> f["f"] --> c1["c" ]
+        b2["b'"] --> g["g"] --> c2["c'"]
+    end
+```
+
+```text:GHCi
+ghci> (((+ 1) :: Int -> Int) *** show) (3, 4)
+(4,"4")
+```
+
+`&&&` は 1 本の入力を 2 方向に分岐させ、それぞれ別の関数に通してからタプルにまとめます。入力は 1 つですが、結果は 2 つの計算を両方経由した値になります。
+
+```mermaid
+flowchart LR
+    subgraph S4["f &&& g :: b → (c, c')"]
+        direction LR
+        b["b"] --> f["f"] --> c1["c" ]
+        b --> g["g"] --> c2["c'"]
+    end
+```
+
+```text:GHCi
+ghci> (((+ 1) :: Int -> Int) &&& (* 2)) 3
+(4,6)
+```
+
+これを使えば、リストの平均が計算の流れとして書けます。
 
 ```hs
 import Control.Arrow
