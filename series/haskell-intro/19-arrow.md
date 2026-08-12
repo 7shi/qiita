@@ -50,7 +50,7 @@ Haskell ではモナドと呼ばれる部品を組み合わせてプログラム
 1. [Haskell Effモナド 超入門](https://zenn.dev/7shi/articles/20260811-haskell-eff-monad)
 1. **Haskell アロー 超入門** ← この記事
 
-今回のコードはすべて `runghc` で動きます。使うのは base に同梱されている `Control.Arrow` だけで、外部パッケージは要りません。
+今回のコードはすべて `runghc` で動きます。使うのは base に同梱されている `Control.Arrow` だけで、外部パッケージは不要です。
 
 # 関数合成を一般化する
 
@@ -79,7 +79,7 @@ main = do
 
 ## Category
 
-`>>>` の土台にあるのが `Category` 型クラスです。`Control.Category` にあります。
+`>>>` の土台にあるのが `Category` 型クラスです。`Control.Category` にあります。この型クラスのインスタンスにするとは、その型を「つなげられるもの」という観点で括ることにあたります。中身がまるで違う型でも、この観点から見る限りは同じように扱えます。
 
 ```hs
 class Category cat where
@@ -87,15 +87,22 @@ class Category cat where
     (.) :: cat b c -> cat a b -> cat a c
 ```
 
-`id` と `.` という名前のとおり、関数の恒等関数と関数合成をそのまま型クラスにしたものです。関数 `(->)` はこのインスタンスで、そのときの `id`・`.` が Prelude のものになります。
-
-`>>>` は引数の順を入れ替えただけです。
+`id` と `.` という名前のとおり、関数の恒等関数と関数合成をそのまま型クラスにしたものです。関数 `(->)` はこのインスタンスで、中身は Prelude の `id`・`.` そのものです。
 
 ```hs
+instance Category (->) where
+    id x = x
+    g . f = \x -> g (f x)
+```
+
+`>>>` は `Category` のメソッドではなく、`.` を使って定義された別の関数です。`.` の引数の順を入れ替えただけなので、`.` さえインスタンスで定義すれば自動的に使えます。
+
+```hs
+(>>>) :: Category cat => cat a b -> cat b c -> cat a c
 f >>> g = g . f
 ```
 
-自分で `instance Category` を書くときは、Prelude の `id`・`.` と名前が衝突するので、Prelude 側を隠す必要があります。
+なお、自分で `instance Category` を書くときは、Prelude の `id`・`.` と名前が衝突するので、Prelude 側を隠す必要があります。
 
 ```hs
 import Control.Category
@@ -104,17 +111,63 @@ import Prelude hiding ((.), id)
 
 使うだけなら `Control.Category` を import しなくても構いません。`Control.Arrow` が `>>>` と `<<<`（向きが逆のもの）を再エクスポートしているためです。
 
+### 単位元
+
+`(->)` の `id` は引数をそのまま返すだけなので、どちらから合成しても相手の関数は変わりません。
+
+```hs
+id >>> f = f
+f >>> id = f
+```
+
+このように、合成しても相手を変えない要素を**単位元**と呼びます。数の足し算における 0、掛け算における 1 と同じ位置づけです。
+
+`Category` が `id` に求めているのはこの性質です。恒等関数であることが求められているわけではありません。`(->)` では単位元がたまたま恒等関数になっているだけで、他のインスタンスでは別の形になります。
+
 ## Kleisli
 
-`>>>` でつなげるのは普通の関数だけではありません。`a -> m b` の形、つまりモナドを返す関数も `Kleisli` で包むと `>>>` でつながります。
+`>>>` でつなげられるのは `(->)` だけではありません。
+
+モナドを返す関数（`a -> m b` の形）も関数なので、`(->)` として `>>>` でつなぐこと自体はできます。しかしその場合、次につなげるのは `m b` を受け取る関数に限られます。`m` が付いたまま渡されるためです。`a -> m b` と `b -> m c` のように、モナドを剥がしながらつなぐには別のインスタンスが必要です。
+
+そのために用意されているのが `Kleisli` です。`a -> m b` の形の関数を包む newtype で、これを `Category` のインスタンスにすることで、`>>>` が前の結果からモナドを剥がして次に渡す動作になります。
 
 ```hs
 newtype Kleisli m a b = Kleisli { runKleisli :: a -> m b }
 ```
 
-これはモナド則を書き直したときに出てきた `>=>` と同じものです。👉[モナドとゆかいな仲間たち](https://zenn.dev/7shi/articles/20260807-haskell-monads-and-friends#-で書き直す)
+`(->)` が `Category` のインスタンスだったのと同じく、`Kleisli m` にも `Category` のインスタンスが用意されています。
 
-文字列を数値にする `parse` と、偶数なら半分にする `half` を `Maybe` でつないでみます。どちらも失敗しうる関数です。👉[Maybeモナド](https://qiita.com/7shi/items/c7d7eec066af0fe0688d#maybeモナド)
+```hs
+instance Monad m => Category (Kleisli m) where
+    id = Kleisli return
+    Kleisli g . Kleisli f = Kleisli (\x -> f x >>= g)
+```
+
+`.` の中身は `\x -> f x >>= g` です。前の計算の結果を `>>=` で次の計算に渡すので、`>>>` でつなぐと `Maybe` の失敗が後ろに伝わるといった、モナドとしての振る舞いがそのまま働きます。これはモナド則を書き直したときに出てきた `>=>` と同じものです。👉[モナドとゆかいな仲間たち](https://zenn.dev/7shi/articles/20260807-haskell-monads-and-friends#-で書き直す)
+
+### 単位元
+
+`id :: cat a a` を `Kleisli m` に当てはめると `Kleisli m a a`、つまり中身は `a -> m a` という関数です。`Kleisli` が包む関数は必ず `a -> m b` の形なので、`(->)` のときのような恒等関数 `\a -> a`（型は `a -> a`）では型が合いません。
+
+代わりに `return` が単位元になります。`>>>` でつなぐと `.` の定義により `>>=` が現れますが、モナド則がそれを打ち消すためです。
+
+```hs
+Kleisli return >>> Kleisli f  -- 中身は \x -> return x >>= f = f x
+Kleisli f >>> Kleisli return  -- 中身は \x -> f x >>= return = f x
+```
+
+どちらも `Kleisli f` に戻るので、`id` は `return` を包んだものになります。
+
+```hs
+id = Kleisli return
+```
+
+`return` は値を `m` で包むので、恒等関数のように値をそのまま返すわけではありません。`id` という名前から恒等関数を思い浮かべますが、そうなるのは `Category (->)` のときだけです。`Category` が定めているのは単位元という性質だけで、それが何になるかはインスタンス次第です。
+
+### 動作確認
+
+文字列を数値にする `parse` と、偶数なら半分にする `half` を `Maybe` でつないでみます。どちらも失敗する可能性のある関数です。👉[Maybeモナド](https://qiita.com/7shi/items/c7d7eec066af0fe0688d#maybeモナド)
 
 ```hs
 import Control.Arrow
@@ -130,14 +183,14 @@ half n = if even n then Just (n `div` 2) else Nothing
 main :: IO ()
 main = do
     print $ (parse >=> half) "10"
-    print $ runKleisli (Kleisli parse >>> Kleisli half) "10"
     print $ (parse >=> half) "7"
+    print $ runKleisli (Kleisli parse >>> Kleisli half) "10"
     print $ runKleisli (Kleisli parse >>> Kleisli half) "7"
 ```
 ```text:実行結果
 Just 5
-Just 5
 Nothing
+Just 5
 Nothing
 ```
 

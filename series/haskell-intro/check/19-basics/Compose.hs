@@ -19,6 +19,6 @@ main = do
     print $ (f . g) 1
     print $ (g >>> f) 1
     print $ (parse >=> half) "10"
-    print $ runKleisli (Kleisli parse >>> Kleisli half) "10"
     print $ (parse >=> half) "7"
+    print $ runKleisli (Kleisli parse >>> Kleisli half) "10"
     print $ runKleisli (Kleisli parse >>> Kleisli half) "7"
