@@ -3,6 +3,10 @@
 Qiita の記事を `articles/{category}/` と `series/{slug}/` に整理したリポジトリ。
 整理の方針・作業フローは [PLAN.md](PLAN.md)、ディレクトリ構成は [README.md](README.md) を参照。
 
+## チャットでの返信
+
+チャットでの返信は日本語で行う。
+
 ## フロントマターと Qiita の同期状態
 
 記事のフロントマターは Qiita から取得したメタデータをそのまま保持している。

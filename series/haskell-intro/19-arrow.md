@@ -544,6 +544,7 @@ Nothing
 
 ```hs
 string :: String -> P String String
+string = undefined      -- ここを書く
 
 main :: IO ()
 main = do
@@ -717,11 +718,23 @@ Nothing
 
 ## 練習
 
-【問4】入口で見た `parse` と `half` を `Kleisli` でつないでパイプラインを作り、さらに `app` で値によって次のアローを選んでください。
+【問4】Kleisliの動作確認で見た `parse` と `half` を `Kleisli` でつないでパイプラインを作り、さらに `app` で値によって次のアローを選んでください。
 
 ```hs
+import Control.Arrow
+
+parse :: String -> Maybe Int
+parse s = if not (null s) && all (`elem` "0123456789") s
+          then Just (read s) else Nothing
+
+half :: Int -> Maybe Int
+half n = if even n then Just (n `div` 2) else Nothing
+
 pipeline :: Kleisli Maybe String Int
-choose   :: Kleisli Maybe Int Int
+pipeline = undefined      -- ここを書く
+
+choose :: Kleisli Maybe Int Int
+choose = undefined        -- ここを書く
 
 main :: IO ()
 main = do
@@ -743,15 +756,6 @@ Nothing
 
 :::details 解答例
 ```hs
-import Control.Arrow
-
-parse :: String -> Maybe Int
-parse s = if not (null s) && all (`elem` "0123456789") s
-          then Just (read s) else Nothing
-
-half :: Int -> Maybe Int
-half n = if even n then Just (n `div` 2) else Nothing
-
 pipeline :: Kleisli Maybe String Int
 pipeline = Kleisli parse >>> Kleisli half >>> arr (* 10)
 
@@ -774,13 +778,13 @@ choose = arr (\n -> (if n > 0 then Kleisli half else arr negate, n)) >>> app
 
 |分野|パッケージ|内容|
 |---|---|---|
-|FRP|Yampa|時間とともに変化する値を扱う。ストリーム関数がそのままアロー|
+|FRP|Yampa|時間とともに変化する値を扱い、ストリーム関数がそのままアロー|
 |SQL|opaleye|クエリをアローとして組み立て、SQL に変換してから実行する|
-|XML|HXT|XML の変換をアローとして書く。更新は 2021 年で止まっている|
+|XML|HXT|XML の変換をアローとして書く（更新は 2021 年で止まっている）|
 
-opaleye は今回の静的パーサーと同じ発想です。組み立てた計算を実行前に SQL という別の形に変換するので、途中で値を見て次を選ばれると困ります。
+FRP は Functional Reactive Programming（関数型リアクティブプログラミング）の略です。Yampa のストリーム関数は Hughes の論文以来の定番の題材で、フィードバックを扱うために `ArrowLoop` と `rec` という道具が加わります。今回は扱いませんでした。
 
-Yampa のストリーム関数は Hughes の論文以来の定番の題材で、フィードバックを扱うために `ArrowLoop` と `rec` という道具が加わります。今回は扱いませんでした。
+opaleye は今回の静的パーサーと同じ発想です。組み立てた計算を実行前に SQL という別の形に変換するので、次に使うアローが実行時の値によって変わってしまうと変換できません。
 
 ## Profunctor
 
