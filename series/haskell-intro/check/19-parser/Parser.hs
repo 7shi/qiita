@@ -20,6 +20,9 @@ instance ArrowChoice P where
     left (P (t, f)) = P (t, \s e -> case e of
         Left  b -> fmap (\(c, s') -> (Left c, s')) (f s b)
         Right d -> Just (Right d, s))
+    P (t1, f) ||| P (t2, g) = P ("(" ++ t1 ++ "|" ++ t2 ++ ")", \s e -> case e of
+        Left  b -> f s b
+        Right c -> g s c)
 
 char :: Char -> P String String
 char c = P ([c], \s i -> case s of
@@ -56,4 +59,4 @@ main = do
     print $ runP ab "ab" False
     print $ expects ab2
     print $ runP ab2 "ab" (Left "")
-    print $ runP ab2 "ba" (Right "")
+    print $ runP ab2 "ab" (Right "")
