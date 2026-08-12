@@ -69,7 +69,7 @@ series/haskell-intro/14-type-classes.md
 
 -  [パラメトリック多相とアドホック多相](#%E3%83%91%E3%83%A9%E3%83%A1%E3%83%88%E3%83%AA%E3%83%83%E3%82%AF%E5%A4%9A%E7%9B%B8%E3%81%A8%E3%82%A2%E3%83%89%E3%83%9B%E3%83%83%E3%82%AF%E5%A4%9A%E7%9B%B8)
 -  [class と instance](#class-%E3%81%A8-instance)
-    -  [型注釈が要る理由](#%E5%9E%8B%E6%B3%A8%E9%87%88%E3%81%8C%E8%A6%81%E3%82%8B%E7%90%86%E7%94%B1)
+    -  [型注釈が必要な理由](#%E5%9E%8B%E6%B3%A8%E9%87%88%E3%81%8C%E5%BF%85%E8%A6%81%E3%81%AA%E7%90%86%E7%94%B1)
 -  [デフォルト実装](#%E3%83%87%E3%83%95%E3%82%A9%E3%83%AB%E3%83%88%E5%AE%9F%E8%A3%85)
     -  [練習](#%E7%B7%B4%E7%BF%92)
 -  [deriving](#deriving)
@@ -80,7 +80,7 @@ series/haskell-intro/14-type-classes.md
     -  [instance 側の制約](#instance-%E5%81%B4%E3%81%AE%E5%88%B6%E7%B4%84)
 -  [型注釈で実装が選ばれる](#%E5%9E%8B%E6%B3%A8%E9%87%88%E3%81%A7%E5%AE%9F%E8%A3%85%E3%81%8C%E9%81%B8%E3%81%B0%E3%82%8C%E3%82%8B)
     -  [ambiguous type variable](#ambiguous-type-variable)
-    -  [数値リテラルだけ注釈が要らない理由](#%E6%95%B0%E5%80%A4%E3%83%AA%E3%83%86%E3%83%A9%E3%83%AB%E3%81%A0%E3%81%91%E6%B3%A8%E9%87%88%E3%81%8C%E8%A6%81%E3%82%89%E3%81%AA%E3%81%84%E7%90%86%E7%94%B1)
+    -  [数値リテラルだけ注釈が不要な理由](#%E6%95%B0%E5%80%A4%E3%83%AA%E3%83%86%E3%83%A9%E3%83%AB%E3%81%A0%E3%81%91%E6%B3%A8%E9%87%88%E3%81%8C%E4%B8%8D%E8%A6%81%E3%81%AA%E7%90%86%E7%94%B1)
 -  [スーパークラス](#%E3%82%B9%E3%83%BC%E3%83%91%E3%83%BC%E3%82%AF%E3%83%A9%E3%82%B9)
     -  [Semigroup と Monoid](#semigroup-%E3%81%A8-monoid)
     -  [Writer](#writer)
