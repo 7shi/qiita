@@ -75,7 +75,7 @@ Haskell の解説で圏論の名前を見かけることがありますが、こ
 どれも既に動かしたものです。新しく覚えることは、コードに付ける名前と、その名前が指している範囲だけです。
 
 :::message
-この記事は圏論の入門の入門です。証明はしません。「そうなっている」ことを型と実行結果で確かめるところまでで、「なぜ成り立つのか」は本格的な本に譲ります。末尾の `# 参考` がその出口です。
+この記事は圏論の入門の入門です。証明はしません。「そうなっている」ことを型と実行結果で確かめるところまでで、「なぜ成り立つのか」は本格的な本に譲ります。
 
 数学的な厳密さより、Haskell 側との対応を優先します。圏論の一般論（極限や随伴の一般定義など）には立ち入らず、Haskell に対応物があるものだけを扱います。
 :::
@@ -1061,8 +1061,6 @@ Yoneda は性能の改善にも使われます。`fmap` を重ねても関数の
 
 圏論を学ぶかどうかは読者の自由です。既にあるモナドを使うだけなら、この回の内容を忘れても困りません。それでも、自分でモナドを設計する側に回ったときには、圏論の語彙が地図として効きます。Free モナドの「自由」も、Operational モナドで `Functor` が不要だったことも、この回で見たとおり圏論の側に理由がありました。理由を知らなくても書けますが、知っていれば次に何が書けるかが見えます。
 
-その先へ進むための文献を最後に挙げます。
-
 # 関連記事
 
 モナド則を図で説明した番外編です。本記事の Kleisli 圏とモノイド対象の節と重なります。
@@ -1073,13 +1071,10 @@ https://qiita.com/7shi/items/547b6137d7a3c482fe68
 
 # 参考
 
-段階順に並べます。
+「モナドは自己関手の圏におけるモノイド対象」の原文は、次の本にあります。第 VI 章 §1、モナドの定義の直後です。
 
-1. Milewski, B. (2014-). [Category Theory for Programmers](https://bartoszmilewski.com/2014/10/28/category-theory-for-programmers-the-preface/). ブログ連載。プログラマ向けに書かれており、Haskell と C++ のコードが併記されます。有志による無料 PDF 版が [GitHub](https://github.com/hmemcpy/milewski-ctfp-pdf) にあります。本記事の次に読むならこれです。
-2. Awodey, S. (2010). *Category Theory* (2nd ed.). Oxford University Press. Oxford Logic Guides 52. 数学書ですが、論理学や計算機科学の読者を想定しており、圏論の教科書としては入りやすい部類です。
-3. Mac Lane, S. (1998). *Categories for the Working Mathematician* (2nd ed.). Springer. Graduate Texts in Mathematics 5. 標準的な教科書です。米田の補題は III.2、随伴は IV.1、モナドは VI.1 にあります。「モナドは自己関手の圏におけるモノイド対象」の原文は VI.1 で、モナドの定義の直後に置かれています。
-4. Moggi, E. (1991). Notions of computation and monads. *Information and Computation*, 93(1), 55–92. https://doi.org/10.1016/0890-5401(91)90052-4 計算の効果をモナドでモデル化した論文です。プログラミングにモナドを持ち込んだ出発点にあたります。
+1. Mac Lane, S. (1998). *Categories for the Working Mathematician* (2nd ed.). Springer. Graduate Texts in Mathematics 5.
 
-「モナドは自己関手の圏におけるモノイド対象」という一文が広く知られるようになったきっかけは、次の記事です。1990 年の項に、Haskell の説明としてこの一文が出てきます。記事全体がジョークなので、発言者の設定も含めて史実ではありません。
+この一文が広く知られるようになったきっかけは、次の記事です。1990 年の項に、Haskell の説明としてこの一文が出てきます。記事全体がジョークなので、発言者の設定も含めて史実ではありません。
 
 https://james-iry.blogspot.com/2009/05/brief-incomplete-and-mostly-wrong.html
