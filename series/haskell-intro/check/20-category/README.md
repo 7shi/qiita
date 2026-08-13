@@ -6,7 +6,10 @@
 |ファイル|本文の位置|内容|
 |---|---|---|
 |`Mono.hs`|`## 一点圏`|モノイドを「対象が 1 つの圏」とみなす `Category` インスタンス（`main` なし）|
-|`Bottom.hs`|`## bottom`|すべての型に bottom があること、`seq` でファンクター則が破れること|
+|`Bottom.hs`|`## Hask 圏`|`seq` でファンクター則が破れること（本文は GHCi 版に差し替え済み。ここは残置）|
+
+`## Hask 圏` の `undefined :: Int`・WHNF の例・`fmap id` と `id` の比較は、
+いずれも GHCi で直接確認する（下記「実行結果」）。
 
 ## 実行結果
 
@@ -24,13 +27,52 @@ ghci> id :: Mono [String] () ()
 Mono []
 ```
 
+```text:bottom（GHCi）
+ghci> undefined :: Int
+*** Exception: Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at <interactive>:1:1 in interactive:Ghci1
+```
+
+```text:fmap id と id（GHCi）
+ghci> bot = undefined :: Int -> Int
+ghci> seq (fmap id bot) 0
+0
+ghci> seq (id bot) 0
+*** Exception: Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at <interactive>:1:7 in interactive:Ghci1
+ghci> fmap id bot 5
+*** Exception: Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at <interactive>:1:7 in interactive:Ghci1
+ghci> id bot 5
+*** Exception: Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at <interactive>:1:7 in interactive:Ghci1
+```
+
+```text:WHNF（GHCi）
+ghci> seq (1+1, 2+2) 0
+0
+ghci> seq (\_ -> undefined) 0
+0
+ghci> seq (undefined, undefined) 0
+0
+ghci> seq (undefined :: Int) 0
+*** Exception: Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at <interactive>:4:6 in interactive:Ghci4
+ghci> length [undefined, undefined]
+2
+```
+
 ```text:Bottom.hs
-Int の undefined も型としては通る
 \_ -> undefined は WHNF
 fmap id bot は id . bot なのでラムダ
 Bottom.hs: Prelude.undefined
 CallStack (from HasCallStack):
-  undefined, called at Bottom.hs:11:11 in main:Main
+  undefined, called at Bottom.hs:9:11 in main:Main
 ```
 
 ## 確認したこと
@@ -55,6 +97,13 @@ CallStack (from HasCallStack):
   `Mono []` から `Mono (Sum 0)` に変わる（`id :: ...` を型注釈違いで 2 つ並べて確認）。
   `Int` 自体は `Monoid` ではない（加算とも乗算とも取れるため）ので、`Sum` で包む必要がある。
   本文ではこれに先立ち、リスト・`Sum`・`Product` の `<>` と `mempty` を GHCi で並べて示す。
+- **停止しない計算（`loop = loop`）は GHCi で実演できない。** 評価すると固まり、Ctrl+C
+  で中断するしかない。GHC が `<<loop>>` を検出して例外にする場合もあるが、この形では
+  検出されなかった（`let loop = loop :: Int` を評価してタイムアウトを確認）。
+  そのため本文では出力を載せず、コードと文章で示している。
+- **WHNF は「一番外側に構築子かラムダが現れた時点」で止まる。** `(undefined, undefined)` は
+  構築子 `(,)` が見えているので `seq` が通り、`undefined :: Int` は構築子が現れないので停止しない。
+  `length [undefined, undefined]` が `2` を返せるのも同じ理由（構造だけを辿り要素に触れない）。
 - **`seq` で `fmap id == id` が破れる。** `(->) r` の `fmap` は `.` なので
   `fmap id bot` は `id . bot`、つまりラムダ式であり WHNF に達する。
   一方 `id bot` は `bot` そのものなので `seq` で停止しない。
