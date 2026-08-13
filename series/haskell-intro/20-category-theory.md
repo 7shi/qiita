@@ -368,7 +368,7 @@ Hask では射が関数でしたが、それは `(->)` というインスタン�
 
 # 関手
 
-`Functor` は `fmap` を持つ型クラスでした。👉[モナドとゆかいな仲間たち](https://zenn.dev/7shi/articles/20260807-haskell-monads-and-friends#ファンクター則)
+`Functor` は `fmap` を持つ型クラスです。👉[モナドとゆかいな仲間たち](https://zenn.dev/7shi/articles/20260807-haskell-monads-and-friends#ファンクター則)
 
 ```hs
 class Functor f where
@@ -455,9 +455,15 @@ Free モナドの回で、手順書を別のモナドへ移す `foldFree` を使
 foldFree :: Monad m => (forall x. f x -> m x) -> Free f a -> m a
 ```
 
-Eff モナドの回のハンドラーも同じ形でした。命令の型 `f` を、実際に動くモナド `m` へ翻訳する関数です。👉[Effモナド](https://zenn.dev/7shi/articles/20260811-haskell-eff-monad#ハンドラー)
+Eff モナドの回で、ハンドラーを組み立てる `interpret` も同じ形でした。👉[Effモナド](https://zenn.dev/7shi/articles/20260811-haskell-eff-monad#環境からハンドラーを取り出す)
 
-この `forall x. f x -> m x` という形に名前が付いています。**自然変換**（natural transformation）です。関手から関手への対応で、圏論では射・関手に続く 3 段目の概念にあたります。
+```hs
+interpret :: (forall x. e x -> Eff es x) -> Eff (e ': es) a -> Eff es a
+```
+
+どちらも第 1 引数が `forall x. f x -> m x` の形をしています。命令の型 `f` を、実際に動くモナド `m` へ翻訳する関数を渡し、それを手順書全体へ広げるという役割も共通です。
+
+この形に名前が付いています。**自然変換**（natural transformation）です。関手から関手への対応で、圏論では射・関手に続く 3 段目の概念にあたります。
 
 型シノニムにすると読みやすくなります。
 
@@ -467,33 +473,35 @@ type f ~> g = forall a. f a -> g a
 
 `~>` は base には入っていないので自作します。この名前はライブラリでもよく使われます。
 
-実例は身近なところにあります。
+実例として、リストと `Maybe` を行き来する関数があります。どちらも `Data.Maybe` にありますが、中身が短いので定義を示します。
 
 ```hs:Natural.hs
-import Data.Maybe (listToMaybe, maybeToList)
-
 type f ~> g = forall a. f a -> g a
 
-alpha :: [] ~> Maybe
-alpha = listToMaybe
+listToMaybe :: [] ~> Maybe
+listToMaybe []      = Nothing
+listToMaybe (x : _) = Just x
 
-beta :: Maybe ~> []
-beta = maybeToList
+maybeToList :: Maybe ~> []
+maybeToList Nothing  = []
+maybeToList (Just x) = [x]
 ```
 
-`listToMaybe` はリストの先頭を取り出す関数、`maybeToList` は `Maybe` をリストにする関数です。型を `~>` で書き直すと、リストという関手から `Maybe` という関手への対応、あるいはその逆になっていることが見えます。
+`listToMaybe` はリストの先頭を取り出す関数、`maybeToList` は `Maybe` をリストにする関数です。
 
-中身の型 `a` が何であっても同じように働く、というのが `forall a.` の意味です。`listToMaybe` は要素が `Int` でも `String` でも先頭を取るだけで、中身を見ません。自然変換とは、容れ物だけを取り替えて中身に触らない対応のことです。
+型に注目してください。`~>` で書くと、リストという関手から `Maybe` という関手への対応、あるいはその逆になっていることが見えます。通常の書き方をすると `[a] -> Maybe a` と `Maybe a -> [a]` で、こちらでは `a` に目が行きます。
+
+中身の型 `a` が何であっても同じように働く、というのが `forall a.` の意味です。`listToMaybe` は要素が `Int` でも `String` でも先頭を取るだけで、中身の値を見ません。捨てたり並べ替えたりはできますが、それは構造だけを見て決まることで、要素の値そのものを調べたり作り変えたりはできません。自然変換とは、このように要素の値に立ち入らず、関手の構造だけで決まる対応のことです。
 
 ## 自然性
 
-「中身に触らない」を式にしたものが**自然性条件**（naturality condition）です。
+「要素の値に立ち入らない」を式にしたものが**自然性条件**（naturality condition）です。自然変換を `alpha`、中身を書き換える関数を `h` とします。
 
 ```hs
 fmap h . alpha == alpha . fmap h
 ```
 
-左辺は「容れ物を移してから中身を書き換える」、右辺は「中身を書き換えてから容れ物を移す」です。どちらの順でも同じ結果になることを要求しています。
+左辺は「関手を移してから要素を書き換える」、右辺は「要素を書き換えてから関手を移す」です。どちらの順でも同じ結果になることを要求しています。
 
 図にすると分かりやすくなります。$\alpha$ を関手 $F$ から関手 $G$ への自然変換、$h : a \to b$ を射とします。
 
@@ -505,13 +513,9 @@ F b @>{\alpha_b}>> G b
 \end{CD}
 $$
 
-左上から右下へ行く道が 2 本あります。右へ行ってから下へ降りる道と、下へ降りてから右へ行く道です。この 2 本が同じところに着くというのが自然性です。このように「どの道を通っても同じ」ことを表す図を**可換図式**（commutative diagram）と呼びます。
+左上から右下へ行く道が 2 本あります。右へ行ってから下へ降りる道と、下へ降りてから右へ行く道です。この 2 本が同じところに着くというのが**自然性**です。このように「どの道を通っても同じ」ことを表す図を**可換図式**（commutative diagram）と呼びます。
 
 $\alpha_a$ の添字は、対象 $a$ ごとに用意された射という意味です。自然変換は 1 本の射ではなく、対象ごとに 1 本ずつ用意された射の族として定義されます。Haskell では `forall a.` がその役割を果たすので、添字は表に出てきません。
-
-:::message
-図の中の矢印には 2 種類あります。$a \to b$ のような射の矢印と、関手から関手への自然変換です。後者は $\Rightarrow$ で書き分けます。Haskell ではどちらも `->` になってしまうので、記事の中では記号で区別します。
-:::
 
 実際に両辺を評価します。
 
@@ -521,15 +525,15 @@ h = show
 
 main :: IO ()
 main = do
-    -- 自然性: fmap h . alpha == alpha . fmap h
-    print ((fmap h . alpha) [1, 2, 3])
-    print ((alpha . fmap h) [1, 2, 3])
-    print ((fmap h . alpha) ([] :: [Int]))
-    print ((alpha . fmap h) ([] :: [Int]))
-    print ((fmap h . beta) (Just 1))
-    print ((beta . fmap h) (Just 1))
-    print ((fmap h . beta) (Nothing :: Maybe Int))
-    print ((beta . fmap h) (Nothing :: Maybe Int))
+    -- 自然性: fmap h . listToMaybe == listToMaybe . fmap h
+    print ((fmap h . listToMaybe) [1, 2, 3])
+    print ((listToMaybe . fmap h) [1, 2, 3])
+    print ((fmap h . listToMaybe) ([] :: [Int]))
+    print ((listToMaybe . fmap h) ([] :: [Int]))
+    print ((fmap h . maybeToList) (Just 1))
+    print ((maybeToList . fmap h) (Just 1))
+    print ((fmap h . maybeToList) (Nothing :: Maybe Int))
+    print ((maybeToList . fmap h) (Nothing :: Maybe Int))
 ```
 
 ```text:実行結果
@@ -707,7 +711,7 @@ $$
 |$\eta$|`return`|
 |$\mathrm{Id}$|`Identity`|
 
-矢印が $\Rightarrow$ になっているのは、射ではなく自然変換だからです。
+矢印が $\to$ ではなく $\Rightarrow$ になっているのは、射ではなく自然変換だからです。自然変換は $\alpha_a$ のような成分に分けると射になりますが、$\alpha$ 全体は関手から関手への対応なので、段が 1 つ上がります。Haskell ではどちらも `->` になってしまうので、数式の側で書き分けます。
 
 ## モノイド則
 
@@ -1145,7 +1149,7 @@ Yoneda は性能の改善にも使われます。`fmap` を重ねても関数の
 |`instance Category (->)`|Hask 圏。ただし bottom があるので厳密には圏でない|
 |`instance Monoid m => Category (Mono m)`|一点圏。モノイドは対象が 1 つの圏|
 |`Functor` とファンクター則|自己関手。対象の対応と射の対応の組|
-|`forall a. f a -> g a`|自然変換。中身に触らず容れ物を移す|
+|`forall a. f a -> g a`|自然変換。要素の値に立ち入らない関手間の対応|
 |`instance Category (Kleisli m)`|Kleisli 圏。モナド則は圏の公理だった|
 |`join` と `return`|$\mu$ と $\eta$。自己関手の圏におけるモノイド対象|
 |`foldMap` と `foldFree`|随伴の普遍性。これが「自由」の意味|
