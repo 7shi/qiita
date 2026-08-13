@@ -1,20 +1,27 @@
 # check/20-category
 
-20 回 `# 圏` の検証コード。すべて `runghc` で動く。**外部パッケージは不要。**
+20 回 `# 圏` の検証コード。**外部パッケージは不要。**
+`Mono.hs` は定義だけなので GHCi で読み込んで使う。`Bottom.hs` は `runghc` で動く。
 
 |ファイル|本文の位置|内容|
 |---|---|---|
-|`Mono.hs`|`## 一点圏`|モノイドを「対象が 1 つの圏」とみなす `Category` インスタンス|
+|`Mono.hs`|`## 一点圏`|モノイドを「対象が 1 つの圏」とみなす `Category` インスタンス（`main` なし）|
 |`Bottom.hs`|`## bottom`|すべての型に bottom があること、`seq` でファンクター則が破れること|
 
 ## 実行結果
 
-```text:Mono.hs
-Mono ["a","b","c"]
-Mono ["a"]
-Mono ["a"]
-True
+```text:Mono.hs（GHCi）
+ghci> :load Mono.hs
+[1 of 2] Compiling Main             ( Mono.hs, interpreted )
+Ok, one module loaded.
+ghci> Mono (Sum 3) >>> Mono (Sum 4) :: Mono (Sum Int) () ()
 Mono (Sum {getSum = 7})
+ghci> Mono ["a"] >>> Mono ["b"] >>> Mono ["c"] :: Mono [String] () ()
+Mono ["a","b","c"]
+ghci> id :: Mono (Sum Int) () ()
+Mono (Sum {getSum = 0})
+ghci> id :: Mono [String] () ()
+Mono []
 ```
 
 ```text:Bottom.hs
@@ -43,8 +50,9 @@ CallStack (from HasCallStack):
   `.` は右から左へ合成するので、モノイドの並びとしては `f` が先に来る。
 - **対象が 1 つであることは型では強制していない。** `a`・`b` は使われない型引数（phantom）で、
   `Mono [String] () ()` のように `()` に固定して「対象が 1 つ」とみなす約束にしている。
+  値からは決まらないので、GHCi で評価する式には型注釈が必要（付けないと曖昧な型変数でエラー）。
 - **恒等射はモノイド次第。** `m` を `[String]` から `Sum Int` に替えるだけで `id` は
-  `Mono []` から `Mono (Sum 0)` に変わる（`step` と `cost` を同じファイルで並べて確認）。
+  `Mono []` から `Mono (Sum 0)` に変わる（`id :: ...` を型注釈違いで 2 つ並べて確認）。
   `Int` 自体は `Monoid` ではない（加算とも乗算とも取れるため）ので、`Sum` で包む必要がある。
   本文ではこれに先立ち、リスト・`Sum`・`Product` の `<>` と `mempty` を GHCi で並べて示す。
 - **`seq` で `fmap id == id` が破れる。** `(->) r` の `fmap` は `.` なので
@@ -54,6 +62,6 @@ CallStack (from HasCallStack):
 
 ## 言語拡張の確認
 
-2 ファイルとも `runghc -XHaskell2010` で通る。**言語拡張は不要。**
+`Mono.hs` は `ghci -XHaskell2010`、`Bottom.hs` は `runghc -XHaskell2010` で通る。**言語拡張は不要。**
 `Mono.hs` は `Control.Category` を import して Prelude の `id`・`.` を隠している
 （19 回と同じ）。
