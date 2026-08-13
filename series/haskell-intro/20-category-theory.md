@@ -99,7 +99,7 @@ class Category cat where
 
 対象は「点」、射は「点から点への矢印」だと思ってください。
 
-一番イメージしやすいのは `(->)` です。対象が型、射が関数になります。`Int` から `Int` への射は `(+ 3)` のような関数で、合成は関数合成、恒等射は恒等関数です。後で Hask として改めて扱います。
+一番イメージしやすいのは `(->)` です。対象が型、射が関数になります。`Int` から `Int` への射は `(+ 3)` のような関数で、合成は関数合成、恒等射は恒等関数です。次節で Hask として扱います。
 
 ここで注意が必要なのは、射は関数とは限らないことです。`cat a b` が何であるかはインスタンスが決めます。
 
@@ -121,11 +121,74 @@ $$
 
 圏の言葉では、これが恒等射の定義です。恒等射とは、合成しても相手を変えない射のことであって、「何もしない関数」のことではありません。
 
+## Hask 圏
+
+Haskell そのものを圏とみなしたものを Hask と呼びます。対象は Haskell の型、射は関数です。
+
+```hs
+instance Category (->) where
+    id x = x
+    g . f = \x -> g (f x)
+```
+
+このインスタンスが Hask にあたります。合成は関数合成、恒等射は恒等関数です。`Int` から `String` への射とは `Int -> String` という型の関数のことで、その関数が何本あってもすべて別の射です。
+
+シリーズで書いてきた関数はすべて Hask の射です。これから出てくる関手も自然変換も、Hask の上で考えます。
+
+## bottom
+
+Hask には避けて通れない問題があります。Haskell のすべての型は `undefined` と、停止しない計算を要素として持ちます。これらをまとめて **bottom**（$\bot$）と呼びます。
+
+```hs
+undefined :: Int
+```
+
+これは型検査を通ります。`Int` の値のつもりで扱えますが、評価すると停止しません。同じことが `Bool` でも `String` でも `Int -> Int` でも成り立ちます。
+
+bottom があるだけなら「そういう値がある」で済みますが、`seq` があると話が変わります。`seq` は第 1 引数を弱頭正規形（WHNF）まで評価してから第 2 引数を返す関数で、bottom かどうかを外から観測できてしまいます。
+
+```hs:Bottom.hs
+main :: IO ()
+main = do
+    -- どの型にも undefined がある
+    putStrLn (const "Int の undefined も型としては通る" (undefined :: Int))
+    -- seq は「常に停止しない関数」と「停止しない値」を区別する
+    seq (\_ -> undefined :: Int) (putStrLn "\\_ -> undefined は WHNF")
+    -- fmap id == id が (->) で破れる
+    seq (fmap id bot) (putStrLn "fmap id bot は id . bot なのでラムダ")
+    seq (id bot) (putStrLn "ここには来ない")
+  where
+    bot = undefined :: Int -> Int
+```
+
+```text:実行結果
+Int の undefined も型としては通る
+\_ -> undefined は WHNF
+fmap id bot は id . bot なのでラムダ
+Bottom.hs: Prelude.undefined
+CallStack (from HasCallStack):
+  undefined, called at Bottom.hs:11:11 in main:Main
+```
+
+最後の 2 行が問題です。関数の `fmap` は `.` なので、`fmap id bot` は `id . bot` になります。これはラムダ式なので、中身を呼ばない限り停止します。一方 `id bot` は `bot` そのものなので停止しません。
+
+どんな引数を与えても両者の結果は同じです。それでも `seq` は両者を区別します。つまり `fmap id` と `id` は、関数としては同じでも `seq` の下では別物です。後で見るファンクター則の 1 つ目が、この意味で破れています。
+
+圏を作るには「2 つの射が等しい」ことがはっきり決まる必要がありますが、`seq` はその判定を壊します。そのため Hask は、厳密には圏になりません。
+
+:::message
+これは知られた問題で、Hask を圏として扱う議論はたいてい「bottom と `seq` を無視する」という前提を置いています。無視すれば対応はきれいに取れますし、実際のコードでも `seq` を使わなければ困りません。
+
+無視してよい理由には裏付けもあります。「甘い推論は道徳的に正しい」（Fast and Loose Reasoning is Morally Correct）という標語で知られる結果があり、bottom を無視して導いた等式は、条件を満たせば bottom がある世界でも成り立つことが示されています。
+:::
+
+以降、bottom は無視します。ただし、無視していることは覚えておいてください。
+
 ## 一点圏
 
-射が関数でない例を作ってみます。
+Hask の射は関数でしたが、圏一般では射が関数とは限りません。関数でない例を作ってみます。
 
-`(->)` の圏で `(+ 3)` と `(+ 4)` を合成すると、7 を足す関数になります。
+出発点は Hask です。`(+ 3)` と `(+ 4)` を合成すると、7 を足す関数になります。
 
 ```hs:GHCi
 ghci> ((+ 3) . (+ 4)) 0
@@ -244,69 +307,6 @@ Mono []
 ここでの射は `Sum 3` や `["a"]` といったただの値で、関数ではありません。恒等射も `[]` や `Sum 0` であって、恒等関数とは無関係です。`Category` が `id` に求めるのが単位元という性質だけだったことが、ここではっきりします。
 
 対象が 1 つしかない圏を**一点圏**（one-object category）と呼びます。逆向きに読むこともできます。モノイドとは一点圏のことです。圏の方が広く、対象を 1 つに絞るとモノイドになります。この見方は後で効いてきます。
-
-## Hask 圏
-
-Haskell そのものを圏とみなしたものを Hask と呼びます。対象は Haskell の型、射は関数です。
-
-```hs
-instance Category (->) where
-    id x = x
-    g . f = \x -> g (f x)
-```
-
-このインスタンスが Hask にあたります。合成は関数合成、恒等射は恒等関数です。`Int` から `String` への射とは `Int -> String` という型の関数のことで、その関数が何本あってもすべて別の射です。
-
-シリーズで書いてきた関数はすべて Hask の射です。これから出てくる関手も自然変換も、Hask の上で考えます。
-
-## bottom
-
-Hask には避けて通れない問題があります。Haskell のすべての型は `undefined` と、停止しない計算を要素として持ちます。これらをまとめて **bottom**（$\bot$）と呼びます。
-
-```hs
-undefined :: Int
-```
-
-これは型検査を通ります。`Int` の値のつもりで扱えますが、評価すると停止しません。同じことが `Bool` でも `String` でも `Int -> Int` でも成り立ちます。
-
-bottom があるだけなら「そういう値がある」で済みますが、`seq` があると話が変わります。`seq` は第 1 引数を弱頭正規形（WHNF）まで評価してから第 2 引数を返す関数で、bottom かどうかを外から観測できてしまいます。
-
-```hs:Bottom.hs
-main :: IO ()
-main = do
-    -- どの型にも undefined がある
-    putStrLn (const "Int の undefined も型としては通る" (undefined :: Int))
-    -- seq は「常に停止しない関数」と「停止しない値」を区別する
-    seq (\_ -> undefined :: Int) (putStrLn "\\_ -> undefined は WHNF")
-    -- fmap id == id が (->) で破れる
-    seq (fmap id bot) (putStrLn "fmap id bot は id . bot なのでラムダ")
-    seq (id bot) (putStrLn "ここには来ない")
-  where
-    bot = undefined :: Int -> Int
-```
-
-```text:実行結果
-Int の undefined も型としては通る
-\_ -> undefined は WHNF
-fmap id bot は id . bot なのでラムダ
-Bottom.hs: Prelude.undefined
-CallStack (from HasCallStack):
-  undefined, called at Bottom.hs:11:11 in main:Main
-```
-
-最後の 2 行が問題です。関数の `fmap` は `.` なので、`fmap id bot` は `id . bot` になります。これはラムダ式なので、中身を呼ばない限り停止します。一方 `id bot` は `bot` そのものなので停止しません。
-
-どんな引数を与えても両者の結果は同じです。それでも `seq` は両者を区別します。つまり `fmap id` と `id` は、関数としては同じでも `seq` の下では別物です。次節で見るファンクター則の 1 つ目が、この意味で破れています。
-
-圏を作るには「2 つの射が等しい」がはっきり決まっている必要がありますが、`seq` はその判定を壊します。そのため Hask は、厳密には圏になりません。
-
-:::message
-これは知られた問題で、Hask を圏として扱う議論はたいてい「bottom と `seq` を無視する」という前提を置いています。無視すれば対応はきれいに取れますし、実際のコードでも `seq` を使わなければ困りません。
-
-無視してよい理由には裏付けもあります。「甘い推論は道徳的に正しい」（Fast and Loose Reasoning is Morally Correct）という標語で知られる結果があり、bottom を無視して導いた等式は、条件を満たせば bottom がある世界でも成り立つことが示されています。
-
-この記事も以降は bottom を無視します。ただし、無視していることは覚えておいてください。
-:::
 
 # 関手
 
