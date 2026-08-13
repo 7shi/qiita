@@ -98,12 +98,16 @@ class Category cat where
 
 |`Category`|圏論|
 |---|---|
-|型 `a`・`b`・`c`|**対象**（object）|
+|型 `a`・`b`|**対象**（object）|
 |`cat a b`|`a` から `b` への**射**（morphism, arrow）|
 |`.`|射の**合成**（composition）|
 |`id`|**恒等射**（identity morphism）|
 
-対象は「点」、射は「点から点への矢印」だと思ってください。ここで注意が必要なのは、射は関数とは限らないことです。`cat a b` が何であるかはインスタンスが決めます。
+対象は「点」、射は「点から点への矢印」だと思ってください。
+
+一番イメージしやすいのは `(->)` です。対象が型、射が関数になります。`Int` から `Int` への射は `(+ 3)` のような関数で、合成は関数合成、恒等射は恒等関数です。後で $\mathbf{Hask}$ として改めて扱います。
+
+ここで注意が必要なのは、射は関数とは限らないことです。`cat a b` が何であるかはインスタンスが決めます。
 
 要求される性質は 2 つだけです。合成が結合的であること。
 
@@ -127,39 +131,106 @@ $$
 
 射が関数でない例を作ってみます。
 
+`(->)` の圏で `(+ 3)` と `(+ 4)` を合成すると、7 を足す関数になります。
+
+```hs:GHCi
+ghci> ((+ 3) . (+ 4)) 0
+7
+ghci> ((+ 3) . (+ 4)) 10
+17
+```
+
+合成の結果を決めているのは 3 と 4 という数だけです。関数の形を捨てて数だけを残しても、同じことができそうに見えます。
+
 型クラスの回で扱ったモノイドを思い出します。`<>` で結合でき、結合法則を満たし、単位元 `mempty` を持つ型でした。👉[型クラス](https://zenn.dev/7shi/articles/20260805-haskell-type-classes#semigroup-と-monoid)
 
-圏に求められるのも結合法則と単位元でした。形が同じです。モノイドの要素を射だと思えば、それだけで圏になります。
+`Int` そのものは `Monoid` ではありません。加算も乗算もモノイドであり、一方に決められないためです。そこで `Data.Monoid` にラッパーが用意されています。加算にあたるのが `Sum` です。
 
-```hs:Mon.hs
+```hs:GHCi
+ghci> import Data.Monoid
+ghci> Sum 3 <> Sum 4
+Sum {getSum = 7}
+ghci> mempty :: Sum Int
+Sum {getSum = 0}
+```
+
+`Sum 3 <> Sum 4` が `Sum 7` になるのは、`(+ 3) . (+ 4)` が 7 を足す関数になるのと同じことです。関数だったものが `Sum Int` というただの値に、合成が `<>` に置き換わっています。単位元 `Sum 0` が、何も足さない関数にあたります。
+
+圏に求められるのも結合法則と単位元でした。モノイドはそれを満たすので、そのまま `Category` のインスタンスとして書けます。既存の `Monoid` との名前衝突を回避するため、ここでは型名を `Mono` とします。
+
+```hs:Mono.hs
 import Control.Category
 import Data.Monoid (Sum(..))
 import Prelude hiding ((.), id)
 
-newtype Mon m a b = Mon m deriving (Show, Eq)
+newtype Mono m a b = Mono m deriving (Show, Eq)
 
-instance Monoid m => Category (Mon m) where
-    id = Mon mempty
-    Mon g . Mon f = Mon (f <> g)
+instance Monoid m => Category (Mono m) where
+    id = Mono mempty
+    Mono g . Mono f = Mono (f <> g)
 ```
 
-`Mon m a b` の `a`・`b` は右辺に現れません。このように使われない型引数を**幽霊型**（phantom type）と呼びます。ここでは `()` に固定して、対象が 1 つしかない圏として使います。対象が 1 つなので射はすべて同じ対象から同じ対象へ向かい、どれとどれでも合成できます。
+`.` の実体が `<>`、`id` の実体が `mempty` です。インスタンスになっているのは `Mono` ではなく `Mono m` で、モノイドを 1 つ決めて初めて圏になります。
+
+`Mono m a b` の `a`・`b` は右辺に現れません。このように使われない型引数を**幽霊型**（phantom type）と呼びます。射の中身は `m` の値だけで、数を扱う `Int` も `m` に入れる `Sum Int` が持っているため、`a`・`b` が持つものは何もありません。`(+ 3)` を `Sum 3` に置き換えたぶん、関数の面影が消えています。
+
+その `a`・`b` が対象にあたります。持つものが何も無いので、空であることを表す `()` を入れます。どの射も `()` から `()` へ向かうことになり、結果として対象が 1 つの圏になります。加算のモノイドなら射の型は `Mono (Sum Int) () ()` で、`(->)` の側と型を並べるとこうなります。
+
+```hs
+--              cat            a   b
+     (+   3) :: (->)           Int Int
+Mono (Sum 3) :: Mono (Sum Int) ()  ()
+```
+
+`Int` の位置が動いていることに注意してください。`(->)` の側では対象でしたが、`Mono` の側では `cat` が指す `Mono (Sum Int)` の中にあります。同じ `Int` が、`(->)` の側では対象、`Mono` の側では射を決める型の一部として働いています。
+
+|`cat a b`|`(->) Int Int`|`Mono (Sum Int) () ()`|
+|---|---|---|
+|対象|`Int`|`()`|
+|射（例）|`(+ 3)`|`Mono (Sum 3)`|
+|合成|関数合成|`<>`|
+|恒等射|恒等関数|`Mono (Sum 0)`|
+
+射はどちらも矢印の両端が同じ対象なので、どの射とどの射でも合成できます。違いは射として何を残したかで、左は `Int -> Int` の関数すべて、右はそのうち「n を足す」ものだけにあたります。
 
 :::message
-対象が 1 つであることを型で強制してはいません。`Mon m a b` は `a`・`b` に何でも入るので、型の上では対象がいくつあっても構わない形になっています。以下では `()` だけを使うことで「対象が 1 つ」とみなしています。
+`()` を入れるのはこちらの約束です。`a`・`b` には何でも入るので、`Mono (Sum Int) Bool Char` のような型も通ります。それでも射の中身は `Sum Int` の値のままで変わりません。
 :::
 
-手順の並びを射とする例です。
+これで `Mono (Sum Int)` という圏が 1 つできました。結合律と単位律は、モノイド則がそのまま保証します。`Mono` の定義が使っているのは `<>` と `mempty` だけで、`Sum` に固有のものは何もありません。
 
-```hs:Mon.hs
-unMon :: Mon m a b -> m
-unMon (Mon m) = m
+制約が `Monoid m =>` なので、`Sum` 以外のモノイドからも同じように圏が作れます。乗算にあたる `Product` がその例です。
 
-step :: String -> Mon [String] () ()
-step s = Mon [s]
+```hs:GHCi
+ghci> Product 3 <> Product 4
+Product {getProduct = 12}
+ghci> mempty :: Product Int
+Product {getProduct = 1}
+```
 
-cost :: Int -> Mon (Sum Int) () ()
-cost n = Mon (Sum n)
+結合の仕方も単位元も型ごとに違いますが、どれも `<>` と `mempty` という同じ形に収まっています。
+
+シリーズで使い続けてきたリストも `Monoid` のインスタンスです。
+
+```hs:GHCi
+ghci> ["a"] <> ["b"] <> ["c"]
+["a","b","c"]
+ghci> mempty :: [String]
+[]
+```
+
+`Mono` が射として扱っているのは `m` の要素そのものです。`Mono [String] () ()` では文字列のリスト `[String]` が射になります。`Sum 3` や `Product 3` は `(+ 3)` や `(* 3)` のような関数と対応していましたが、リストにはそのような対応物がありません。
+
+「射」や「矢印」という言葉は写像を連想させますが、圏が射に求めているのは、合成できることと恒等射があることだけです。`Category` にも射に値を渡すメソッドはなく、`cat a b` の `a`・`b` はどれとどれを合成できるかを決めるラベルとして働いています。`<>` で合成できて `mempty` という単位元がある以上、リストも射としての条件を満たしています。
+
+操作を 1 つずつ 1 要素のリストで表せば、合成はその操作の並びです。`Mono (Sum Int)` とは別の圏で、射も恒等射も違うものになります。
+
+```hs:Mono.hs
+step :: String -> Mono [String] () ()
+step s = Mono [s]
+
+cost :: Int -> Mono (Sum Int) () ()
+cost n = Mono (Sum n)
 
 main :: IO ()
 main = do
@@ -170,19 +241,21 @@ main = do
     -- 結合律
     print (((step "a" >>> step "b") >>> step "c")
             == (step "a" >>> (step "b" >>> step "c")))
-    -- 単位元はモノイドによって変わる
-    print (getSum (unMon (cost 3 >>> id >>> cost 4)))
+    -- 恒等射はモノイドによって変わる
+    print (cost 3 >>> id >>> cost 4)
 ```
 
 ```text:実行結果
-Mon ["a","b","c"]
-Mon ["a"]
-Mon ["a"]
+Mono ["a","b","c"]
+Mono ["a"]
+Mono ["a"]
 True
-7
+Mono (Sum {getSum = 7})
 ```
 
 `>>>` でつないだ結果はリストの連結です。`id` と合成しても変わらず、結合の順序を変えても同じものになります。圏の公理を満たしています。
+
+最後の行は `Sum Int` の方です。`id` は同じものを書いていますが、今度は `Sum 0` として働き、合成も加算になっています。恒等射はモノイドごとに違います。
 
 ここでの射は `["a"]` や `Sum 3` といったただの値で、関数ではありません。恒等射も `[]` や `Sum 0` であって、恒等関数とは無関係です。`Category` が `id` に求めるのが単位元という性質だけだったことが、ここではっきりします。
 
@@ -460,6 +533,8 @@ instance Monad m => Category (Kleisli m) where
 |恒等射|`return`|
 
 対象は $\mathbf{Hask}$ と同じですが、射が違います。$\mathbf{Hask}$ で `a` から `b` への射は `a -> b` でしたが、Kleisli 圏では `a -> m b` です。同じ対象の上に別の射を敷いた圏ということになります。
+
+ここでも「`a` から `b` への射」は `b` を返す関数ではありません。返ってくるのは `m b` です。`b` は合成の辻褄を合わせるための名前として働いています。
 
 モナド `m` ごとに Kleisli 圏が 1 つ決まります。`Kleisli Maybe` なら失敗する計算の圏、`Kleisli []` なら非決定性計算の圏です。
 
@@ -1026,7 +1101,7 @@ Yoneda は性能の改善にも使われます。`fmap` を重ねても関数の
 |---|---|
 |`class Category cat`|圏。公理は結合律と単位律の 2 つだけ|
 |`instance Category (->)`|$\mathbf{Hask}$ 圏。ただし bottom があるので厳密には圏でない|
-|`instance Monoid m => Category (Mon m)`|一点圏。モノイドは対象が 1 つの圏|
+|`instance Monoid m => Category (Mono m)`|一点圏。モノイドは対象が 1 つの圏|
 |`Functor` とファンクター則|自己関手。対象の対応と射の対応の組|
 |`forall a. f a -> g a`|自然変換。中身に触らず容れ物を移す|
 |`instance Category (Kleisli m)`|Kleisli 圏。モナド則は圏の公理だった|

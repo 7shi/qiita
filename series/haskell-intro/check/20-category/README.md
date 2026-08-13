@@ -4,17 +4,17 @@
 
 |ファイル|本文の位置|内容|
 |---|---|---|
-|`Mon.hs`|`## 一点圏`|モノイドを「対象が 1 つの圏」とみなす `Category` インスタンス|
+|`Mono.hs`|`## 一点圏`|モノイドを「対象が 1 つの圏」とみなす `Category` インスタンス|
 |`Bottom.hs`|`## bottom`|すべての型に bottom があること、`seq` でファンクター則が破れること|
 
 ## 実行結果
 
-```text:Mon.hs
-Mon ["a","b","c"]
-Mon ["a"]
-Mon ["a"]
+```text:Mono.hs
+Mono ["a","b","c"]
+Mono ["a"]
+Mono ["a"]
 True
-7
+Mono (Sum {getSum = 7})
 ```
 
 ```text:Bottom.hs
@@ -39,10 +39,14 @@ CallStack (from HasCallStack):
 
   代わりに一点圏（モノイド）を採用した。射がモノイドの要素で関数ですらないため、
   「`id` は恒等関数ではなく単位元」という 19 回の指摘が一段はっきりする。
-- **`Mon` の `.` は `<>` の引数の順を入れ替えたもの。** `Mon g . Mon f = Mon (f <> g)`。
+- **`Mono` の `.` は `<>` の引数の順を入れ替えたもの。** `Mono g . Mono f = Mono (f <> g)`。
   `.` は右から左へ合成するので、モノイドの並びとしては `f` が先に来る。
 - **対象が 1 つであることは型では強制していない。** `a`・`b` は使われない型引数（phantom）で、
-  `Mon [String] () ()` のように `()` に固定して「対象が 1 つ」とみなす約束にしている。
+  `Mono [String] () ()` のように `()` に固定して「対象が 1 つ」とみなす約束にしている。
+- **恒等射はモノイド次第。** `m` を `[String]` から `Sum Int` に替えるだけで `id` は
+  `Mono []` から `Mono (Sum 0)` に変わる（`step` と `cost` を同じファイルで並べて確認）。
+  `Int` 自体は `Monoid` ではない（加算とも乗算とも取れるため）ので、`Sum` で包む必要がある。
+  本文ではこれに先立ち、リスト・`Sum`・`Product` の `<>` と `mempty` を GHCi で並べて示す。
 - **`seq` で `fmap id == id` が破れる。** `(->) r` の `fmap` は `.` なので
   `fmap id bot` は `id . bot`、つまりラムダ式であり WHNF に達する。
   一方 `id bot` は `bot` そのものなので `seq` で停止しない。
@@ -51,5 +55,5 @@ CallStack (from HasCallStack):
 ## 言語拡張の確認
 
 2 ファイルとも `runghc -XHaskell2010` で通る。**言語拡張は不要。**
-`Mon.hs` は `Control.Category` を import して Prelude の `id`・`.` を隠している
+`Mono.hs` は `Control.Category` を import して Prelude の `id`・`.` を隠している
 （19 回と同じ）。
