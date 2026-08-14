@@ -12,9 +12,9 @@ lowerYoneda (Yoneda y) = y id
 main :: IO ()
 main = do
     -- 往復すると元に戻る
-    print (lowerYoneda (liftYoneda [1, 2, 3]))
-    print (lowerYoneda (liftYoneda (Just 'a')))
-    print (lowerYoneda (liftYoneda (Right 3 :: Either String Int)))
+    print $ lowerYoneda (liftYoneda [1, 2, 3])
+    print $ lowerYoneda (liftYoneda (Just 'a'))
+    print $ lowerYoneda (liftYoneda (Right 3 :: Either String Int))
     -- fmap は関数の合成に変わる
-    print (lowerYoneda (fmap (* 2) (liftYoneda [1, 2, 3])))
-    print (lowerYoneda (fmap show (fmap (+ 1) (liftYoneda (Just 3)))))
+    print $ lowerYoneda (fmap (* 2) (liftYoneda [1, 2, 3]))
+    print $ lowerYoneda (fmap show (fmap (+ 1) (liftYoneda (Just 3))))

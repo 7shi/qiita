@@ -8,9 +8,9 @@ join' mm = mm >>= id
 
 main :: IO ()
 main = do
-    print ([1, 2, 3] `bind` \x -> [x, x * 10])
-    print ([1, 2, 3] >>=    \x -> [x, x * 10])
-    print (join' [[1, 2], [3]])
-    print (join  [[1, 2], [3]])
-    print (Just 3 `bind` \x -> Just (x * 2))
-    print (join' (Just (Just 3)))
+    print $ [1, 2, 3] `bind` \x -> [x, x * 10]
+    print $ [1, 2, 3] >>=    \x -> [x, x * 10]
+    print $ join' [[1, 2], [3]]
+    print $ join  [[1, 2], [3]]
+    print $ Just 3 `bind` \x -> Just (x * 2)
+    print $ join' (Just (Just 3))

@@ -8,13 +8,13 @@ step n = [n + 1, n * 2]
 
 main :: IO ()
 main = do
-    print (step 3)
-    print ((step >=> step) 3)
-    print ((step >=> step >=> step) 3)
+    print $ step 3
+    print $ (step >=> step) 3
+    print $ (step >=> step >=> step) 3
     -- 左単位元・右単位元
-    print ((return >=> step) 3 == step 3)
-    print ((step >=> return) 3 == step 3)
+    print $ (return >=> step) 3 == step 3
+    print $ (step >=> return) 3 == step 3
     -- 結合法則
-    print (((step >=> step) >=> step) 3 == (step >=> (step >=> step)) 3)
+    print $ ((step >=> step) >=> step) 3 == (step >=> (step >=> step)) 3
     -- Kleisli の >>> でも同じ
-    print (runKleisli (Kleisli step >>> Kleisli step) 3)
+    print $ runKleisli (Kleisli step >>> Kleisli step) 3

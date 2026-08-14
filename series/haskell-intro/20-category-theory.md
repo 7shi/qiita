@@ -399,15 +399,15 @@ g = (+ 1)
 main :: IO ()
 main = do
     -- 射の対応: a -> b を f a -> f b に移す
-    print (fmap g (Just 3))
-    print (fmap g [1, 2, 3])
-    print (fmap g (Right 3 :: Either String Int))
+    print $ fmap g (Just 3)
+    print $ fmap g [1, 2, 3]
+    print $ fmap g (Right 3 :: Either String Int)
     -- fmap id == id
-    print (fmap id (Just 3)  == id (Just 3))
-    print (fmap id [1, 2, 3] == id [1, 2, 3])
+    print $ fmap id (Just 3)  == id (Just 3)
+    print $ fmap id [1, 2, 3] == id [1, 2, 3]
     -- fmap (f . g) == fmap f . fmap g
-    print (fmap (f . g) (Just 3)  == (fmap f . fmap g) (Just 3))
-    print (fmap (f . g) [1, 2, 3] == (fmap f . fmap g) [1, 2, 3])
+    print $ fmap (f . g) (Just 3)  == (fmap f . fmap g) (Just 3)
+    print $ fmap (f . g) [1, 2, 3] == (fmap f . fmap g) [1, 2, 3]
 ```
 
 ```text:実行結果
@@ -528,14 +528,14 @@ h = show
 main :: IO ()
 main = do
     -- 自然性: fmap h . listToMaybe == listToMaybe . fmap h
-    print ((fmap h . listToMaybe) [1, 2, 3])
-    print ((listToMaybe . fmap h) [1, 2, 3])
-    print ((fmap h . listToMaybe) ([] :: [Int]))
-    print ((listToMaybe . fmap h) ([] :: [Int]))
-    print ((fmap h . maybeToList) (Just 1))
-    print ((maybeToList . fmap h) (Just 1))
-    print ((fmap h . maybeToList) (Nothing :: Maybe Int))
-    print ((maybeToList . fmap h) (Nothing :: Maybe Int))
+    print $ (fmap h . listToMaybe) [1, 2, 3]
+    print $ (listToMaybe . fmap h) [1, 2, 3]
+    print $ (fmap h . listToMaybe) ([] :: [Int])
+    print $ (listToMaybe . fmap h) ([] :: [Int])
+    print $ (fmap h . maybeToList) (Just 1)
+    print $ (maybeToList . fmap h) (Just 1)
+    print $ (fmap h . maybeToList) (Nothing :: Maybe Int)
+    print $ (maybeToList . fmap h) (Nothing :: Maybe Int)
 ```
 
 ```text:実行結果
@@ -617,16 +617,16 @@ step n = [n + 1, n * 2]
 
 main :: IO ()
 main = do
-    print (step 3)
-    print ((step >=> step) 3)
-    print ((step >=> step >=> step) 3)
+    print $ step 3
+    print $ (step >=> step) 3
+    print $ (step >=> step >=> step) 3
     -- 左単位元・右単位元
-    print ((return >=> step) 3 == step 3)
-    print ((step >=> return) 3 == step 3)
+    print $ (return >=> step) 3 == step 3
+    print $ (step >=> return) 3 == step 3
     -- 結合法則
-    print (((step >=> step) >=> step) 3 == (step >=> (step >=> step)) 3)
+    print $ ((step >=> step) >=> step) 3 == (step >=> (step >=> step)) 3
     -- Kleisli の >>> でも同じ
-    print (runKleisli (Kleisli step >>> Kleisli step) 3)
+    print $ runKleisli (Kleisli step >>> Kleisli step) 3
 ```
 
 ```text:実行結果
@@ -670,12 +670,12 @@ join' mm = mm >>= id
 
 main :: IO ()
 main = do
-    print ([1, 2, 3] `bind` \x -> [x, x * 10])
-    print ([1, 2, 3] >>=    \x -> [x, x * 10])
-    print (join' [[1, 2], [3]])
-    print (join  [[1, 2], [3]])
-    print (Just 3 `bind` \x -> Just (x * 2))
-    print (join' (Just (Just 3)))
+    print $ [1, 2, 3] `bind` \x -> [x, x * 10]
+    print $ [1, 2, 3] >>=    \x -> [x, x * 10]
+    print $ join' [[1, 2], [3]]
+    print $ join  [[1, 2], [3]]
+    print $ Just 3 `bind` \x -> Just (x * 2)
+    print $ join' (Just (Just 3))
 ```
 
 ```text:実行結果
@@ -852,18 +852,18 @@ m = [1, 2, 3]
 main :: IO ()
 main = do
     -- Monoid の結合律・単位律
-    print ((([1, 2] <> [3]) <> [4]) == ([1, 2] <> ([3] <> [4]) :: [Int]))
-    print ((mempty <> m) == m && (m <> mempty) == m)
+    print $ (([1, 2] <> [3]) <> [4]) == ([1, 2] <> ([3] <> [4]) :: [Int])
+    print $ (mempty <> m) == m && (m <> mempty) == m
     -- モナドの結合律 join . join == join . fmap join
-    print (join (join mmm))
-    print (join (fmap join mmm))
-    print (join (join mmm) == join (fmap join mmm))
+    print $ join (join mmm)
+    print $ join (fmap join mmm)
+    print $ join (join mmm) == join (fmap join mmm)
     -- モナドの単位律 join . return == id, join . fmap return == id
-    print (join (return m) == m)
-    print (join (fmap return m) == m)
+    print $ join (return m) == m
+    print $ join (fmap return m) == m
     -- Maybe でも同じ
-    print (join (join (Just (Just (Just 'a')))))
-    print (join (fmap join (Just (Just (Just 'a')))))
+    print $ join (join (Just (Just (Just 'a'))))
+    print $ join (fmap join (Just (Just (Just 'a'))))
 ```
 
 ```text:実行結果
@@ -1036,11 +1036,11 @@ toLog (Say s next) = ([s], next)
 main :: IO ()
 main = do
     -- (a -> m) を 1 つ与えると [a] -> m が決まる
-    print (foldMap (\x -> [show x]) [1, 2, 3 :: Int])
-    print (sum [1, 2, 3 :: Int])
+    print $ foldMap (\x -> [show x]) [1, 2, 3 :: Int]
+    print $ sum [1, 2, 3 :: Int]
     -- (f ~> m) を 1 つ与えると Free f a -> m a が決まる
     foldFree toIO prog
-    print (foldFree toLog prog)
+    print $ foldFree toLog prog
 ```
 
 ```text:実行結果
@@ -1124,10 +1124,10 @@ unBox (Coyoneda (Box b) g) = g b
 main :: IO ()
 main = do
     -- Box は Functor ではないが Coyoneda Box は Functor
-    print (unBox (fmap (* 2) (liftCoyoneda (Box 3))))
-    print (unBox (fmap show (fmap (+ 1) (liftCoyoneda (Box 3)))))
+    print $ unBox (fmap (* 2) (liftCoyoneda (Box 3)))
+    print $ unBox (fmap show (fmap (+ 1) (liftCoyoneda (Box 3))))
     -- Functor がある型なら取り出せる
-    print (lowerCoyoneda (fmap (* 2) (liftCoyoneda [1, 2, 3])))
+    print $ lowerCoyoneda (fmap (* 2) (liftCoyoneda [1, 2, 3]))
 ```
 
 ```text:実行結果
@@ -1169,12 +1169,12 @@ lowerYoneda (Yoneda y) = y id
 main :: IO ()
 main = do
     -- 往復すると元に戻る
-    print (lowerYoneda (liftYoneda [1, 2, 3]))
-    print (lowerYoneda (liftYoneda (Just 'a')))
-    print (lowerYoneda (liftYoneda (Right 3 :: Either String Int)))
+    print $ lowerYoneda (liftYoneda [1, 2, 3])
+    print $ lowerYoneda (liftYoneda (Just 'a'))
+    print $ lowerYoneda (liftYoneda (Right 3 :: Either String Int))
     -- fmap は関数の合成に変わる
-    print (lowerYoneda (fmap (* 2) (liftYoneda [1, 2, 3])))
-    print (lowerYoneda (fmap show (fmap (+ 1) (liftYoneda (Just 3)))))
+    print $ lowerYoneda (fmap (* 2) (liftYoneda [1, 2, 3]))
+    print $ lowerYoneda (fmap show (fmap (+ 1) (liftYoneda (Just 3))))
 ```
 
 ```text:実行結果

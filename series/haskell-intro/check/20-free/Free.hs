@@ -41,8 +41,8 @@ toLog (Say s next) = ([s], next)
 main :: IO ()
 main = do
     -- (a -> m) を 1 つ与えると [a] -> m が決まる
-    print (foldMap (\x -> [show x]) [1, 2, 3 :: Int])
-    print (sum [1, 2, 3 :: Int])
+    print $ foldMap (\x -> [show x]) [1, 2, 3 :: Int]
+    print $ sum [1, 2, 3 :: Int]
     -- (f ~> m) を 1 つ与えると Free f a -> m a が決まる
     foldFree toIO prog
-    print (foldFree toLog prog)
+    print $ foldFree toLog prog
