@@ -447,6 +447,8 @@ $$
 
 Haskell の `Functor` インスタンスは、すべて自己関手です。「自己関手の圏」という言い方が後で出てきますが、その「自己関手」はこれのことです。
 
+モナドも自己関手です。`Monad` は `Applicative` を、`Applicative` は `Functor` をスーパークラスに持つので、`Monad` のインスタンスは必ず `Functor` のインスタンスでもあるためです。👉[型クラス](https://zenn.dev/7shi/articles/20260805-haskell-type-classes#スーパークラス)
+
 # 自然変換
 
 Free モナドの回で、手順書を別のモナドへ移す `foldFree` を使いました。👉[Freeモナド](https://zenn.dev/7shi/articles/20260808-haskell-free-monad#free-パッケージ)
@@ -584,6 +586,12 @@ instance Monad m => Category (Kleisli m) where
 
 モナド `m` ごとに Kleisli 圏が 1 つ決まります。`Kleisli Maybe` なら失敗する計算の圏、`Kleisli []` なら非決定性計算の圏です。
 
+:::message
+非決定性計算とは、1 つの入力に対して結果の候補が複数あり、どれか 1 つに定まらない計算のことです。`a -> [b]` という射は、その候補をリストに並べたものと読めます。候補が 1 つもない場合は空リストになります。
+
+`>=>` でつなぐと、前段が出した候補のそれぞれに後段を適用し、出てきた候補をすべて集めて次へ渡します。枝分かれが枝分かれのまま積み上がっていくわけです。この後の動作確認で実際に増えていく様子を見ます。
+:::
+
 ここでモナド則を思い出します。`>=>` で書き直したものでした。👉[モナドとゆかいな仲間たち](https://zenn.dev/7shi/articles/20260807-haskell-monads-and-friends#-で書き直す)
 
 ```hs
@@ -662,11 +670,11 @@ join' mm = mm >>= id
 
 main :: IO ()
 main = do
-    print (bind [1, 2, 3] (\x -> [x, x * 10]))
-    print ([1, 2, 3] >>= \x -> [x, x * 10])
+    print ([1, 2, 3] `bind` \x -> [x, x * 10])
+    print ([1, 2, 3] >>=    \x -> [x, x * 10])
     print (join' [[1, 2], [3]])
     print (join  [[1, 2], [3]])
-    print (bind (Just 3) (\x -> Just (x * 2)))
+    print (Just 3 `bind` \x -> Just (x * 2))
     print (join' (Just (Just 3)))
 ```
 
@@ -692,11 +700,17 @@ join   :: m (m a) -> m a
 return :: a -> m a
 ```
 
-`join` は 2 重に重ねた `m` から `m` への対応です。関手を並べて書くと $T \circ T$ から $T$ への自然変換になります。$T$ はモナドを表す自己関手で、Haskell の `m` にあたります。
+モナドを表す自己関手を $T$ と書きます。Haskell の `m` にあたります。$T \circ T$ は $T$ を 2 回続けて適用する関手で、`m (m a)` にあたります。
+
+これで `join` を読み直せます。2 重に重ねた `m` から `m` への対応なので、$T \circ T$ から $T$ への自然変換です。
 
 `return` の方は少し細工が必要です。`a -> m a` の左辺には関手がありません。ここで `Identity` を持ち出します。中身をそのまま持つだけの関手でした。👉[モナドとゆかいな仲間たち](https://zenn.dev/7shi/articles/20260807-haskell-monads-and-friends#identity)
 
 `a` を `Identity a` と読み替えれば、`return` は `Identity a -> m a`、つまり恒等関手 $\mathrm{Id}$ から $T$ への自然変換になります。
+
+:::message
+2 本の戻り値がどちらも `m a` になっているのは偶然ではありません。`join` は `m` を 2 枚から 1 枚にし、`return` は 0 枚から 1 枚にします。剥がすか包むかで向きは違いますが、どちらも「`m` が 1 枚」に着地します。自然変換として書いた $T \circ T \Rightarrow T$ と $\mathrm{Id} \Rightarrow T$ も、行き先が同じ $T$ です。
+:::
 
 伝統的にこの 2 本には $\mu$（ミュー）と $\eta$（イータ）という名前が付いています。
 
@@ -713,24 +727,92 @@ $$
 
 矢印が $\to$ ではなく $\Rightarrow$ になっているのは、射ではなく自然変換だからです。自然変換は $\alpha_a$ のような成分に分けると射になりますが、$\alpha$ 全体は関手から関手への対応なので、段が 1 つ上がります。Haskell ではどちらも `->` になってしまうので、数式の側で書き分けます。
 
+:::message
+圏論の側でも、モナドはまず自己関手 $T$ であり、そこへ $\mu$ と $\eta$ が加わったものとして定義されます。自己関手を土台に置く点は Haskell と同じですが、階層は一致しません。Haskell は `Functor` と `Monad` の間に `Applicative` を挟みますが、圏論のモナドの定義にそれにあたる段はありません。
+:::
+
 ## モノイド則
 
-ここで型を並べてみます。左が `Monoid`、右がモナドです。👉[型クラス](https://zenn.dev/7shi/articles/20260805-haskell-type-classes#semigroup-と-monoid)
+モナドには、モノイドと似た構造があります。
+
+一点圏の節では、モノイドを圏とみなしましたが、ここでは演算の側に注目します。`Monoid` のメソッドと `join`・`return` を並べると、形が揃っていることが見えてきます。左が `Monoid`、右がモナドです。
 
 |`Monoid`|モナド|
 |---|---|
 |`(<>) :: a -> a -> a`|`join :: m (m a) -> m a`|
 |`mempty :: a`|`return :: a -> m a`|
 
-`<>` は同じ型のものを 2 つ受け取って 1 つにします。`join` は同じ関手を 2 つ重ねたものを 1 つにします。「2 つ並んだものを 1 つにする」という形が共通しています。`mempty` と `return` も、どこからともなく 1 つ作るという点で同じ位置にいます。
+`<>` は同じ型のものを 2 つ受け取って 1 つにします。`join` は同じ関手を 2 つ重ねたものを 1 つにします。「2 つ並んだものを 1 つにする」という形が共通しています。`mempty` と `return` も、単位元を供給するという点で同じ位置にいます。`mempty` は `<>` の単位元で、`return` は `join` に対する単位元です。前節で見たとおり、`return` は恒等関手 $\mathrm{Id}$ から $T$ への自然変換で、$\mathrm{Id}$ は関手の合成の単位元にあたります。
 
-満たすべき法則も対応します。
+満たすべき法則も対応しますが、`join` の形から入ると見比べにくいので、Kleisli 圏の節で見た `>=>` 版のモナド則を使用します。`>=>` を `<>` に、`return` を `mempty` に読み替えれば、モノイド則と同じ形であることが分かります。ただし `<>` が結合するのは値で、`>=>` が合成するのは射です。
 
-|`Monoid`|モナド|
+|`Monoid`|Kleisli 圏|
 |---|---|
-|`(x <> y) <> z == x <> (y <> z)`|`join . join == join . fmap join`|
-|`mempty <> x == x`|`join . return == id`|
-|`x <> mempty == x`|`join . fmap return == id`|
+|`mempty <> x` == `x`|`return >=> f` == `f`|
+|`x <> mempty` == `x`|`f >=> return` == `f`|
+|`(x <> y) <> z` == `x <> (y <> z)`|`(f >=> g) >=> h` == `f >=> (g >=> h)`|
+
+ここから `join` の側へ移します。手がかりは、`join` の節で見た `join mm = mm >>= id` という定義です。`>=>` は `(f >=> g) x = f x >>= g` と定義されているので、`f` と `g` を両方 `id` にすると、これがそのまま現れます。
+
+```hs
+(id >=> id) mm == id mm >>= id
+               == mm >>= id
+               == join mm
+```
+
+`>=>` の両側を `id` にしたものが `join` そのものだ、というのが移し替えの根拠です。そこで 3 本の等式の `f`・`g`・`h` をすべて `id` に置き換えれば、`>=>` 版が `join` 版に移ります。
+
+置き換えてよいのは、モナド則が Kleisli 射すべてについて成り立つからです。`id` もその一つで、Kleisli 射は `a -> m b` の形ですが、`a` に `m b` を選べば `m b -> m b` になり、`id` の型と一致します。
+
+計算を追いやすくするため、`>=>` を `join` と `fmap` で書き直しておきます。
+
+```hs
+f x >>= g == join  (fmap g  (f x))
+f   >=> g == join . fmap g . f
+```
+
+置き換えると `fmap id` と `id` が消え、`join` だけが残ります。
+
+```hs
+-- 左単位元
+return >=> id == id
+join . fmap id . return == id
+join . return == id
+
+-- 右単位元
+id >=> return == id
+join . fmap return . id == id
+join . fmap return == id
+
+-- 結合法則
+(id >=> id) >=> id == id >=> (id >=> id)
+join . fmap id . join == join . fmap (join . fmap id . id)
+join . join == join . fmap join
+```
+
+型が合うことは GHCi で確認できます。
+
+```hs:GHCi
+ghci> import Control.Monad
+ghci> :t id >=> id
+id >=> id :: Monad m => m (m c) -> m c
+ghci> :t join
+join :: Monad m => m (m a) -> m a
+ghci> :t (id >=> id) >=> id
+(id >=> id) >=> id :: Monad m => m (m (m c)) -> m c
+ghci> :t id >=> (id >=> id)
+id >=> (id >=> id) :: Monad m => m (m (m c)) -> m c
+ghci> :t join . join
+join . join :: Monad m => m (m (m a)) -> m a
+ghci> :t join . fmap join
+join . fmap join :: Monad m => m (m (m a)) -> m a
+```
+
+`>=>` の型は `(a -> m b) -> (b -> m c) -> a -> m c` です。左の `id` が `a` を `m b` に、右の `id` が `b` を `m c` に決めるので、`id >=> id` は `m (m c) -> m c` になります。`join` と同じ型です。結合法則の両辺も、結合の向きによらず `m (m (m c)) -> m c` に揃い、`join . join` および `join . fmap join` と一致します。
+
+単位元の 2 本も同様で、`join . return` と `join . fmap return` はどちらも `m a -> m a` になり、`id` と型が合います。
+
+逆に `join` 版から `>=>` 版を導き直すこともできるため、両者は同じ内容です。こうして得られた 3 本が、`join` 側から見たモノイド則です。
 
 `join . join` と `join . fmap join` は、3 重のモナドを潰す 2 通りの順序です。外側 2 枚を先に潰すか、内側 2 枚を先に潰すかの違いで、どちらでも同じところに着きます。
 
@@ -754,7 +836,7 @@ T @= T @= T
 \end{CD}
 $$
 
-外から包んでから潰しても、内から包んでから潰しても、元に戻ります。
+二重線は恒等射です。矢印を向けずに「そのまま」を表す記法で、$\mathrm{id}$ と書いた矢印と同じ意味です。外から包んでから潰しても、内から包んでから潰しても、元に戻ります。
 
 実際に評価します。
 
@@ -797,6 +879,12 @@ Just 'a'
 ```
 
 `Monoid` の法則とモナドの法則が、同じ形で並んで成り立っています。
+
+:::message
+これは形が同じだという話であって、モナドが `Monoid` のインスタンスになるという意味ではありません。`Monoid` は型に対する型クラスですが、`m` は型ではなく型構築子です。`<>` が結合するのは同じ型の値 2 つで、`join` が潰すのは値ではなく `m` の層です。リストのように `m a` が `Monoid` のインスタンスになる型もありますが、それはモナドとしての構造とは別のものです。
+
+モナドがモノイドの形をしているのは Hask の中ではありません。次節で見るとおり、別の圏の中での話になります。
+:::
 
 ## 一文を読み解く
 
