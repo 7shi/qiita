@@ -691,6 +691,60 @@ Just 3
 
 どちらを基本に取っても同じモナドになります。Haskell は `>>=` を基本に選んでいますが、圏論では `join` を基本に選びます。`join` の方が圏論の道具立てに乗せやすいためです。
 
+### モナド則の書き換え
+
+Kleisli 圏の節で見た `>=>` 版のモナド則を、`join` の側に書き換えておきます。手掛かりは以下の定義です。
+
+```hs
+f >=> g = \x -> f x >>= g
+join mm = mm >>= id
+```
+
+`f` と `g` を両方 `id` にすれば、`join` が現れます。モナド則が Kleisli 射すべてについて成り立つため、`id` に置き換えることができます。Kleisli 射は `a -> m b` の形ですが、`a` に `m b` を選べば `m b -> m b` になり、`id` の型と一致します。
+
+```hs
+id >=> id == \x -> id x >>= id
+          == \x -> x >>= id
+          == \x -> join x
+          == join
+```
+
+よって、3 本の等式の `f`・`g`・`h` をすべて `id` に置き換えれば、`>=>` 版が `join` 版に移ります。計算を追いやすくするため、`>=>` を `join` と `fmap` で書き直しておきます。
+
+```hs
+f x >>= g == join  (fmap g  (f x))
+f   >=> g == join . fmap g . f
+```
+
+これによって置き換えれば `fmap id` と `id` が消えて、`join` だけが残ります。
+
+```hs
+-- 左単位元
+return >=> id == id
+join . fmap id . return == id
+join . return == id
+
+-- 右単位元
+id >=> return == id
+join . fmap return . id == id
+join . fmap return == id
+
+-- 結合法則
+(id >=> id) >=> id == id >=> (id >=> id)
+join . fmap id . join == join . fmap (join . fmap id . id)
+join . join == join . fmap join
+```
+
+こうして得られた 3 本が、`join` 側から見たモナド則です。
+
+```hs
+join . return == id              -- 左単位元
+join . fmap return == id         -- 右単位元
+join . join == join . fmap join  -- 結合法則
+```
+
+3 本とも `join .` の形にまとまっています。`join` は最後に必ず 1 回だけ働く、という形です。
+
 ## μ と η
 
 `join` と `return` を、前節の自然変換として読み直します。
@@ -727,9 +781,43 @@ $$
 
 矢印が $\to$ ではなく $\Rightarrow$ になっているのは、射ではなく自然変換だからです。自然変換は $\alpha_a$ のような成分に分けると射になりますが、$\alpha$ 全体は関手から関手への対応なので、段が 1 つ上がります。Haskell ではどちらも `->` になってしまうので、数式の側で書き分けます。
 
+後で使う $\eta T$・$T\eta$・$\mu T$・$T\mu$ という記法も同じ事情です。これは「$\eta$・$\mu$ のどの対象での成分を使うか」を区別するための書き分けですが、Haskell 側には対応する記法がありません。`return`・`join` をそのまま使うか、`fmap` を挟んで使うかで自動的に区別が付くため、わざわざ名前を分ける必要がないのです。
+
 :::message
 圏論の側でも、モナドはまず自己関手 $T$ であり、そこへ $\mu$ と $\eta$ が加わったものとして定義されます。自己関手を土台に置く点は Haskell と同じですが、階層は一致しません。Haskell は `Functor` と `Monad` の間に `Applicative` を挟みますが、圏論のモナドの定義にそれにあたる段はありません。
 :::
+
+## 単位律と結合律の図式
+
+単位律から図式にします。`join . return` と `join . fmap return` は、どちらも外から加えた 1 枚を潰す操作です。外から包んでから潰すか、内から包んでから潰すかの違いで、どちらも出発点の `T` に戻ります。
+
+- `join . return` は $\mu \circ \eta T$（外から包んでから潰す）
+- `join . fmap return` は $\mu \circ T\eta$（内から包んでから潰す）
+
+$$
+\begin{CD}
+T @>{\eta T}>> T^2 \\
+@V{T\eta}VV @VV{\mu}V \\
+T^2 @>{\mu}>> T
+\end{CD}
+$$
+
+上辺 $\eta T$ → 右辺 $\mu$ の経路が `join . return`、左辺 $T\eta$ → 下辺 $\mu$ の経路が `join . fmap return` です。この正方形が可換なので 2 つの経路は一致し、しかもどちらも出発点の `T` に戻ってくるので、その一致先は `id` です。
+
+結合律も図にできます。`join . join` と `join . fmap join` は、3 重のモナドを潰す 2 通りの順序です。外側 2 枚を先に潰すか、内側 2 枚を先に潰すかの違いで、どちらでも同じところに着きます。
+
+- `join . join` は $\mu \circ \mu T$（外側 2 枚を先に潰す）
+- `join . fmap join` は $\mu \circ T\mu$（内側 2 枚を先に潰す）
+
+$$
+\begin{CD}
+T^3 @>{T\mu}>> T^2 \\
+@V{\mu T}VV @VV{\mu}V \\
+T^2 @>{\mu}>> T
+\end{CD}
+$$
+
+上辺 $T\mu$ → 右辺 $\mu$ の経路が `join . fmap join`、左辺 $\mu T$ → 下辺 $\mu$ の経路が `join . join` です。この正方形が可換なので、2 つの経路は一致します。
 
 ## モノイド則
 
@@ -744,141 +832,13 @@ $$
 
 `<>` は同じ型のものを 2 つ受け取って 1 つにします。`join` は同じ関手を 2 つ重ねたものを 1 つにします。「2 つ並んだものを 1 つにする」という形が共通しています。`mempty` と `return` も、単位元を供給するという点で同じ位置にいます。`mempty` は `<>` の単位元で、`return` は `join` に対する単位元です。前節で見たとおり、`return` は恒等関手 $\mathrm{Id}$ から $T$ への自然変換で、$\mathrm{Id}$ は関手の合成の単位元にあたります。
 
-満たすべき法則も対応しますが、`join` の形から入ると見比べにくいので、Kleisli 圏の節で見た `>=>` 版のモナド則を使用します。`>=>` を `<>` に、`return` を `mempty` に読み替えれば、モノイド則と同じ形であることが分かります。ただし `<>` が結合するのは値で、`>=>` が合成するのは射です。
+満たすべき法則も対応しますが、`join` の形のままでは見比べにくいので、Kleisli 圏の節で見た `>=>` 版のモナド則を使います。`>=>` を `<>` に、`return` を `mempty` に読み替えれば、モノイド則と同じ形であることが分かります。ただし `<>` が結合するのは値で、`>=>` が合成するのは射です。
 
 |`Monoid`|Kleisli 圏|
 |---|---|
 |`mempty <> x` == `x`|`return >=> f` == `f`|
 |`x <> mempty` == `x`|`f >=> return` == `f`|
 |`(x <> y) <> z` == `x <> (y <> z)`|`(f >=> g) >=> h` == `f >=> (g >=> h)`|
-
-ここから `join` の側へ移します。手がかりは、`join` の節で見た `join mm = mm >>= id` という定義です。`>=>` は `(f >=> g) x = f x >>= g` と定義されているので、`f` と `g` を両方 `id` にすると、これがそのまま現れます。
-
-```hs
-(id >=> id) mm == id mm >>= id
-               == mm >>= id
-               == join mm
-```
-
-`>=>` の両側を `id` にしたものが `join` そのものだ、というのが移し替えの根拠です。そこで 3 本の等式の `f`・`g`・`h` をすべて `id` に置き換えれば、`>=>` 版が `join` 版に移ります。
-
-置き換えてよいのは、モナド則が Kleisli 射すべてについて成り立つからです。`id` もその一つで、Kleisli 射は `a -> m b` の形ですが、`a` に `m b` を選べば `m b -> m b` になり、`id` の型と一致します。
-
-計算を追いやすくするため、`>=>` を `join` と `fmap` で書き直しておきます。
-
-```hs
-f x >>= g == join  (fmap g  (f x))
-f   >=> g == join . fmap g . f
-```
-
-置き換えると `fmap id` と `id` が消え、`join` だけが残ります。
-
-```hs
--- 左単位元
-return >=> id == id
-join . fmap id . return == id
-join . return == id
-
--- 右単位元
-id >=> return == id
-join . fmap return . id == id
-join . fmap return == id
-
--- 結合法則
-(id >=> id) >=> id == id >=> (id >=> id)
-join . fmap id . join == join . fmap (join . fmap id . id)
-join . join == join . fmap join
-```
-
-型が合うことは GHCi で確認できます。
-
-```hs:GHCi
-ghci> import Control.Monad
-ghci> :t id >=> id
-id >=> id :: Monad m => m (m c) -> m c
-ghci> :t join
-join :: Monad m => m (m a) -> m a
-ghci> :t (id >=> id) >=> id
-(id >=> id) >=> id :: Monad m => m (m (m c)) -> m c
-ghci> :t id >=> (id >=> id)
-id >=> (id >=> id) :: Monad m => m (m (m c)) -> m c
-ghci> :t join . join
-join . join :: Monad m => m (m (m a)) -> m a
-ghci> :t join . fmap join
-join . fmap join :: Monad m => m (m (m a)) -> m a
-```
-
-`>=>` の型は `(a -> m b) -> (b -> m c) -> a -> m c` です。左の `id` が `a` を `m b` に、右の `id` が `b` を `m c` に決めるので、`id >=> id` は `m (m c) -> m c` になります。`join` と同じ型です。結合法則の両辺も、結合の向きによらず `m (m (m c)) -> m c` に揃い、`join . join` および `join . fmap join` と一致します。
-
-単位元の 2 本も同様で、`join . return` と `join . fmap return` はどちらも `m a -> m a` になり、`id` と型が合います。
-
-逆に `join` 版から `>=>` 版を導き直すこともできるため、両者は同じ内容です。こうして得られた 3 本が、`join` 側から見たモノイド則です。
-
-`join . join` と `join . fmap join` は、3 重のモナドを潰す 2 通りの順序です。外側 2 枚を先に潰すか、内側 2 枚を先に潰すかの違いで、どちらでも同じところに着きます。
-
-$$
-\begin{CD}
-T^3 @>{T\mu}>> T^2 \\
-@V{\mu T}VV @VV{\mu}V \\
-T^2 @>{\mu}>> T
-\end{CD}
-$$
-
-`fmap join` が $T\mu$（内側に作用）、`join` が $\mu T$（外側に作用）です。前節の自然性の図と同じ読み方で、2 本の道が同じところに着きます。
-
-単位律の方も図にできます。
-
-$$
-\begin{CD}
-T @>{\eta T}>> T^2 @<{T\eta}<< T \\
-@| @V{\mu}VV @| \\
-T @= T @= T
-\end{CD}
-$$
-
-二重線は恒等射です。矢印を向けずに「そのまま」を表す記法で、$\mathrm{id}$ と書いた矢印と同じ意味です。外から包んでから潰しても、内から包んでから潰しても、元に戻ります。
-
-実際に評価します。
-
-```hs:Laws.hs
-import Control.Monad (join)
-
-mmm :: [[[Int]]]
-mmm = [[[1, 2], [3]], [[4]]]
-
-m :: [Int]
-m = [1, 2, 3]
-
-main :: IO ()
-main = do
-    -- Monoid の結合律・単位律
-    print $ (([1, 2] <> [3]) <> [4]) == ([1, 2] <> ([3] <> [4]) :: [Int])
-    print $ (mempty <> m) == m && (m <> mempty) == m
-    -- モナドの結合律 join . join == join . fmap join
-    print $ join (join mmm)
-    print $ join (fmap join mmm)
-    print $ join (join mmm) == join (fmap join mmm)
-    -- モナドの単位律 join . return == id, join . fmap return == id
-    print $ join (return m) == m
-    print $ join (fmap return m) == m
-    -- Maybe でも同じ
-    print $ join (join (Just (Just (Just 'a'))))
-    print $ join (fmap join (Just (Just (Just 'a'))))
-```
-
-```text:実行結果
-True
-True
-[1,2,3,4]
-[1,2,3,4]
-True
-True
-True
-Just 'a'
-Just 'a'
-```
-
-`Monoid` の法則とモナドの法則が、同じ形で並んで成り立っています。
 
 :::message
 これは形が同じだという話であって、モナドが `Monoid` のインスタンスになるという意味ではありません。`Monoid` は型に対する型クラスですが、`m` は型ではなく型構築子です。`<>` が結合するのは同じ型の値 2 つで、`join` が潰すのは値ではなく `m` の層です。リストのように `m a` が `Monoid` のインスタンスになる型もありますが、それはモナドとしての構造とは別のものです。
@@ -906,7 +866,7 @@ Just 'a'
 |単位元の集合 $1$|恒等関手 $\mathrm{Id}$|`Identity`|
 |単位元 $1 \to M$|$\eta : \mathrm{Id} \Rightarrow T$|`return`|
 
-直積が関手の合成に、単位元の置き場所が恒等関手に置き換わっています。あとは結合律と単位律を課せば、モノイドの定義がそのまま移植できます。前節で確かめた 3 本がそれです。
+直積が関手の合成に、単位元の置き場所が恒等関手に置き換わっています。あとは結合律と単位律を課せば、モノイドの定義がそのまま移植できます。「単位律と結合律の図式」で確かめた 3 本がそれです。
 
 これが「自己関手の圏におけるモノイド対象」の中身です。モナドとは、$\mathbf{End}(\mathbf{Hask})$ という圏の中でモノイドの形をしている対象のことでした。
 
