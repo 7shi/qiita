@@ -368,46 +368,47 @@ Hask では射が関数でしたが、それは `(->)` というインスタン�
 
 # 関手
 
-`Functor` は `fmap` を持つ型クラスです。👉[モナドとゆかいな仲間たち](https://zenn.dev/7shi/articles/20260807-haskell-monads-and-friends#ファンクター則)
+Haskell の `Functor` は `fmap` を持つ型クラスです。👉[モナドとゆかいな仲間たち](https://zenn.dev/7shi/articles/20260807-haskell-monads-and-friends#ファンクター則)
 
 ```hs
 class Functor f where
     fmap :: (a -> b) -> f a -> f b
 ```
 
-名前のとおり、これが**関手**（functor）です。
+functor は**関手**と訳されます。関手とは圏から圏への 2 つの対応の組です。圏論での関手を $F$、Haskell の `Functor` のインスタンスを `f` とすると、対応は次のようになります。
 
-関手は圏から圏への対応で、2 つの対応の組になっています。
+|対応|関手|Haskell|意味|
+|---|---|---|---|
+|対象|$a \mapsto F a$|`a` → `f a`|対象 $a$ を対象 $F a$ に移す|
+|射|$g \mapsto F g$|`g` → `fmap g`|射 $g : a \to b$ を射 $F g : F a \to F b$ に持ち上げる|
 
-- **対象の対応**: 対象 $a$ を対象 $F a$ に移す
-- **射の対応**: 射 $f : a \to b$ を射 $F(f) : F a \to F b$ に移す
+圏論では $F$ という 1 つの記号が両方の対応を兼ねます。$F a$ と $F g$ は同じ形に書きますが、$F g$ は $g$ を $F$ で包んだものではありません。射の対応という別の写像を、対象の対応と同じ記号で書いています。
 
-`Functor` インスタンスは、この 2 つを 1 つの型構築子で兼ねています。
+Haskell では、型構築子 `f` と関数 `fmap` に分かれています。
 
-|関手|Haskell|
-|---|---|
-|対象の対応 $a \mapsto F a$|型構築子の適用 `a` → `f a`|
-|射の対応 $f \mapsto F(f)$|`fmap`|
+:::message
+Haskell には関数を包んだ形も出てきます。`Just (+ 1) :: Maybe (Int -> Int)` は引数を直接受け取れないため `<*>` が必要です。一方、$F g$ にあたるのは `fmap (+ 1) :: Maybe Int -> Maybe Int` の方で、こちらは `Maybe Int` を直接受け取れる関数です。👉[モナドとゆかいな仲間たち](https://zenn.dev/7shi/articles/20260807-haskell-monads-and-friends#applicative)
+:::
 
-`Maybe` なら、型 `Int` を型 `Maybe Int` に移すのが対象の対応、関数 `Int -> String` を関数 `Maybe Int -> Maybe String` に移すのが射の対応です。前者は型構築子を書くだけ、後者が `fmap` です。
+射の対応を `Maybe`・リスト・`Either String` の 3 つで確かめます。
 
 ```hs:Functor.hs
-f, g :: Int -> Int
-f = (* 2)
-g = (+ 1)
+g, h :: Int -> Int
+g = (* 2)
+h = (+ 1)
 
 main :: IO ()
 main = do
     -- 射の対応: a -> b を f a -> f b に移す
-    print $ fmap g (Just 3)
-    print $ fmap g [1, 2, 3]
-    print $ fmap g (Right 3 :: Either String Int)
+    print $ fmap h (Just 3)
+    print $ fmap h [1, 2, 3]
+    print $ fmap h (Right 3 :: Either String Int)
     -- fmap id == id
     print $ fmap id (Just 3)  == id (Just 3)
     print $ fmap id [1, 2, 3] == id [1, 2, 3]
-    -- fmap (f . g) == fmap f . fmap g
-    print $ fmap (f . g) (Just 3)  == (fmap f . fmap g) (Just 3)
-    print $ fmap (f . g) [1, 2, 3] == (fmap f . fmap g) [1, 2, 3]
+    -- fmap (g . h) == fmap g . fmap h
+    print $ fmap (g . h) (Just 3)  == (fmap g . fmap h) (Just 3)
+    print $ fmap (g . h) [1, 2, 3] == (fmap g . fmap h) [1, 2, 3]
 ```
 
 ```text:実行結果
@@ -420,19 +421,19 @@ True
 True
 ```
 
-同じ関数 `(+1)` が `Maybe`・リスト・`Either String` の 3 つに持ち上がっています。どの持ち上げ方をするかを決めているのが `fmap` で、対象の対応だけでは決まりません。関手が 2 つの対応の組だというのは、この意味です。
+同じ関数 `(+ 1)` が `Maybe`・リスト・`Either String` の 3 つに持ち上がっています。どの持ち上げ方をするかを決めているのが `fmap` で、対象の対応だけでは決まりません。関手が 2 つの対応の組だというのは、この意味です。
 
 後半 4 行はファンクター則です。
 
 ```hs
 fmap id      == id               -- 単位元
-fmap (f . g) == fmap f . fmap g  -- 準同型
+fmap (g . h) == fmap g . fmap h  -- 準同型
 ```
 
 これは圏の言葉では関手が恒等射と合成を保つことの要求です。
 
 $$
-F(\mathrm{id}) = \mathrm{id} \qquad F(f \circ g) = F(f) \circ F(g)
+F\,\mathrm{id} = \mathrm{id} \qquad F(g \circ h) = F g \circ F h
 $$
 
 モナドを自作する回では、`fmap` を「関数合成という構造を保つ準同型」と説明しました。関手の定義は、まさにこの 2 本です。ファンクター則を満たさない `Functor` インスタンスは関手ではありません。
@@ -473,7 +474,7 @@ interpret :: (forall x. e x -> Eff es x) -> Eff (e ': es) a -> Eff es a
 type f ~> g = forall a. f a -> g a
 ```
 
-`~>` は base には入っていないので自作します。この名前はライブラリでもよく使われます。
+`~>` は base には入っていませんが、ライブラリでもよく使われます。
 
 実例として、リストと `Maybe` を行き来する関数があります。どちらも `Data.Maybe` にありますが、中身が短いので定義を示します。
 
@@ -505,7 +506,13 @@ fmap h . alpha == alpha . fmap h
 
 左辺は「関手を移してから要素を書き換える」、右辺は「要素を書き換えてから関手を移す」です。どちらの順でも同じ結果になることを要求しています。
 
-図にすると分かりやすくなります。$\alpha$ を関手 $F$ から関手 $G$ への自然変換、$h : a \to b$ を射とします。
+自然変換は 1 本の射ではなく、対象ごとに 1 本ずつ用意された射の族として定義されます。この 1 本 1 本を**成分**（component）と呼び、$\alpha_a$ のように対象を添字にして書きます。Haskell では `forall a.` の 1 つの定義が族全体を引き受けるため、成分を個別に書くことはありません。型を固定したときの 1 本が成分にあたります。
+
+:::message
+Haskell では、`forall a.` の形をした関数は自然性条件を自動的に満たします。
+:::
+
+成分を使って、先ほどの等式を図にします。$\alpha$ を関手 $F$ から関手 $G$ への自然変換、$h : a \to b$ を射とします。
 
 $$
 \begin{CD}
@@ -515,9 +522,9 @@ F b @>{\alpha_b}>> G b
 \end{CD}
 $$
 
-左上から右下へ行く道が 2 本あります。右へ行ってから下へ降りる道と、下へ降りてから右へ行く道です。この 2 本が同じところに着くというのが**自然性**です。このように「どの道を通っても同じ」ことを表す図を**可換図式**（commutative diagram）と呼びます。
+横の $\alpha_a, \alpha_b$ は成分で、対象ごとに用意された射です。Haskell では `forall a.` の多相関数を型ごとに見たものにあたります。縦の $F h, G h$ は、関手の節で見た射の対応です。$h$ をそれぞれの関手へ持ち上げたもので、Haskell では `fmap h` にあたります。
 
-$\alpha_a$ の添字は、対象 $a$ ごとに用意された射という意味です。自然変換は 1 本の射ではなく、対象ごとに 1 本ずつ用意された射の族として定義されます。Haskell では `forall a.` がその役割を果たすので、添字は表に出てきません。
+左上から右下へ行く道が 2 本あります。右へ行ってから下へ降りる道と、下へ降りてから右へ行く道です。この 2 本が同じところに着くというのが**自然性**です。このように「どの道を通っても同じ」ことを表す図を**可換図式**（commutative diagram）と呼びます。
 
 実際に両辺を評価します。
 
@@ -552,9 +559,7 @@ Nothing
 上から 2 行ずつが対になっています。空の場合も含めて、どちらの順でも一致しています。
 
 :::message
-Haskell では、`forall a.` の形をした関数は自然性条件を自動的に満たします。型の中で `a` について何も分かっていない以上、`a` の値に応じて動作を変えることができないためです。
-
-型だけから等式が導ける、という性質を**パラメトリシティ**（parametricity）と呼び、そこから得られる等式を**自由定理**（free theorem）と呼びます。自然性条件はその一例です。
+自然性条件は等式ですが、これは実装を見なくても `forall a.` という型だけから成り立ちます。このように型から動作が制限される性質を**パラメトリシティ**（parametricity）と呼び、そこから導ける等式を**自由定理**（free theorem）と呼びます。自然性条件はその一例です。
 
 ただし bottom を無視した場合の話です。`seq` や `undefined` を持ち込むと成り立たなくなります。
 :::
@@ -655,7 +660,7 @@ True
 join :: Monad m => m (m a) -> m a
 ```
 
-2 重に包まれたモナドを 1 枚剥がして平らにします。リストなら `[[1,2],[3]]` を `[1,2,3]` にする関数です。
+2 重に包まれたモナドを 1 層剥がして平らにします。リストなら `[[1,2],[3]]` を `[1,2,3]` にする関数です。
 
 `>>=` と `join` は相互に定義できます。
 
@@ -754,42 +759,93 @@ join   :: m (m a) -> m a
 return :: a -> m a
 ```
 
-モナドを表す自己関手を $T$ と書きます。Haskell の `m` にあたります。$T \circ T$ は $T$ を 2 回続けて適用する関手で、`m (m a)` にあたります。
+モナドを表す自己関手を $T$ と書きます。Haskell の `m` にあたります。$T \circ T$ は $T$ を 2 回続けて適用する関手で、`m (m a)` にあたります。合成の回数が増えると読みにくくなるため、以降は 2 回なら $T^2$、3 回なら $T^3$ と略記します。
 
-これで `join` を読み直せます。2 重に重ねた `m` から `m` への対応なので、$T \circ T$ から $T$ への自然変換です。
+これで `join` を読み直せます。2 重に重ねた `m` から `m` への対応なので、$T^2$ から $T$ への自然変換です。
 
 `return` の方は少し細工が必要です。`a -> m a` の左辺には関手がありません。ここで `Identity` を持ち出します。中身をそのまま持つだけの関手でした。👉[モナドとゆかいな仲間たち](https://zenn.dev/7shi/articles/20260807-haskell-monads-and-friends#identity)
 
 `a` を `Identity a` と読み替えれば、`return` は `Identity a -> m a`、つまり恒等関手 $\mathrm{Id}$ から $T$ への自然変換になります。
 
 :::message
-2 本の戻り値がどちらも `m a` になっているのは偶然ではありません。`join` は `m` を 2 枚から 1 枚にし、`return` は 0 枚から 1 枚にします。剥がすか包むかで向きは違いますが、どちらも「`m` が 1 枚」に着地します。自然変換として書いた $T \circ T \Rightarrow T$ と $\mathrm{Id} \Rightarrow T$ も、行き先が同じ $T$ です。
+2 本の戻り値がどちらも `m a` になっているのは偶然ではありません。`join` は `m` を 2 層から 1 層にし、`return` は 0 層から 1 層にします。剥がすか包むかで向きは違いますが、どちらも「`m` が 1 層」に着地します。
 :::
 
-伝統的にこの 2 本には $\mu$（ミュー）と $\eta$（イータ）という名前が付いています。
-
-$$
-\mu : T \circ T \Rightarrow T \qquad \eta : \mathrm{Id} \Rightarrow T
-$$
+圏論ではこの 2 本に $\mu$（ミュー）と $\eta$（イータ）という名前が付いています。
 
 |圏論|Haskell|
 |---|---|
 |$T$|`m`（自己関手）|
-|$\mu$|`join`|
-|$\eta$|`return`|
 |$\mathrm{Id}$|`Identity`|
+|$\mu : T^2 \Rightarrow T$|`join :: m (m a) -> m a`|
+|$\eta : \mathrm{Id} \Rightarrow T$|`return :: a -> m a`|
 
-矢印が $\to$ ではなく $\Rightarrow$ になっているのは、射ではなく自然変換だからです。自然変換は $\alpha_a$ のような成分に分けると射になりますが、$\alpha$ 全体は関手から関手への対応なので、段が 1 つ上がります。Haskell ではどちらも `->` になってしまうので、数式の側で書き分けます。
+$\mu,\eta$ はどちらも行き先が同じ $T$ です。矢印が $\to$ ではなく $\Rightarrow$ になっているのは、射ではなく自然変換だからです。自然変換は関手から関手への対応なので、射より段が 1 つ上がります。Haskell ではどちらも `->` で書かれてしまいますが、数式の側ではこのように書き分けます。
 
-後で使う $\eta T$・$T\eta$・$\mu T$・$T\mu$ という記法も同じ事情です。これは「$\eta$・$\mu$ のどの対象での成分を使うか」を区別するための書き分けですが、Haskell 側には対応する記法がありません。`return`・`join` をそのまま使うか、`fmap` を挟んで使うかで自動的に区別が付くため、わざわざ名前を分ける必要がないのです。
+段を 1 つ下ろすには、対象 $a$ を 1 つ選んで成分を取り出します。成分は射なので、矢印は $\to$ に戻ります。
+
+$$\mu_a : T(T a) \to T a \qquad \eta_a : a \to T a$$
+
+表の Haskell 側とほぼ同じ型表記ですが、同じ `a` でも指すものは違います。Haskell の `a` は型変数で、`return` は多相な 1 つの定義としてすべての型の総称となっており、$\eta$ に対応します。数式の $a$ は選んだ対象 1 つなので、$\eta_a$ に対応するのは `return :: Int -> Maybe Int` のように型を固定した形です。
+
+Haskell で型を固定するには、`@` で型引数を明示する記法が使えます。`return` の型変数は `m`・`a` の順に並んでいるため、`@Maybe @Int` と添えると `m` が `Maybe`、`a` が `Int` に決まります。
+
+```hs:GHCi
+ghci> :t return @Maybe @Int
+return @Maybe @Int :: Int -> Maybe Int
+```
+
+これが $\eta_a$ にあたる形です。普段のコードでは型が推論されるため `@` を書く機会はほとんどありませんが、型変数の行き先を明示するには都合が良いので、以降でも使います。
 
 :::message
-圏論の側でも、モナドはまず自己関手 $T$ であり、そこへ $\mu$ と $\eta$ が加わったものとして定義されます。自己関手を土台に置く点は Haskell と同じですが、階層は一致しません。Haskell は `Functor` と `Monad` の間に `Applicative` を挟みますが、圏論のモナドの定義にそれにあたる段はありません。
+圏論でも、モナドはまず自己関手 $T$ であり、そこへ $\mu$ と $\eta$ が加わったものとして定義されます。自己関手を土台に置く点は Haskell と同じですが、階層は一致しません。Haskell は `Functor` と `Monad` の間に `Applicative` を挟みますが、圏論のモナドの定義にそれにあたる段はありません。
+:::
+
+## ηT と μT
+
+$\eta : \mathrm{Id} \Rightarrow T$ は $T$ を 0 層から 1 層にする自然変換です。既に $T$ が 1 層ある状態に適用すれば、$T$ は 1 層から 2 層になります。$T\eta$ は $\eta$ の型 $\mathrm{Id} \Rightarrow T$ の両側に左から $T \circ$ を付けると考えれば $(T \circ \mathrm{Id}) \Rightarrow (T \circ T)$ より $T \Rightarrow T^2$ となり、$\eta T$ も同様に右から $\circ T$ を付けて $(\mathrm{Id} \circ T) \Rightarrow (T \circ T)$ より $T \Rightarrow T^2$ となります。
+
+$F \circ G$ において、左にある関手 $F$ が外側、右にある関手 $G$ が内側です。その目で先ほどの型を見れば、$T\eta$ は内側に $T$ が増え、$\eta T$ は外側に $T$ が増えていることが分かります。つまり、$\eta$ の位置に $T$ が増えているわけです。
+
+$T\eta, T\mu$ は、関手 $T$ による持ち上げです。関手が射を $g \mapsto T g$ と対応させるのと同じことを、自然変換の成分に対して行います。Haskell の `fmap return`・`fmap join` にあたり、$T$ の内側に作用します。
+
+$\eta T, \mu T$ は、$T$ の外側に作用します。Haskell では型変数 `a` をモナドに置き換えた形に相当します。`return :: a -> m a` の `a` を `m a` に置き換えれば `m a -> m (m a)` となり、外側に 1 層増えます。
+
+ここまで見た 4 つを並べます。
+
+|作用する側|圏論|Haskell|型|
+|---|---|---|---|
+|内側|$T\eta : T \Rightarrow T^2$|`fmap @m (return @m @a)`|`m a -> m (m a)`|
+|外側|$\eta T : T \Rightarrow T^2$|`return @m @(m a)`|`m a -> m (m a)`|
+|内側|$T\mu : T^3 \Rightarrow T^2$|`fmap @m (join @m @a)`|`m (m (m a)) -> m (m a)`|
+|外側|$\mu T : T^3 \Rightarrow T^2$|`join @m @(m a)`|`m (m (m a)) -> m (m a)`|
+
+対になった 2 つは型が同じです。区別しているのはどちら側に作用するかで、Haskell では `fmap` の有無がそれにあたります。リストに適用すると結果の違いが見えます。
+
+```hs:Whisker.hs
+tEta, etaT :: forall m a. Monad m => m a -> m (m a)
+tEta = fmap @m (return @m @a)  -- Tη: 内側を m で包む
+etaT = return @m @(m a)        -- ηT: 外側を m で包む
+
+main :: IO ()
+main = do
+    print $ tEta [1, 2, 3 :: Int]
+    print $ etaT [1, 2, 3 :: Int]
+```
+```text:実行結果
+[[1],[2],[3]]
+[[1,2,3]]
+```
+
+$T\eta$ は要素を 1 つずつリストで包み、$\eta T$ はリスト全体を包みます。
+
+:::message
+`@m` や `@a` と書けるのは、`forall m a.` で型変数がスコープに入っている場合です。GHCi で試すときは具体的な型を渡します。これらは説明のために付けているだけで、省略しても動きます。その場合は型変数を参照しなくなるため、シグネチャの `forall m a.` も不要になります。
 :::
 
 ## 単位律と結合律の図式
 
-単位律から図式にします。`join . return` と `join . fmap return` は、どちらも外から加えた 1 枚を潰す操作です。外から包んでから潰すか、内から包んでから潰すかの違いで、どちらも出発点の `T` に戻ります。
+単位律から図式にします。`join . return` と `join . fmap return` は、どちらも外から加えた 1 層を潰す操作です。外から包んでから潰すか、内から包んでから潰すかの違いで、どちらも出発点の `T` に戻ります。
 
 - `join . return` は $\mu \circ \eta T$（外から包んでから潰す）
 - `join . fmap return` は $\mu \circ T\eta$（内から包んでから潰す）
@@ -804,10 +860,10 @@ $$
 
 上辺 $\eta T$ → 右辺 $\mu$ の経路が `join . return`、左辺 $T\eta$ → 下辺 $\mu$ の経路が `join . fmap return` です。この正方形が可換なので 2 つの経路は一致し、しかもどちらも出発点の `T` に戻ってくるので、その一致先は `id` です。
 
-結合律も図にできます。`join . join` と `join . fmap join` は、3 重のモナドを潰す 2 通りの順序です。外側 2 枚を先に潰すか、内側 2 枚を先に潰すかの違いで、どちらでも同じところに着きます。
+結合律も図にできます。`join . join` と `join . fmap join` は、3 重のモナドを潰す 2 通りの順序です。外側 2 層を先に潰すか、内側 2 層を先に潰すかの違いで、どちらでも同じところに着きます。
 
-- `join . join` は $\mu \circ \mu T$（外側 2 枚を先に潰す）
-- `join . fmap join` は $\mu \circ T\mu$（内側 2 枚を先に潰す）
+- `join . join` は $\mu \circ \mu T$（外側 2 層を先に潰す）
+- `join . fmap join` は $\mu \circ T\mu$（内側 2 層を先に潰す）
 
 $$
 \begin{CD}
@@ -861,8 +917,8 @@ $$
 |モノイド|$\mathbf{End}(\mathbf{Hask})$ での対応|Haskell|
 |---|---|---|
 |集合 $M$|自己関手 $T$|`m`|
-|直積 $M \times M$|関手の合成 $T \circ T$|`m (m a)`|
-|掛け算 $M \times M \to M$|$\mu : T \circ T \Rightarrow T$|`join`|
+|直積 $M \times M$|関手の合成 $T^2$|`m (m a)`|
+|掛け算 $M \times M \to M$|$\mu : T^2 \Rightarrow T$|`join`|
 |単位元の集合 $1$|恒等関手 $\mathrm{Id}$|`Identity`|
 |単位元 $1 \to M$|$\eta : \mathrm{Id} \Rightarrow T$|`return`|
 
