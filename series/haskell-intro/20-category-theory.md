@@ -1257,15 +1257,15 @@ Yoneda は性能の改善にも使われます。`fmap` を重ねても関数の
 
 |Haskell|圏論|
 |---|---|
-|`class Category cat`|圏。公理は結合律と単位律の 2 つだけ|
-|`instance Category (->)`|Hask 圏。ただし bottom があるので厳密には圏でない|
-|`instance Monoid m => Category (Mono m)`|一点圏。モノイドは対象が 1 つの圏|
-|`Functor` とファンクター則|自己関手。対象の対応と射の対応の組|
-|`forall a. f a -> g a`|自然変換。要素の値に立ち入らない関手間の対応|
-|`instance Category (Kleisli m)`|Kleisli 圏。モナド則は圏の公理だった|
-|`join` と `return`|$\mu$ と $\eta$。自己関手の圏におけるモノイド対象|
-|`foldMap` と `foldFree`|随伴の普遍性。これが「自由」の意味|
-|`Coyoneda` の `Functor` インスタンス|米田の補題。`Functor` が不要だった理由|
+|`class Category cat`|圏、公理は結合律と単位律の 2 つだけ|
+|`instance Category (->)`|Hask 圏、ただし bottom があるので厳密には圏でない|
+|`instance Monoid m => Category (Mono m)`|一点圏、モノイドは対象が 1 つの圏|
+|`Functor` とファンクター則|自己関手、対象の対応と射の対応の組|
+|`forall a. f a -> g a`|自然変換、要素の値に立ち入らない関手間の対応|
+|`instance Category (Kleisli m)`|Kleisli 圏、モナド則は圏の公理だった|
+|`join` と `return`|$\mu$ と $\eta$、自己関手の圏におけるモノイド対象|
+|`foldMap` と `foldFree`|随伴の普遍性、これが「自由」の意味|
+|`Coyoneda` の `Functor` インスタンス|米田の補題、`Functor` が不要だった理由|
 
 今回見たのは圏論のほんの入口です。それでも、Haskell を圏論の言葉で読み直すことで、対象・射・合成という構造が見えてきたのであれば、目的は達成できたと言えます。
 
@@ -1288,7 +1288,7 @@ Yoneda は性能の改善にも使われます。`fmap` を重ねても関数の
 
 # 補遺
 
-シリーズで扱わなかった話題を並べておきます。
+シリーズに入れるか検討したものの、分量や準備を考えて外した話題を並べておきます。
 
 |話題|概要|
 |---|---|
