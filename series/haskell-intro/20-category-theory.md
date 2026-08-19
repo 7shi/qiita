@@ -1444,25 +1444,132 @@ data Program instr a where
 
 Free モナドでは命令の型ごとに `Functor` インスタンスを書く必要があったのに対して、Operational では不要になったためです。
 
-なぜ不要になったのかの理論的背景を、ここで説明します。
+この差の背景にあるのが、今回扱う米田の補題です。ただし `:>>=` の形は補題を裏返した側にあたるため、先に素直な向きを見てから裏返します。
+
+## 継続渡しからの一般化
+
+継続モナドでは、値を直接持つ代わりに、続きを受け取る関数を持ちました。👉[継続モナド](https://zenn.dev/7shi/articles/20260803-haskell-continuation-monad#継続モナド)
+
+```hs
+newtype Cont r a = Cont { runCont :: (a -> r) -> r }
+```
+
+`Cont r a` の中に `a` はありません。あるのは「`a -> r` を渡されたら `r` を返す」関数だけです。それでも計算は進みました。値そのものではなく、値の使われ方を持つという形です。
+
+同じ発想を関手に適用します。`f a` を直接持つ代わりに、中身の `a` に適用する関数を受け取り、結果を `f` に包んで返す形にします。
+
+```hs
+(a -> r) -> r      -- Cont r a、値 a の代わり
+(a -> b) -> f b    -- f a の代わり？
+```
+
+ただし、このままでは `f a` の代わりになりません。`b` が固定されているためです。`Cont` の `r` と同じ状況で、たとえば `b` が `String` に決め打ちされていれば、`f String` は作れても `f a` は取り戻せません。
+
+そこで `b` を固定せず、どんな型に対しても一様に答えられることを要求します。
+
+```hs
+forall b. (a -> b) -> f b
+```
+
+これなら `b` として `a` 自身を選べます。何もしない関数 `id :: a -> a` を渡せば `f a` が返ってくるので、情報は失われていません。
+
+この形は既に見たものでもあります。`(a -> )` を関手とみなすと、そこから `f` への自然変換になっています。`(a -> )` は「`a` から出る関数を集めたもの」で、後で数式に出てくる $\mathrm{Hom}(a, -)$ にあたります。
+
+## Yoneda
+
+この形に名前が付いています。**Yoneda**（米田）です。数学者の米田信夫に由来します。
+
+```hs:Yoneda.hs
+newtype Yoneda f a = Yoneda (forall b. (a -> b) -> f b)
+```
+
+`forall b.` が `newtype` の内側にあるため、型全体ではなく、包まれた関数がすべての `b` を引き受けます。使う側が `b` を選び、`Yoneda f a` の側はそれに合わせて答える関係です。
+
+:::message
+引数として渡される関数に `forall` を書くには `RankNTypes` という言語拡張が必要ですが、GHC2021 に含まれるためプラグマは不要です。それ以前の標準（Haskell2010）では次のプラグマが必要となります。
+
+```hs
+{-# LANGUAGE RankNTypes #-}
+```
+:::
+
+`Functor` インスタンスを書きます。
+
+```hs:Yoneda.hs
+instance Functor (Yoneda f) where
+    fmap h (Yoneda y) = Yoneda (\k -> y (k . h))
+```
+
+中身を `h` で書き換えるには、受け取った関数 `k` の手前に `h` をつなぎます。`f` には手を触れないため、`f` に制約は必要ありません。
+
+`f a` を `Yoneda` で包む関数と、取り出して `f a` に戻す関数を用意します。
+
+```hs:Yoneda.hs
+liftYoneda :: Functor f => f a -> Yoneda f a
+liftYoneda fa = Yoneda (\k -> fmap k fa)
+
+lowerYoneda :: Yoneda f a -> f a
+lowerYoneda (Yoneda y) = y id
+```
+
+`lowerYoneda` は `id` を渡すだけです。「`a -> b` を渡せば `f b` を返す」という約束の `b` に `a` を選び、何もしない関数を渡すと `f a` が出てきます。
+
+制約は非対称になっています。包む `liftYoneda` には `Functor f` が必要ですが、取り出す `lowerYoneda` は無制約です。
+
+この 2 つが互いに逆になります。
+
+```hs:Yoneda.hs
+main :: IO ()
+main = do
+    -- 往復すると元に戻る
+    print $ lowerYoneda (liftYoneda [1, 2, 3])
+    print $ lowerYoneda (liftYoneda (Just 'a'))
+    print $ lowerYoneda (liftYoneda (Right 3 :: Either String Int))
+    -- fmap は関数の合成に変わる
+    print $ lowerYoneda (fmap (* 2) (liftYoneda [1, 2, 3]))
+    print $ lowerYoneda (fmap show (fmap (+ 1) (liftYoneda (Just 3))))
+```
+
+```text:実行結果
+[1,2,3]
+Just 'a'
+Right 3
+[2,4,6]
+Just "4"
+```
+
+往復しても元に戻ります。つまり `forall b. (a -> b) -> f b` と `f a` は同じ情報を持っています。見た目はまるで違うのに、片方からもう片方が復元できます。
+
+### 一般形
+
+これが**米田の補題**（Yoneda lemma）の Haskell 版です。一般形は次のように書かれます。
+
+$$
+\mathrm{Nat}(\mathrm{Hom}(a, -), F) \cong F a
+$$
+
+$\mathrm{Hom}(a, -)$ は「$a$ から出る射を集めたもの」で、Haskell では `(a -> )` にあたります。$\mathrm{Nat}$ は自然変換全体、$\cong$ は同型を表します。左辺は `forall b. (a -> b) -> f b`、右辺は `f a` で、上で確かめた往復がこの $\cong$ です。
+
+なぜこれが成り立つのかには立ち入りません。「対象そのものと、その対象から出る射の全体は同じ情報を持つ」という主張で、圏論の基本定理の 1 つに数えられます。証明は本格的な本に譲ります。
 
 ## Coyoneda
 
-`:>>=` は命令と継続を組にする構築子でした。この組だけを取り出し、`Program` への再帰をやめて独立した型にしたものが **Coyoneda** です。
+Yoneda は関数を受け取る形でした。引数として受け取っていたものを、代わりに中に持つ形にします。向きを逆にすると 2 点が変わります。
 
-:::message
-Co は圏論で双対（矢印の向きをすべて逆にした対応物）を表す接頭辞で、後で扱う Yoneda と対になる型という意味です。今回は扱いませんが、Monad の双対である Comonad もあります。
-:::
+* 受け取る側では `a -> b` だったものが、持つ側では `b -> a` になります。
+* 「すべての `b` に答えられる」という全称の要求は、「ある `b` を隠し持つ」という存在に変わります。
+
+構築子の型を並べます。
 
 ```hs
-(:>>=)   :: instr b -> (b -> Program instr a) -> Program  instr a
-Coyoneda :: f     b -> (b ->               a) -> Coyoneda f     a
+Yoneda   :: (forall b. (a -> b) -> f b) -> Yoneda f a
+Coyoneda :: forall b. f b -> (b -> a) -> Coyoneda f a
 ```
 
-命令 `instr b` を、任意の型構築子 `f` による型 `f b` に置き換えています。モナド `m a` の中に値が入っていたのと同じように、`f b` も中に `b` が入っている型です。継続 `b -> Program instr a` も、`Program` に戻らないただの関数 `b -> a` になっています。
+この型を **Coyoneda** と呼びます。
 
 :::message
-`f` には型クラス制約が付かないため、`Monad` はもちろん `Functor` である必要もありません。
+Co は圏論で双対（矢印の向きをすべて逆にした対応物）を表す接頭辞で、Yoneda と対になる型という意味です。今回は扱いませんが、Monad の双対である Comonad もあります。
 :::
 
 定義は次のようになります。
@@ -1529,69 +1636,34 @@ main = do
 
 `Box` には `Functor` インスタンスがありません。それでも `Coyoneda Box` に対しては `fmap` が書けています。2 行目では `fmap` を 2 回重ねていますが、`Box` の中身は 1 度も動かず、関数が `show . (+1)` と合成されただけです。
 
-任意の型構築子を `Functor` にしてしまう構成になっています。これが Operational モナドで `Functor` インスタンスが不要だった理由です。あの `instr :>>= k` は、命令を Coyoneda で包んだ形をしていました。
+任意の型構築子を `Functor` にしてしまう構成になっています。
 
-## Yoneda
+## 双対の対比
 
-向きを逆にした型もあります。まず Coyoneda と並べます。
+Yoneda と Coyoneda を並べます。
+
+||Yoneda|Coyoneda|
+|---|---|---|
+|継続|受け取る|持つ|
+|関数の向き|`a -> b`|`b -> a`|
+|`b` の量化|全称、すべての `b` に答える|存在、ある `b` を隠し持つ|
+|`Functor f` が必要な側|包むとき（`liftYoneda`）|取り出すとき（`lowerCoyoneda`）|
+|効能|`fmap` が関数の合成に潰れる|`Functor` でない型を `Functor` にする|
+
+どちらも `f a` と同じ情報を持ち、`lift`・`lower` で往復できます。違いは制約の位置で、Yoneda は入口、Coyoneda は出口に `Functor` が必要です。Coyoneda が `Functor` を後から与える道具になるのは、入口が無制約だからです。
+
+## Functor が不要だった理由
+
+冒頭の `:>>=` と Coyoneda を並べます。
 
 ```hs
-Coyoneda ::                 f b -> (b -> a) -> Coyoneda f a
-Yoneda   :: (forall b. (a -> b) ->     f b) -> Yoneda   f a
+(:>>=)   :: instr b -> (b -> Program instr a) -> Program  instr a
+Coyoneda :: f     b -> (b ->               a) -> Coyoneda f     a
 ```
 
-Coyoneda が「`f b` と関数 `b -> a` の組」だったのに対し、こちらは「関数 `a -> b` を受け取ると `f b` を返す関数」です。`b` の向きが逆で、Coyoneda は持っている `f b` の中身を `a` に変換するのに対し、こちらは渡された `a -> b` を使って `f b` を作ります。`forall b.` の位置も、型全体ではなく引数の関数の側に移っています。
+命令 `instr b` が任意の型構築子による `f b` に、継続 `b -> Program instr a` が `Program` に戻らないただの関数 `b -> a` になっているだけで、形は同じです。Operational の命令と継続の組は、命令を Coyoneda で包んだものでした。
 
-これが **Yoneda**（米田）です。定義と、包む関数・取り出す関数は次のようになります。
-
-```hs:Yoneda.hs
-newtype Yoneda f a = Yoneda (forall b. (a -> b) -> f b)
-
-instance Functor (Yoneda f) where
-    fmap h (Yoneda y) = Yoneda (\k -> y (k . h))
-
-liftYoneda :: Functor f => f a -> Yoneda f a
-liftYoneda fa = Yoneda (\k -> fmap k fa)
-
-lowerYoneda :: Yoneda f a -> f a
-lowerYoneda (Yoneda y) = y id
-```
-
-`lowerYoneda` は `id` を渡すだけです。「`a -> b` を渡せば `f b` を返す」という約束の `b` に `a` を選び、何もしない関数を渡すと `f a` が出てきます。
-
-この 2 つが互いに逆になります。
-
-```hs:Yoneda.hs
-main :: IO ()
-main = do
-    -- 往復すると元に戻る
-    print $ lowerYoneda (liftYoneda [1, 2, 3])
-    print $ lowerYoneda (liftYoneda (Just 'a'))
-    print $ lowerYoneda (liftYoneda (Right 3 :: Either String Int))
-    -- fmap は関数の合成に変わる
-    print $ lowerYoneda (fmap (* 2) (liftYoneda [1, 2, 3]))
-    print $ lowerYoneda (fmap show (fmap (+ 1) (liftYoneda (Just 3))))
-```
-
-```text:実行結果
-[1,2,3]
-Just 'a'
-Right 3
-[2,4,6]
-Just "4"
-```
-
-往復しても元に戻ります。つまり `forall b. (a -> b) -> f b` と `f a` は同じ情報を持っています。見た目はまるで違うのに、片方からもう片方が復元できます。
-
-これが**米田の補題**（Yoneda lemma）の Haskell 版です。一般形は次のように書かれます。
-
-$$
-\mathrm{Nat}(\mathrm{Hom}(a, -), F) \cong F a
-$$
-
-$\mathrm{Hom}(a, -)$ は「$a$ から出る射を集めたもの」で、Haskell では `(a -> )` にあたります。$\mathrm{Nat}$ は自然変換全体、$\cong$ は同型を表します。左辺は `forall b. (a -> b) -> f b`、右辺は `f a` で、上で確かめた往復がこの $\cong$ です。
-
-なぜこれが成り立つのかには立ち入りません。「対象そのものと、その対象から出る射の全体は同じ情報を持つ」という主張で、圏論の基本定理の 1 つに数えられます。証明は本格的な本に譲ります。
+Free モナドは命令を `Free f` の中に直接埋め込むため、中身を書き換えるには `f` 自身の `fmap` が必要でした。Operational は継続を分けて持つことで、その `fmap` を関数の合成に置き換えています。これが `Functor` インスタンスが不要だった理由です。
 
 :::message
 `Coyoneda`・`Yoneda` は [kan-extensions](https://hackage.haskell.org/package/kan-extensions) パッケージの `Data.Functor.Coyoneda`・`Data.Functor.Yoneda` にあります。本記事では base だけで完結させるため自作しました。

@@ -4,16 +4,10 @@
 
 |ファイル|本文の位置|内容|
 |---|---|---|
-|`Coyoneda.hs`|`## Coyoneda`|`Functor` インスタンスを持たない型を `Functor` にしてしまう構成|
 |`Yoneda.hs`|`## Yoneda`|`liftYoneda`／`lowerYoneda` の往復|
+|`Coyoneda.hs`|`## Coyoneda`|`Functor` インスタンスを持たない型を `Functor` にしてしまう構成|
 
 ## 実行結果
-
-```text:Coyoneda.hs
-6
-"4"
-[2,4,6]
-```
 
 ```text:Yoneda.hs
 [1,2,3]
@@ -23,8 +17,17 @@ Right 3
 Just "4"
 ```
 
+```text:Coyoneda.hs
+6
+"4"
+[2,4,6]
+```
+
 ## 確認したこと
 
+- **`Yoneda` の往復は元に戻る。** `lowerYoneda (liftYoneda x) == x` を
+  `[]`・`Maybe`・`Either` で確認した。`forall b. (a -> b) -> f b` と `f a` が
+  同じ情報を持っている。
 - **`instance Functor (Coyoneda f)` は `f` に何も要求しない。**
   `fmap h (Coyoneda fb g) = Coyoneda fb (h . g)` は後ろの関数を合成するだけ。
   `Functor` インスタンスを持たない `data Box a = Box a` に対しても
@@ -33,9 +36,6 @@ Just "4"
 - **`lowerCoyoneda` にだけ `Functor f` が必要。** 包むのは無条件、取り出すときに初めて必要になる。
 - **`fmap` は 2 回重ねても関数の合成になるだけ。**
   `fmap show (fmap (+ 1) ...)` が `Box` の中身を 1 度も動かさずに `"4"` を返す。
-- **`Yoneda` の往復は元に戻る。** `lowerYoneda (liftYoneda x) == x` を
-  `[]`・`Maybe`・`Either` で確認した。`forall b. (a -> b) -> f b` と `f a` が
-  同じ情報を持っている。
 
 ## 言語拡張の確認
 
