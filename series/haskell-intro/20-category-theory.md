@@ -1395,7 +1395,7 @@ toLog :: Say ~> ((,) [String])
 toLog (Say s next) = ([s], next)
 ```
 
-`toLog` の行先となっている `((,) [String])` は、既に見たモノイドから作ったモナドです。ここではログを集める簡易な Writer として使っています。
+`toLog` の行先となっている `((,) [String])` は、既に見たモノイドから作ったモナドです。ここではログを集める簡易的な Writer として使っています。
 
 これらを `main` で使用します。
 
@@ -1434,7 +1434,7 @@ world
 
 # 米田の補題
 
-Operational モナドの回で、継続を命令の型から外しました。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#継続を命令の型から外す)
+Operational モナドでは、継続が命令の型に含まれていません。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#継続を命令の型から外す)
 
 ```hs
 data Program instr a where
@@ -1442,26 +1442,46 @@ data Program instr a where
     (:>>=) :: instr b -> (b -> Program instr a) -> Program instr a
 ```
 
-このとき `Functor instr =>` という制約が不要になりました。Free モナドでは命令の型ごとに `Functor` インスタンスを書く必要があったのに、Operational では書かずに済みます。
+Free モナドでは命令の型ごとに `Functor` インスタンスを書く必要があったのに対して、Operational では不要になったためです。
 
-なぜ済むのかを、ここで説明します。
+なぜ不要になったのかの理論的背景を、ここで説明します。
 
 ## Coyoneda
 
-`:>>=` の形だけを取り出した型を作ります。
+`:>>=` は命令と継続を組にする構築子でした。この組だけを取り出し、`Program` への再帰をやめて独立した型にしたものが **Coyoneda** です。
+
+:::message
+Co は圏論で双対（矢印の向きを逆にした対応物）を表す接頭辞で、後で扱う Yoneda と対になる型という意味です。今回は扱いませんが、Monad の双対である Comonad もあります。
+:::
+
+```hs
+(:>>=)   :: instr b -> (b -> Program instr a) -> Program  instr a
+Coyoneda :: f     b -> (b ->               a) -> Coyoneda f     a
+```
+
+命令 `instr b` を、任意の型構築子 `f` による型 `f b` に置き換えています。モナド `m a` の中に値が入っていたのと同じように、`f b` も中に `b` が入っている型です。継続 `b -> Program instr a` も、`Program` に戻らないただの関数 `b -> a` になっています。
+
+:::message
+`f` には型クラス制約が付かないため、`Monad` はもちろん `Functor` である必要もありません。
+:::
+
+定義は次のようになります。
 
 ```hs:Coyoneda.hs
 data Coyoneda f a = forall b. Coyoneda (f b) (b -> a)
 ```
 
-「容れ物 `f b` と、中身を `a` に変換する関数 `b -> a` の組」です。`:>>=` と見比べてください。
+`f b` と、中身を `a` に変換する関数 `b -> a` の組です。`b` は左辺の `Coyoneda f a` に現れません。左辺にない型変数を右辺で使うには明示的な束縛が必要なので、`forall b.` を指定しています。作る側は好きな `b` を選べますが、取り出す側からは `b` が何だったのかは見えません。Operational の `b` と同じ存在型です。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#継続を命令の型から外す)
+
+:::message
+`forall` を使ったこの書き方は、GHC2021 では書けますが、それ以前の標準（Haskell2010）では `ExistentialQuantification` という言語拡張が必要となります。
 
 ```hs
-(:>>=) :: instr b -> (b -> Program instr a) -> Program instr a  -- Operational
-Coyoneda :: f b -> (b -> a) -> Coyoneda f a                     -- 今回
+{-# LANGUAGE ExistentialQuantification #-}
 ```
 
-`b` が型全体に現れない存在型になっているところまで同じです。この型を **Coyoneda**（コ米田）と呼びます。
+Operational では同じ存在型を GADT で書いたため `GADTs` が必要でした。`GADTs` は GHC2021 に含まれないので、あちらはプラグマが必須です。
+:::
 
 `Functor` インスタンスを書きます。
 
@@ -1470,9 +1490,9 @@ instance Functor (Coyoneda f) where
     fmap h (Coyoneda fb g) = Coyoneda fb (h . g)
 ```
 
-`f` に何も要求していません。容れ物 `f b` には手を触れず、後ろの関数を `h . g` と合成するだけだからです。`instance Functor f =>` が付いていないことを確認してください。
+`fb` には手を触れず、後ろの関数を `h . g` と合成するだけのため、`f` に制約は必要ありません。
 
-包むのと取り出すのを用意します。
+`f a` を `Coyoneda` で包む関数と、取り出して `f a` に戻す関数を用意します。
 
 ```hs:Coyoneda.hs
 liftCoyoneda :: f a -> Coyoneda f a
@@ -1482,7 +1502,7 @@ lowerCoyoneda :: Functor f => Coyoneda f a -> f a
 lowerCoyoneda (Coyoneda fb g) = fmap g fb
 ```
 
-非対称になっています。包む `liftCoyoneda` は無制約ですが、取り出す `lowerCoyoneda` には `Functor f` が必要です。溜め込んだ関数を実際に容れ物へ適用する段になって初めて `fmap` が要求されます。
+制約は非対称になっています。包む `liftCoyoneda` は無制約ですが、取り出す `lowerCoyoneda` には `Functor f` が必要です。`fmap` を重ねるたびに合成されてきた関数を、実際に `fb` の中身へ適用する段になって初めて `fmap` が要求されます。裏を返せば、`f` に戻さない限り `Functor` は不要です。
 
 `Functor` インスタンスを持たない型で試します。
 
@@ -1519,7 +1539,7 @@ main = do
 newtype Yoneda f a = Yoneda (forall b. (a -> b) -> f b)
 ```
 
-**Yoneda**（米田）です。Coyoneda が「容れ物と関数の組」だったのに対し、こちらは「関数を受け取ると容れ物を返す関数」です。
+**Yoneda**（米田）です。Coyoneda が「`f b` と関数の組」だったのに対し、こちらは「関数を受け取ると `f b` を返す関数」です。
 
 ```hs:Yoneda.hs
 instance Functor (Yoneda f) where
@@ -1571,7 +1591,7 @@ $\mathrm{Hom}(a, -)$ は「$a$ から出る射を集めたもの」で、Haskell
 :::message
 `Coyoneda`・`Yoneda` は [kan-extensions](https://hackage.haskell.org/package/kan-extensions) パッケージの `Data.Functor.Coyoneda`・`Data.Functor.Yoneda` にあります。本記事では base だけで完結させるため自作しました。
 
-Yoneda は性能の改善にも使われます。`fmap` を重ねても関数の合成にしかならないので、`fmap` を何回も適用するコードで容れ物を作り直す手間が省けます。同じ発想で Free モナドの左結合 `>>=` を高速化する Codensity という道具もあります。
+Yoneda は性能の改善にも使われます。`fmap` を重ねても関数の合成にしかならないので、`fmap` を何回も適用するコードで `f b` を作り直す手間が省けます。同じ発想で Free モナドの左結合 `>>=` を高速化する Codensity という道具もあります。
 :::
 
 # まとめ
