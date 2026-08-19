@@ -7,6 +7,7 @@
 |`Join.hs`|`## join`|`>>=` と `join` が相互に定義できること|
 |`Laws.hs`|`## モノイド則`|`Monoid` の則と、`join`・`return` で書いたモナド則|
 |`Whisker.hs`|`## ηT と μT`|`@` で型引数を明示した $\eta T$・$T\eta$・$\mu T$・$T\mu$|
+|`Tuple.hs`|`## モノイドから作るモナド`|`Monoid w => Monad ((,) w)` の `return`・`>>=`・`>=>`|
 
 ## 実行結果
 
@@ -41,6 +42,17 @@ True
 True
 ```
 
+```text:Tuple.hs
+[]
+([],4)
+["g"]
+(["g"],8)
+(["g"],8)
+True
+True
+True
+```
+
 ## 確認したこと
 
 - **`>>=` と `join` は相互に定義できる。** `bind m k = join (fmap k m)` が
@@ -58,10 +70,24 @@ True
   `[[1,2,3]]` と `[[1],[2],[3]]` で結果が違う。作用する側の違いがそのまま出る。
 - **$\mu$ の側も同様。** `join @m @(m a)`（$\mu T$）と `fmap @m (join @m @a)`（$T\mu$）は
   型が `m (m (m a)) -> m (m a)` で一致し、`join` を後ろに付けると結合律で一致する。
+- **`Monoid w => Monad ((,) w)` が base にある。** モノイド `w` を決めるとモナドが
+  1 つできる例。
+- **モノイドの側とモナドの側が式ごとに対応する。** `mempty` の `[]` が
+  `return 4 :: ([String], Int)` の左側に、`[] <> ["g"]` の `["g"]` が
+  `return 4 >>= \x -> (["g"], x * 2)` の左側にそのまま現れる。
+  増えるのは値の側（4・8）だけ。
+- **`mempty <> x == x` にあたるのが `return >=> f == f`。**
+  `(return >=> \x -> (["g"], x * 2)) 4` が `(["g"],8)` で、`>>=` 版と一致する。
+- **本文に載せた `pure`・`<*>`・`>>=` の定義が base の挙動と一致する。**
+  `pure a == (mempty, a)`、`(w1, f) <*> (w2, a) == (w1 <> w2, f a)`、
+  `m >>= k` が 2 つの `w` を `<>` でつなぐことを等式で確認した。
+- **`(,) w` は `newtype` ではない。** GHCi の `:info (,)` で
+  `instance Monoid a => Monad ((,) a) -- Defined in 'GHC.Base'` が出る。
+  タプルの型構築子を部分適用したものが、そのままインスタンスになっている。
 
 ## 言語拡張の確認
 
-`Join.hs`・`Laws.hs` は `runghc -XHaskell2010` で通る。**言語拡張は不要。**
+`Join.hs`・`Laws.hs`・`Tuple.hs` は `runghc -XHaskell2010` で通る。**言語拡張は不要。**
 
 `Whisker.hs` は `ScopedTypeVariables`（`forall` の型変数を本体で使う）と
 `TypeApplications`（`@`）が必要。**どちらも GHC2021 に含まれるのでプラグマは書かない。**
