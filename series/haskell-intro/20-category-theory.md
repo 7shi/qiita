@@ -1451,7 +1451,7 @@ Free モナドでは命令の型ごとに `Functor` インスタンスを書く�
 `:>>=` は命令と継続を組にする構築子でした。この組だけを取り出し、`Program` への再帰をやめて独立した型にしたものが **Coyoneda** です。
 
 :::message
-Co は圏論で双対（矢印の向きを逆にした対応物）を表す接頭辞で、後で扱う Yoneda と対になる型という意味です。今回は扱いませんが、Monad の双対である Comonad もあります。
+Co は圏論で双対（矢印の向きをすべて逆にした対応物）を表す接頭辞で、後で扱う Yoneda と対になる型という意味です。今回は扱いませんが、Monad の双対である Comonad もあります。
 :::
 
 ```hs
@@ -1533,15 +1533,20 @@ main = do
 
 ## Yoneda
 
-向きを逆にした型もあります。
+向きを逆にした型もあります。まず Coyoneda と並べます。
+
+```hs
+Coyoneda ::                 f b -> (b -> a) -> Coyoneda f a
+Yoneda   :: (forall b. (a -> b) ->     f b) -> Yoneda   f a
+```
+
+Coyoneda が「`f b` と関数 `b -> a` の組」だったのに対し、こちらは「関数 `a -> b` を受け取ると `f b` を返す関数」です。`b` の向きが逆で、Coyoneda は持っている `f b` の中身を `a` に変換するのに対し、こちらは渡された `a -> b` を使って `f b` を作ります。`forall b.` の位置も、型全体ではなく引数の関数の側に移っています。
+
+これが **Yoneda**（米田）です。定義と、包む関数・取り出す関数は次のようになります。
 
 ```hs:Yoneda.hs
 newtype Yoneda f a = Yoneda (forall b. (a -> b) -> f b)
-```
 
-**Yoneda**（米田）です。Coyoneda が「`f b` と関数の組」だったのに対し、こちらは「関数を受け取ると `f b` を返す関数」です。
-
-```hs:Yoneda.hs
 instance Functor (Yoneda f) where
     fmap h (Yoneda y) = Yoneda (\k -> y (k . h))
 
