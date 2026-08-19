@@ -1395,7 +1395,7 @@ toLog :: Say ~> ((,) [String])
 toLog (Say s next) = ([s], next)
 ```
 
-`toLog` の行先が `((,) [String])` になっているのは、モノイド対象の章で見た `Monoid w => Monad ((,) w)` を簡易な Writer として使っているためです。
+`toLog` の行先となっている `((,) [String])` は、既に見たモノイドから作ったモナドです。ここではログを集める簡易な Writer として使っています。
 
 これらを `main` で使用します。
 
