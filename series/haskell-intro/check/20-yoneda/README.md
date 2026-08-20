@@ -44,6 +44,13 @@ Just "4"
 |`Coyoneda.hs`|`ExistentialQuantification`|**必要**（`data Coyoneda f a = forall b. ...`）|
 |〃|`GADTs`|`ExistentialQuantification` の代わりでも通る|
 |`Yoneda.hs`|`RankNTypes`|**必要**（`newtype` のフィールドに `forall`）|
+|〃|`ExplicitForAll`|`RankNTypes` に含まれるので単独では不要|
+
+`-XHaskell2010` で確かめた挙動は次のとおり。`forall` を型に書くこと自体が拒否され
+（`Illegal symbol 'forall'`）、`ExplicitForAll` だけ足すと今度は多相な型を引数の位置に
+置けないと言われる（`Illegal polymorphic type`）。`RankNTypes` は `ExplicitForAll` を
+含むため、プラグマは `RankNTypes` 1 つでよい。`Coyoneda.hs` の存在型は `RankNTypes`
+では通らず、`ExistentialQuantification`（または `GADTs`）が必要。
 
 **`ExistentialQuantification`・`RankNTypes` はどちらも GHC2021 に含まれるのでプラグマは不要。**
 17 回では `GADTs` が必要だったが、今回は GADT 構文を使わず `forall` を直接書いているため

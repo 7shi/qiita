@@ -19,5 +19,5 @@ main = do
     -- Box は Functor ではないが Coyoneda Box は Functor
     print $ unBox (fmap (* 2) (liftCoyoneda (Box 3)))
     print $ unBox (fmap show (fmap (+ 1) (liftCoyoneda (Box 3))))
-    -- Functor がある型なら取り出せる
+    -- Functor の場合
     print $ lowerCoyoneda (fmap (* 2) (liftCoyoneda [1, 2, 3]))

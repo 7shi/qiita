@@ -410,7 +410,6 @@ main = do
     print $ fmap (g . h) (Just 3)  == (fmap g . fmap h) (Just 3)
     print $ fmap (g . h) [1, 2, 3] == (fmap g . fmap h) [1, 2, 3]
 ```
-
 ```text:実行結果
 Just 4
 [2,3,4]
@@ -544,7 +543,6 @@ main = do
     print $ (fmap h . maybeToList) (Nothing :: Maybe Int)
     print $ (maybeToList . fmap h) (Nothing :: Maybe Int)
 ```
-
 ```text:実行結果
 Just "1"
 Just "1"
@@ -633,7 +631,6 @@ main = do
     -- Kleisli の >>> でも同じ
     print $ runKleisli (Kleisli step >>> Kleisli step) 3
 ```
-
 ```text:実行結果
 [4,6]
 [5,8,7,12]
@@ -686,7 +683,6 @@ main = do
     print $ Just 3 `bind` \x -> Just (x * 2)
     print $ join' (Just (Just 3))
 ```
-
 ```text:実行結果
 [1,10,2,20,3,30]
 [1,10,2,20,3,30]
@@ -1408,7 +1404,6 @@ main = do
     -- 往復: 決まった方に逆向きの操作を掛けると元に戻る
     print $ (foldFree toLog . liftF) (Say "hello" ())
 ```
-
 ```text:実行結果
 hello
 world
@@ -1456,7 +1451,7 @@ newtype Cont r a = Cont { runCont :: (a -> r) -> r }
 
 `Cont r a` の中に `a` はありません。あるのは「`a -> r` を渡されたら `r` を返す」関数だけです。それでも計算は進みました。値そのものではなく、値の使われ方を持つという形です。
 
-同じ発想を関手に適用します。`f a` を直接持つ代わりに、中身の `a` に適用する関数を受け取り、結果を `f` に包んで返す形にします。
+同じ発想を関手に適用します。`f` を関手として、`f a` を直接持つ代わりに、中身の `a` に適用する関数を受け取り、その結果を `f` で包んで返す形にします。`a` は中身の型に使っているため、関数の行き先は別の型 `b` とし、返るのは `f b` になります。
 
 ```hs
 (a -> r) -> r      -- Cont r a、値 a の代わり
@@ -1473,11 +1468,11 @@ forall b. (a -> b) -> f b
 
 これなら `b` として `a` 自身を選べます。何もしない関数 `id :: a -> a` を渡せば `f a` が返ってくるので、情報は失われていません。
 
-この形は既に見たものでもあります。`(a -> )` を関手とみなすと、そこから `f` への自然変換になっています。`(a -> )` は「`a` から出る関数を集めたもの」で、後で数式に出てくる $\mathrm{Hom}(a, -)$ にあたります。
+この形は既に見たものでもあります。`(a -> )` を関手とみなせば、そこから `f` への自然変換になっています。`(a -> )` は「`a` から出る関数を集めたもの」で、数式では $\mathrm{Hom}(a, -)$ と表記します。
 
 ## Yoneda
 
-この形に名前が付いています。**Yoneda**（米田）です。数学者の米田信夫に由来します。
+この形には、数学者の米田信夫に由来する **Yoneda** という名前が付いています。
 
 ```hs:Yoneda.hs
 newtype Yoneda f a = Yoneda (forall b. (a -> b) -> f b)
@@ -1486,7 +1481,7 @@ newtype Yoneda f a = Yoneda (forall b. (a -> b) -> f b)
 `forall b.` が `newtype` の内側にあるため、型全体ではなく、包まれた関数がすべての `b` を引き受けます。使う側が `b` を選び、`Yoneda f a` の側はそれに合わせて答える関係です。
 
 :::message
-引数として渡される関数に `forall` を書くには `RankNTypes` という言語拡張が必要ですが、GHC2021 に含まれるためプラグマは不要です。それ以前の標準（Haskell2010）では次のプラグマが必要となります。
+`forall` を型に書くこと自体は `ExplicitForAll`、引数として渡される関数のように多相な型を引数の位置へ置くことは `RankNTypes` という言語拡張を必要とします。どちらも GHC2021 に含まれるためプラグマは不要です。それ以前の標準（Haskell2010）では次のプラグマが必要となります（`RankNTypes` は `ExplicitForAll` を含むため、これ 1 つで足ります）。
 
 ```hs
 {-# LANGUAGE RankNTypes #-}
@@ -1529,7 +1524,6 @@ main = do
     print $ lowerYoneda (fmap (* 2) (liftYoneda [1, 2, 3]))
     print $ lowerYoneda (fmap show (fmap (+ 1) (liftYoneda (Just 3))))
 ```
-
 ```text:実行結果
 [1,2,3]
 Just 'a'
@@ -1540,9 +1534,7 @@ Just "4"
 
 往復しても元に戻ります。つまり `forall b. (a -> b) -> f b` と `f a` は同じ情報を持っています。見た目はまるで違うのに、片方からもう片方が復元できます。
 
-### 一般形
-
-これが**米田の補題**（Yoneda lemma）の Haskell 版です。一般形は次のように書かれます。
+これが**米田の補題**（Yoneda lemma）の Haskell 版です。圏論では次のように書かれます。
 
 $$
 \mathrm{Nat}(\mathrm{Hom}(a, -), F) \cong F a
@@ -1550,7 +1542,19 @@ $$
 
 $\mathrm{Hom}(a, -)$ は「$a$ から出る射を集めたもの」で、Haskell では `(a -> )` にあたります。$\mathrm{Nat}$ は自然変換全体、$\cong$ は同型を表します。左辺は `forall b. (a -> b) -> f b`、右辺は `f a` で、上で確かめた往復がこの $\cong$ です。
 
-なぜこれが成り立つのかには立ち入りません。「対象そのものと、その対象から出る射の全体は同じ情報を持つ」という主張で、圏論の基本定理の 1 つに数えられます。証明は本格的な本に譲ります。
+「対象そのものと、その対象から出る射の全体は同じ情報を持つ」という主張で、圏論の基本定理の 1 つに数えられます。本記事の範囲を超えるため、証明は本格的な書籍に譲ります。👉[参考](#参考)
+
+### 普遍性との関係
+
+この形は普遍性で見た 1 対 1 対応と同じ骨格です。`foldMap` では、どのようなモノイド `m` に対しても $\mathrm{Hom}_{\mathbf{Mon}}(F a, m)$ と $\mathrm{Hom}_{\mathbf{Set}}(a, U m)$ が 1 対 1 に対応し、往復すると元に戻ることを確かめました。米田の補題も、どのような `b` に対しても答えられる自然変換の全体が `f a` と 1 対 1 に対応し、`liftYoneda` と `lowerYoneda` の往復で元に戻ります。相手を固定せずに対応が付き、往復で戻るという形が共通しています。
+
+さらに米田の補題は、普遍性が対象を決められることの根拠にもなっています。$F$ として $\mathrm{Hom}(b, -)$ を選ぶと、次のようになります。
+
+$$
+\mathrm{Nat}(\mathrm{Hom}(a, -), \mathrm{Hom}(b, -)) \cong \mathrm{Hom}(b, a)
+$$
+
+対象そのものを直接見なくても、他のすべての対象との射の対応だけで対象が決まるということです。この、対象 $a$ を $\mathrm{Hom}(a, -)$ に移す対応を**米田埋め込み**（Yoneda embedding）と呼びます。普遍性はまさに「あらゆる相手との射がどう対応するか」を述べた条件なので、それを満たす対象は同型を除いて 1 つに限られます。自由モノイドがリストになるしかなかったのは、この意味です。
 
 ## Coyoneda
 
@@ -1559,14 +1563,12 @@ Yoneda は関数を受け取る形でした。引数として受け取ってい�
 * 受け取る側では `a -> b` だったものが、持つ側では `b -> a` になります。
 * 「すべての `b` に答えられる」という全称の要求は、「ある `b` を隠し持つ」という存在に変わります。
 
-構築子の型を並べます。
+この型を **Coyoneda** と呼びます。構築子の型を並べます。
 
 ```hs
-Yoneda   :: (forall b. (a -> b) -> f b) -> Yoneda f a
-Coyoneda :: forall b. f b -> (b -> a) -> Coyoneda f a
+Yoneda   :: (forall b. (a -> b) -> f b) -> Yoneda   f a
+Coyoneda ::  forall b. f b -> (b -> a)  -> Coyoneda f a
 ```
-
-この型を **Coyoneda** と呼びます。
 
 :::message
 Co は圏論で双対（矢印の向きをすべて逆にした対応物）を表す接頭辞で、Yoneda と対になる型という意味です。今回は扱いませんが、Monad の双対である Comonad もあります。
@@ -1578,16 +1580,14 @@ Co は圏論で双対（矢印の向きをすべて逆にした対応物）を�
 data Coyoneda f a = forall b. Coyoneda (f b) (b -> a)
 ```
 
-`f b` と、中身を `a` に変換する関数 `b -> a` の組です。`b` は左辺の `Coyoneda f a` に現れません。左辺にない型変数を右辺で使うには明示的な束縛が必要なので、`forall b.` を指定しています。作る側は好きな `b` を選べますが、取り出す側からは `b` が何だったのかは見えません。Operational の `b` と同じ存在型です。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#継続を命令の型から外す)
+`f b` と、中身を `a` に変換する関数 `b -> a` の組です。`b` は左辺の `Coyoneda f a` には現れません。左辺にない型変数を右辺で使うには明示的な束縛が必要なので、`forall b.` を指定しています。作る側は好きな `b` を選べますが、取り出す側からは `b` が何だったのかは見えません。Operational の `b` と同じ存在型です。👉[Operationalモナド](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad#継続を命令の型から外す)
 
 :::message
-`forall` を使ったこの書き方は、GHC2021 では書けますが、それ以前の標準（Haskell2010）では `ExistentialQuantification` という言語拡張が必要となります。
+存在型で `forall` を使うには `ExistentialQuantification` という言語拡張が必要ですが、GHC2021 に含まれるためプラグマは不要です。それ以前の標準（Haskell2010）では次のプラグマが必要となります。
 
 ```hs
 {-# LANGUAGE ExistentialQuantification #-}
 ```
-
-Operational では同じ存在型を GADT で書いたため `GADTs` が必要でした。`GADTs` は GHC2021 に含まれないので、あちらはプラグマが必須です。
 :::
 
 `Functor` インスタンスを書きます。
@@ -1609,9 +1609,9 @@ lowerCoyoneda :: Functor f => Coyoneda f a -> f a
 lowerCoyoneda (Coyoneda fb g) = fmap g fb
 ```
 
-制約は非対称になっています。包む `liftCoyoneda` は無制約ですが、取り出す `lowerCoyoneda` には `Functor f` が必要です。`fmap` を重ねるたびに合成されてきた関数を、実際に `fb` の中身へ適用する段になって初めて `fmap` が要求されます。裏を返せば、`f` に戻さない限り `Functor` は不要です。
+制約は非対称になっています。包む `liftCoyoneda` は無制約ですが、取り出す `lowerCoyoneda` には `Functor f` が必要です。`fmap` を重ねるたびに合成されてきた関数を、実際に `fb` の中身へ適用する段になって初めて `fmap` が要求されます。裏を返せば、`f` に戻さない限り `Functor` は不要です。中身を使いたいだけなら、パターンマッチで `f b` を取り出して関数を適用すれば済みます。
 
-`Functor` インスタンスを持たない型で試します。
+`Functor` インスタンスを持たない型で確認します。
 
 ```hs:Coyoneda.hs
 data Box a = Box a
@@ -1624,19 +1624,20 @@ main = do
     -- Box は Functor ではないが Coyoneda Box は Functor
     print $ unBox (fmap (* 2) (liftCoyoneda (Box 3)))
     print $ unBox (fmap show (fmap (+ 1) (liftCoyoneda (Box 3))))
-    -- Functor がある型なら取り出せる
+    -- Functor の場合
     print $ lowerCoyoneda (fmap (* 2) (liftCoyoneda [1, 2, 3]))
 ```
-
 ```text:実行結果
 6
 "4"
 [2,4,6]
 ```
 
-`Box` には `Functor` インスタンスがありません。それでも `Coyoneda Box` に対しては `fmap` が書けています。2 行目では `fmap` を 2 回重ねていますが、`Box` の中身は 1 度も動かず、関数が `show . (+1)` と合成されただけです。
+`Box` には `Functor` インスタンスがありませんが、`Coyoneda Box` に対して `fmap` が使用できます。`fmap` を 2 回重ねれば、関数が `show . (+1)` と合成されます。任意の型構築子を `Functor` にする構成になっています。
 
-任意の型構築子を `Functor` にしてしまう構成になっています。
+:::message
+Yoneda は性能の改善にも使われます。`fmap` を重ねても関数の合成にしかならないので、`fmap` を何回も適用するコードで `f b` を作り直す手間が省けます。同じ発想で Free モナドの左結合 `>>=` を高速化する Codensity という道具もあります。
+:::
 
 ## 双対の対比
 
@@ -1652,9 +1653,15 @@ Yoneda と Coyoneda を並べます。
 
 どちらも `f a` と同じ情報を持ち、`lift`・`lower` で往復できます。違いは制約の位置で、Yoneda は入口、Coyoneda は出口に `Functor` が必要です。Coyoneda が `Functor` を後から与える道具になるのは、入口が無制約だからです。
 
-## Functor が不要だった理由
+Yoneda 側の往復が米田の補題でした。Coyoneda 側の往復はそれを裏返した主張で、**余米田の補題**（co-Yoneda lemma）と呼ばれます。`f` が関手であれば、`f b` と `b -> a` の組は `f a` と同型になる、というものです。ここで `f` が関手であることが必要なのは、往復の片道である `lowerCoyoneda` が `fmap` を使うためです。裏を返せば、`f` が関手でない場合に残るのは組の側だけで、それが `Coyoneda f` を新たに関手にしています。
 
-冒頭の `:>>=` と Coyoneda を並べます。
+:::message
+`Coyoneda`・`Yoneda` は [kan-extensions](https://hackage.haskell.org/package/kan-extensions) パッケージの `Data.Functor.Coyoneda`・`Data.Functor.Yoneda` にあります。本記事では base だけで完結させるため自作しました。
+:::
+
+## Operational との関係
+
+Operational の `:>>=` と Coyoneda を並べます。
 
 ```hs
 (:>>=)   :: instr b -> (b -> Program instr a) -> Program  instr a
@@ -1663,13 +1670,9 @@ Coyoneda :: f     b -> (b ->               a) -> Coyoneda f     a
 
 命令 `instr b` が任意の型構築子による `f b` に、継続 `b -> Program instr a` が `Program` に戻らないただの関数 `b -> a` になっているだけで、形は同じです。Operational の命令と継続の組は、命令を Coyoneda で包んだものでした。
 
-Free モナドは命令を `Free f` の中に直接埋め込むため、中身を書き換えるには `f` 自身の `fmap` が必要でした。Operational は継続を分けて持つことで、その `fmap` を関数の合成に置き換えています。これが `Functor` インスタンスが不要だった理由です。
+Free モナドは命令を `Free f` の中に直接埋め込むため、中身を書き換えるには `f` 自身の `fmap` が必要でした。Operational は継続を分けて持つことで、`fmap` を関数の合成に潰しています。Coyoneda が `Box` を `Functor` にしたのと同じ仕組みで、これが `Functor` インスタンスが不要だった理由です。
 
-:::message
-`Coyoneda`・`Yoneda` は [kan-extensions](https://hackage.haskell.org/package/kan-extensions) パッケージの `Data.Functor.Coyoneda`・`Data.Functor.Yoneda` にあります。本記事では base だけで完結させるため自作しました。
-
-Yoneda は性能の改善にも使われます。`fmap` を重ねても関数の合成にしかならないので、`fmap` を何回も適用するコードで `f b` を作り直す手間が省けます。同じ発想で Free モナドの左結合 `>>=` を高速化する Codensity という道具もあります。
-:::
+余米田の補題は、この肩代わりで何も失われていないことを保証します。`instr` が `Functor` なら `Coyoneda instr` は `instr` と同型なので、Operational は Free と別物にはなりません。`Functor` でない場合も、持っているのは `instr b` と関数の組だけです。`instr b` の送り先さえ決めれば残りは合成するしかなく、命令 1 つ分のインタープリターで全体の解釈が決まります。
 
 # まとめ
 
