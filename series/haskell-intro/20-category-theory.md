@@ -879,7 +879,7 @@ $$
 join . join == join . fmap join  -- 結合法則
 ```
 
-`join . join` と `join . fmap join` は、3 重のモナドから 2 層を剥がす 2 通りの順序です。外側の 2 層を先に剥がす、内側の 2 層を先に剥がすかの違いで、どちらも行先は同じです。
+`join . join` と `join . fmap join` は、3 重のモナドから 2 層を剥がす 2 通りの順序です。外側の 2 層を先に剥がすか、内側の 2 層を先に剥がすかの違いで、どちらも行先は同じです。
 
 $$
 \begin{CD}
@@ -1295,7 +1295,7 @@ foldMap :: Monoid m => (a -> m) -> [a]    -> m
 
 GHCi で動作を確認します。
 
-```text:GHCi
+```hs:GHCi
 ghci> import Data.Monoid
 ghci> foldMap (\x -> [show x]) [1, 2, 3]
 ["1","2","3"]
@@ -1437,7 +1437,7 @@ data Program instr a where
     (:>>=) :: instr b -> (b -> Program instr a) -> Program instr a
 ```
 
-Free モナドでは命令の型ごとに `Functor` インスタンスを書く必要があったのに対して、Operational では不要になったためです。
+これにより、Free モナドでは命令の型ごとに `Functor` インスタンスを書く必要があったのに対して、Operational では不要になりました。
 
 この差の背景にあるのが、今回扱う米田の補題です。ただし `:>>=` の形は補題を裏返した側にあたるため、先に素直な向きを見てから裏返します。
 

@@ -7,8 +7,8 @@ etaT = return @m @(m a)         -- ηT: 外側を m で包む
 
 -- μT・Tμ: T³ ⇒ T²
 tMu, muT :: forall m a. Monad m => m (m (m a)) -> m (m a)
-tMu = fmap @m (join @m @a)      -- Tμ: 内側を m で包む
-muT = join @m @(m a)            -- μT: 外側を m で包む
+tMu = fmap @m (join @m @a)      -- Tμ: 内側の m を潰す
+muT = join @m @(m a)            -- μT: 外側の m を潰す
 
 main :: IO ()
 main = do

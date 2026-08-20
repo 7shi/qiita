@@ -242,7 +242,7 @@ False
 
 このように「最低限これだけ実装すればよい」という組み合わせを**最小完全定義**（minimal complete definition）と呼びます。GHCi の `:i` で確認できます。
 
-```text:GHCi
+```hs:GHCi
 ghci> :i Eq
 type Eq :: * -> Constraint
 class Eq a where
@@ -380,7 +380,7 @@ instance Read Color where
 
 `Num` の中身を見てみます。
 
-```text:GHCi
+```hs:GHCi
 ghci> :i Num
 type Num :: * -> Constraint
 class Num a where
@@ -403,7 +403,7 @@ class Num a where
 
 割り算が入っていないことにも注意してください。
 
-```text:GHCi
+```hs:GHCi
 ghci> :t (/)
 (/) :: Fractional a => a -> a -> a
 ```
@@ -412,7 +412,7 @@ ghci> :t (/)
 
 最後の `fromInteger` は整数リテラルの変換です。ソースに書いた `1` は `Num a => a` という型を持ち、どの数値型にもなれます。
 
-```text:GHCi
+```hs:GHCi
 ghci> :t 1
 1 :: Num a => a
 ```
@@ -856,7 +856,7 @@ Just 1
 
 この「型の型」を**種**（kind）と呼びます。GHCi の `:k` で確認できます。
 
-```text:GHCi
+```hs:GHCi
 ghci> :k Int
 Int :: *
 ghci> :k Bool
@@ -875,7 +875,7 @@ Either :: * -> * -> *
 
 型クラスの種も見られます。
 
-```text:GHCi
+```hs:GHCi
 ghci> :k Show
 Show :: * -> Constraint
 ghci> :k Container
@@ -884,7 +884,7 @@ Container :: (* -> *) -> Constraint
 
 まず矢印 `->` の右側を見ます。ここが `*` ではなく `Constraint` になっています。`Constraint` は**型クラス制約**を表します。上で見た `Maybe :: * -> *` が型を受け取って型を返すのに対し、`Show :: * -> Constraint` は型を受け取って制約を返します。`Show Int` は型ではなく、`show :: Show a => a -> String` の `Show a` の位置に書けるもの、と解釈できます。
 
-```text:GHCi
+```hs:GHCi
 ghci> :k Maybe Int
 Maybe Int :: *
 ghci> :k Show Int
@@ -916,7 +916,7 @@ instance Container Int where
 
 表に入れた `Monad` も、種が `* -> *` の型クラスです。
 
-```text:GHCi
+```hs:GHCi
 ghci> :k Monad
 Monad :: (* -> *) -> Constraint
 ```
