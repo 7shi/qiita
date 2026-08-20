@@ -13,7 +13,7 @@ tags:
 - name: Haskell
   versions: []
 title: Haskell 代数的データ型 超入門
-updated_at: '2026-08-13T03:02:11+09:00'
+updated_at: '2026-08-20T10:09:24+09:00'
 url: https://qiita.com/7shi/items/1ce76bde464b4a55c143
 slide: false
 ---
@@ -41,6 +41,7 @@ slide: false
 1. [Haskell Operationalモナド 超入門](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad)
 1. [Haskell Effモナド 超入門](https://zenn.dev/7shi/articles/20260811-haskell-eff-monad)
 1. [Haskell アロー 超入門](https://zenn.dev/7shi/articles/20260813-haskell-arrow)
+1. [Haskell 圏論 超入門](https://zenn.dev/7shi/articles/20260820-haskell-category-theory)
 
 練習の解答例は別記事に掲載します。
 

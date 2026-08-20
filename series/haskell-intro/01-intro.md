@@ -6,12 +6,12 @@ id: 145f1234f8ec2af923ef
 likes_count: 1289
 private: false
 reactions_count: 0
-stocks_count: 1237
+stocks_count: 1238
 tags:
 - name: Haskell
   versions: []
 title: Haskell 超入門
-updated_at: '2026-08-13T03:02:05+09:00'
+updated_at: '2026-08-20T10:09:18+09:00'
 url: https://qiita.com/7shi/items/145f1234f8ec2af923ef
 slide: false
 ---
@@ -39,6 +39,7 @@ Haskellで簡単なプログラムを書くのに最低限必要な基礎文法�
 1. [Haskell Operationalモナド 超入門](https://zenn.dev/7shi/articles/20260809-haskell-operational-monad)
 1. [Haskell Effモナド 超入門](https://zenn.dev/7shi/articles/20260811-haskell-eff-monad)
 1. [Haskell アロー 超入門](https://zenn.dev/7shi/articles/20260813-haskell-arrow)
+1. [Haskell 圏論 超入門](https://zenn.dev/7shi/articles/20260820-haskell-category-theory)
 
 練習の解答例は別記事に掲載します。
 

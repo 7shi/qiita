@@ -18,7 +18,7 @@ tags:
   versions: []
 title: Haskell 圏論 超入門
 updated_at: ''
-url: ''
+url: 'https://zenn.dev/7shi/articles/20260820-haskell-category-theory'
 slide: false
 ---
 
