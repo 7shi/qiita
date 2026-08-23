@@ -6,12 +6,12 @@ id: ac3c2b1bea3bb4e9eb70
 likes_count: 13
 private: false
 reactions_count: 0
-stocks_count: 3
+stocks_count: 2
 tags:
 - name: Gemini
   versions: []
 title: Gemini APIで使えるモデル
-updated_at: '2026-08-03T21:54:43+09:00'
+updated_at: '2026-08-23T15:17:04+09:00'
 url: https://qiita.com/7shi/items/ac3c2b1bea3bb4e9eb70
 slide: false
 ---
@@ -78,16 +78,12 @@ echo "LATESTシンボリックリンクを $FILENAME に更新しました。"
 取得したすべてのモデルが使用可能かは未確認です。
 :::
 
-# 2026/08/03
+# 2026/08/23
 
 name|display_name
 ----|----
 gemini-2.5-flash|Gemini 2.5 Flash
 gemini-2.5-pro|Gemini 2.5 Pro
-gemini-2.0-flash|Gemini 2.0 Flash
-gemini-2.0-flash-001|Gemini 2.0 Flash 001
-gemini-2.0-flash-lite-001|Gemini 2.0 Flash-Lite 001
-gemini-2.0-flash-lite|Gemini 2.0 Flash-Lite
 gemini-2.5-flash-preview-tts|Gemini 2.5 Flash Preview TTS
 gemini-2.5-pro-preview-tts|Gemini 2.5 Pro Preview TTS
 gemma-4-26b-a4b-it|Gemma 4 26B A4B IT
@@ -97,7 +93,6 @@ gemini-flash-lite-latest|Gemini Flash-Lite Latest
 gemini-pro-latest|Gemini Pro Latest
 gemini-2.5-flash-lite|Gemini 2.5 Flash-Lite
 gemini-2.5-flash-image|Nano Banana
-gemini-3-pro-preview|Gemini 3 Pro Preview
 gemini-3-flash-preview|Gemini 3 Flash Preview
 gemini-3.1-pro-preview|Gemini 3.1 Pro Preview
 gemini-3.1-pro-preview-customtools|Gemini 3.1 Pro Preview Custom Tools
@@ -113,10 +108,10 @@ gemini-3.5-flash|Gemini 3.5 Flash
 gemini-3.5-flash-lite|Gemini 3.5 Flash Lite
 gemini-omni-flash-preview|Gemini Omni Flash Preview
 gemini-3.6-flash|Gemini 3.6 Flash
+gemini-3.7-flash|Gemini 3.7 Flash
 lyria-3-clip-preview|Lyria 3 Clip Preview
 lyria-3-pro-preview|Lyria 3 Pro Preview
 gemini-3.1-flash-tts-preview|Gemini 3.1 Flash TTS Preview
-gemini-robotics-er-1.5-preview|Gemini Robotics-ER 1.5 Preview
 gemini-robotics-er-1.6-preview|Gemini Robotics-ER 1.6 Preview
 gemini-robotics-er-2-preview|Gemini Robotics-ER 2 Preview
 gemini-2.5-computer-use-preview-10-2025|Gemini 2.5 Computer Use Preview 10-2025
@@ -128,9 +123,6 @@ gemini-embedding-001|Gemini Embedding 001
 gemini-embedding-2-preview|Gemini Embedding 2 Preview
 gemini-embedding-2|Gemini Embedding 2
 aqa|Model that performs Attributed Question Answering.
-imagen-4.0-generate-001|Imagen 4
-imagen-4.0-ultra-generate-001|Imagen 4 Ultra
-imagen-4.0-fast-generate-001|Imagen 4 Fast
 veo-3.1-generate-preview|Veo 3.1
 veo-3.1-fast-generate-preview|Veo 3.1 fast
 veo-3.1-lite-generate-preview|Veo 3.1 lite
@@ -143,6 +135,18 @@ gemini-3.5-live-translate-preview|Gemini 3.5 Live Translate Preview
 
 # 差分
 
+```diff:2026/08/03 と 2026/08/23 の差分
+-gemini-2.0-flash|Gemini 2.0 Flash
+-gemini-2.0-flash-001|Gemini 2.0 Flash 001
+-gemini-2.0-flash-lite-001|Gemini 2.0 Flash-Lite 001
+-gemini-2.0-flash-lite|Gemini 2.0 Flash-Lite
+-gemini-3-pro-preview|Gemini 3 Pro Preview
++gemini-3.7-flash|Gemini 3.7 Flash
+-gemini-robotics-er-1.5-preview|Gemini Robotics-ER 1.5 Preview
+-imagen-4.0-generate-001|Imagen 4
+-imagen-4.0-ultra-generate-001|Imagen 4 Ultra
+-imagen-4.0-fast-generate-001|Imagen 4 Fast
+```
 ```diff:2026/06/04 と 2026/08/03 の差分
 +gemini-3.1-flash-lite-image|Nano Banana 2 Lite
 +gemini-3.5-flash-lite|Gemini 3.5 Flash Lite
