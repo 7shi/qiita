@@ -15,7 +15,7 @@ tags:
 - name: ベクトル検索
   versions: []
 title: テキスト埋め込みモデル Ruri を使ってみる
-updated_at: '2026-06-13T01:27:44+09:00'
+updated_at: '2026-09-15T23:00:11+09:00'
 url: https://qiita.com/7shi/items/90c745833c7839e38c03
 slide: false
 ---
@@ -244,7 +244,7 @@ test.py というファイルに実装していきます。
 使用するファイルを設定します。
 
 ```python
-textfile = "all-ja-gemini-lines.md"
+textfile = "ja-gemini-lines.md"
 tensorfile = "vectors.safetensors"
 ```
 
