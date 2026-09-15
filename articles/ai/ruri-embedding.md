@@ -15,7 +15,7 @@ tags:
 - name: ベクトル検索
   versions: []
 title: テキスト埋め込みモデル Ruri を使ってみる
-updated_at: '2026-09-15T23:00:11+09:00'
+updated_at: '2026-09-16T00:06:16+09:00'
 url: https://qiita.com/7shi/items/90c745833c7839e38c03
 slide: false
 ---
@@ -348,6 +348,10 @@ $ uv run test.py
 :::note info
 スコアが 1 に近いほど、入力した文章に意味が近いことを示します。この例では直接「楽器」という言葉が使用されていなくても、関係する内容が検索できています。
 :::
+
+以下にこのテキストを対象とした質問があるので、入力してみると良いでしょう。
+
+- https://7shi.github.io/bou-thakuranir_haat/qa-ja.html
 
 # モデルの対応言語
 
