@@ -11,7 +11,7 @@ tags:
 - name: Gemini
   versions: []
 title: Gemini APIで使えるモデル
-updated_at: '2026-08-23T15:17:04+09:00'
+updated_at: '2026-10-09T21:55:35+09:00'
 url: https://qiita.com/7shi/items/ac3c2b1bea3bb4e9eb70
 slide: false
 ---
@@ -78,7 +78,7 @@ echo "LATESTシンボリックリンクを $FILENAME に更新しました。"
 取得したすべてのモデルが使用可能かは未確認です。
 :::
 
-# 2026/08/23
+# 2026/10/09
 
 name|display_name
 ----|----
@@ -104,18 +104,26 @@ nano-banana-pro-preview|Nano Banana Pro
 gemini-3.1-flash-image-preview|Nano Banana 2
 gemini-3.1-flash-image|Nano Banana 2
 gemini-3.1-flash-lite-image|Nano Banana 2 Lite
+gemini-nano-banana-2.1|Nano Banana 2.1
 gemini-3.5-flash|Gemini 3.5 Flash
 gemini-3.5-flash-lite|Gemini 3.5 Flash Lite
 gemini-omni-flash-preview|Gemini Omni Flash Preview
+gemini-omni-1.1-flash|Gemini Omni 1.1 Flash
+gemini-3.5-transcribe|Gemini 3.5 Transcribe
 gemini-3.6-flash|Gemini 3.6 Flash
 gemini-3.7-flash|Gemini 3.7 Flash
+gemini-3.8-flash|Gemini 3.8 Flash
 lyria-3-clip-preview|Lyria 3 Clip Preview
 lyria-3-pro-preview|Lyria 3 Pro Preview
+lyria-3.5|Lyria 3.5
 gemini-3.1-flash-tts-preview|Gemini 3.1 Flash TTS Preview
-gemini-robotics-er-1.6-preview|Gemini Robotics-ER 1.6 Preview
+gemini-3.8-flash-tts|Gemini 3.8 Flash TTS
+gemini-3.8-flash-lite-tts|Gemini 3.8 Flash Lite TTS
 gemini-robotics-er-2-preview|Gemini Robotics-ER 2 Preview
 gemini-2.5-computer-use-preview-10-2025|Gemini 2.5 Computer Use Preview 10-2025
 antigravity-preview-05-2026|Antigravity Agent Preview
+antigravity-preview-09-2026|Antigravity Agent Preview
+antigravity-preview-latest|Antigravity Agent Preview Latest
 deep-research-max-preview-04-2026|Deep Research Max Preview (Apr-21-2026)
 deep-research-preview-04-2026|Deep Research Preview (Apr-21-2026)
 deep-research-pro-preview-12-2025|Deep Research Pro Preview (Dec-12-2025)
@@ -126,15 +134,35 @@ aqa|Model that performs Attributed Question Answering.
 veo-3.1-generate-preview|Veo 3.1
 veo-3.1-fast-generate-preview|Veo 3.1 fast
 veo-3.1-lite-generate-preview|Veo 3.1 lite
+gemini-3.5-transcribe-live|Gemini 3.5 Transcribe Live
 gemini-2.5-flash-native-audio-latest|Gemini 2.5 Flash Native Audio Latest
 gemini-2.5-flash-native-audio-preview-09-2025|Gemini 2.5 Flash Native Audio Preview 09-2025
 gemini-2.5-flash-native-audio-preview-12-2025|Gemini 2.5 Flash Native Audio Preview 12-2025
 gemini-3.1-flash-live-preview|Gemini 3.1 Flash Live Preview
+gemini-3.8-live|Gemini 3.8 Live
+gemini-3.8-live-extended-thinking|Gemini 3.8 Live Extended Thinking
 gemini-robotics-er-2-streaming-preview|Gemini Robotics-ER 2 Streaming Preview
 gemini-3.5-live-translate-preview|Gemini 3.5 Live Translate Preview
+lyria-realtime-exp|Lyria Realtime Experimental
 
 # 差分
 
+```diff:2026/08/23 と 2026/10/09 の差分
++gemini-nano-banana-2.1|Nano Banana 2.1
++gemini-omni-1.1-flash|Gemini Omni 1.1 Flash
++gemini-3.5-transcribe|Gemini 3.5 Transcribe
++gemini-3.8-flash|Gemini 3.8 Flash
++lyria-3.5|Lyria 3.5
+-gemini-robotics-er-1.6-preview|Gemini Robotics-ER 1.6 Preview
++gemini-3.8-flash-tts|Gemini 3.8 Flash TTS
++gemini-3.8-flash-lite-tts|Gemini 3.8 Flash Lite TTS
++antigravity-preview-09-2026|Antigravity Agent Preview
++antigravity-preview-latest|Antigravity Agent Preview Latest
++gemini-3.5-transcribe-live|Gemini 3.5 Transcribe Live
++gemini-3.8-live|Gemini 3.8 Live
++gemini-3.8-live-extended-thinking|Gemini 3.8 Live Extended Thinking
++lyria-realtime-exp|Lyria Realtime Experimental
+```
 ```diff:2026/08/03 と 2026/08/23 の差分
 -gemini-2.0-flash|Gemini 2.0 Flash
 -gemini-2.0-flash-001|Gemini 2.0 Flash 001
