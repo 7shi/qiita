@@ -11,7 +11,7 @@ tags:
 - name: Gemini
   versions: []
 title: Gemini APIで使えるモデル
-updated_at: '2026-10-09T21:55:35+09:00'
+updated_at: '2026-10-15T12:30:48+09:00'
 url: https://qiita.com/7shi/items/ac3c2b1bea3bb4e9eb70
 slide: false
 ---
@@ -78,7 +78,7 @@ echo "LATESTシンボリックリンクを $FILENAME に更新しました。"
 取得したすべてのモデルが使用可能かは未確認です。
 :::
 
-# 2026/10/09
+# 2026/10/15
 
 name|display_name
 ----|----
@@ -113,6 +113,7 @@ gemini-3.5-transcribe|Gemini 3.5 Transcribe
 gemini-3.6-flash|Gemini 3.6 Flash
 gemini-3.7-flash|Gemini 3.7 Flash
 gemini-3.8-flash|Gemini 3.8 Flash
+gemini-4-argon|Gemini 4 Argon
 lyria-3-clip-preview|Lyria 3 Clip Preview
 lyria-3-pro-preview|Lyria 3 Pro Preview
 lyria-3.5|Lyria 3.5
@@ -147,6 +148,9 @@ lyria-realtime-exp|Lyria Realtime Experimental
 
 # 差分
 
+```diff:2026/10/09 と 2026/10/15 の差分
++gemini-4-argon|Gemini 4 Argon
+```
 ```diff:2026/08/23 と 2026/10/09 の差分
 +gemini-nano-banana-2.1|Nano Banana 2.1
 +gemini-omni-1.1-flash|Gemini Omni 1.1 Flash
