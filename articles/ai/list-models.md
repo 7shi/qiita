@@ -11,7 +11,7 @@ tags:
 - name: Gemini
   versions: []
 title: Gemini APIで使えるモデル
-updated_at: '2026-10-15T12:30:48+09:00'
+updated_at: '2026-11-11T05:56:10+09:00'
 url: https://qiita.com/7shi/items/ac3c2b1bea3bb4e9eb70
 slide: false
 ---
@@ -78,7 +78,7 @@ echo "LATESTシンボリックリンクを $FILENAME に更新しました。"
 取得したすべてのモデルが使用可能かは未確認です。
 :::
 
-# 2026/10/15
+# 2026/11/11
 
 name|display_name
 ----|----
@@ -109,11 +109,13 @@ gemini-3.5-flash|Gemini 3.5 Flash
 gemini-3.5-flash-lite|Gemini 3.5 Flash Lite
 gemini-omni-flash-preview|Gemini Omni Flash Preview
 gemini-omni-1.1-flash|Gemini Omni 1.1 Flash
+gemini-omni-1.2-flash|Gemini Omni 1.2 Flash
 gemini-3.5-transcribe|Gemini 3.5 Transcribe
 gemini-3.6-flash|Gemini 3.6 Flash
 gemini-3.7-flash|Gemini 3.7 Flash
 gemini-3.8-flash|Gemini 3.8 Flash
 gemini-4-argon|Gemini 4 Argon
+gemini-4-carbon|Gemini 4 Carbon
 lyria-3-clip-preview|Lyria 3 Clip Preview
 lyria-3-pro-preview|Lyria 3 Pro Preview
 lyria-3.5|Lyria 3.5
@@ -127,14 +129,11 @@ antigravity-preview-09-2026|Antigravity Agent Preview
 antigravity-preview-latest|Antigravity Agent Preview Latest
 deep-research-max-preview-04-2026|Deep Research Max Preview (Apr-21-2026)
 deep-research-preview-04-2026|Deep Research Preview (Apr-21-2026)
-deep-research-pro-preview-12-2025|Deep Research Pro Preview (Dec-12-2025)
+deep-research-pro-preview-12-2025|Deep Research Pro Preview (Dec-12-2025) [Rerouted]
 gemini-embedding-001|Gemini Embedding 001
 gemini-embedding-2-preview|Gemini Embedding 2 Preview
 gemini-embedding-2|Gemini Embedding 2
 aqa|Model that performs Attributed Question Answering.
-veo-3.1-generate-preview|Veo 3.1
-veo-3.1-fast-generate-preview|Veo 3.1 fast
-veo-3.1-lite-generate-preview|Veo 3.1 lite
 gemini-3.5-transcribe-live|Gemini 3.5 Transcribe Live
 gemini-2.5-flash-native-audio-latest|Gemini 2.5 Flash Native Audio Latest
 gemini-2.5-flash-native-audio-preview-09-2025|Gemini 2.5 Flash Native Audio Preview 09-2025
@@ -148,6 +147,15 @@ lyria-realtime-exp|Lyria Realtime Experimental
 
 # 差分
 
+```diff:2026/10/15 と 2026/11/11 の差分
++gemini-omni-1.2-flash|Gemini Omni 1.2 Flash
++gemini-4-carbon|Gemini 4 Carbon
+-deep-research-pro-preview-12-2025|Deep Research Pro Preview (Dec-12-2025)
++deep-research-pro-preview-12-2025|Deep Research Pro Preview (Dec-12-2025) [Rerouted]
+-veo-3.1-generate-preview|Veo 3.1
+-veo-3.1-fast-generate-preview|Veo 3.1 fast
+-veo-3.1-lite-generate-preview|Veo 3.1 lite
+```
 ```diff:2026/10/09 と 2026/10/15 の差分
 +gemini-4-argon|Gemini 4 Argon
 ```
