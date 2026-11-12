@@ -11,7 +11,7 @@ tags:
 - name: Gemini
   versions: []
 title: Gemini APIで使えるモデル
-updated_at: '2026-11-11T05:56:10+09:00'
+updated_at: '2026-11-13T04:09:24+09:00'
 url: https://qiita.com/7shi/items/ac3c2b1bea3bb4e9eb70
 slide: false
 ---
@@ -78,7 +78,7 @@ echo "LATESTシンボリックリンクを $FILENAME に更新しました。"
 取得したすべてのモデルが使用可能かは未確認です。
 :::
 
-# 2026/11/11
+# 2026/11/13
 
 name|display_name
 ----|----
@@ -116,6 +116,7 @@ gemini-3.7-flash|Gemini 3.7 Flash
 gemini-3.8-flash|Gemini 3.8 Flash
 gemini-4-argon|Gemini 4 Argon
 gemini-4-carbon|Gemini 4 Carbon
+gemini-4-hydrogen|Gemini 4 Hydrogen
 lyria-3-clip-preview|Lyria 3 Clip Preview
 lyria-3-pro-preview|Lyria 3 Pro Preview
 lyria-3.5|Lyria 3.5
@@ -144,9 +145,14 @@ gemini-3.8-live-extended-thinking|Gemini 3.8 Live Extended Thinking
 gemini-robotics-er-2-streaming-preview|Gemini Robotics-ER 2 Streaming Preview
 gemini-3.5-live-translate-preview|Gemini 3.5 Live Translate Preview
 lyria-realtime-exp|Lyria Realtime Experimental
+gemini-decision-1|Gemini Decision 1
 
 # 差分
 
+```diff:2026/11/11 と 2026/11/13 の差分
++gemini-4-hydrogen|Gemini 4 Hydrogen
++gemini-decision-1|Gemini Decision 1
+```
 ```diff:2026/10/15 と 2026/11/11 の差分
 +gemini-omni-1.2-flash|Gemini Omni 1.2 Flash
 +gemini-4-carbon|Gemini 4 Carbon
